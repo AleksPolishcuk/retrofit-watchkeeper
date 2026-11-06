@@ -17,7 +17,7 @@ data:
 	scripts/link_data.sh "$(PACK)"
 
 eval:
-	@echo "make eval: not implemented yet" && exit 1
+	.venv/bin/python eval/run_eval.py --method b1
 
 predict:
 	@echo "make predict: not implemented yet" && exit 1
@@ -32,4 +32,4 @@ demo:
 	@echo "make demo: not implemented yet" && exit 1
 
 test:
-	@echo "make test: not implemented yet" && exit 1
+	.venv/bin/python -m pytest tests
