@@ -1,0 +1,64 @@
+import json
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from watchkeeper.api.app import create_app
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data"
+pytestmark = pytest.mark.skipif(not (DATA / "assets.csv").exists(), reason="data pack not linked")
+
+
+@pytest.fixture(scope="module")
+def client(tmp_path_factory):
+    empty = tmp_path_factory.mktemp("no_engine_alerts")
+    return TestClient(create_app(DATA, alerts_dir=empty))
+
+
+def test_every_route_is_read_only(client):
+    methods = set()
+    for route in client.app.routes:
+        methods |= set(getattr(route, "methods", None) or [])
+    assert methods <= {"GET", "HEAD", "OPTIONS"}, f"unexpected methods: {methods}"
+
+
+def test_assets_list_has_twelve_pumps_with_tiers(client):
+    r = client.get("/api/assets").json()
+    assert len(r) == 12
+    assert {a["instrumentation_tier"] for a in r} == {"T0_LEGACY", "T1_RETROFIT", "T2_FULL"}
+    assert {a["asset_id"] for a in r if not a["telemetry_served"]} == {"PUMP-10", "PUMP-11", "PUMP-12"}
+
+
+def test_alerts_fall_back_to_mock_when_the_engine_has_written_nothing(client):
+    r = client.get("/api/alerts", params={"asset_id": "PUMP-08"}).json()
+    assert r["source"] == "mock" and len(r["alerts"]) >= 1
+    assert all(a["asset_id"] == "PUMP-08" for a in r["alerts"])
+
+
+def test_alerts_use_engine_file_when_present(tmp_path):
+    alert = json.loads((ROOT / "docs" / "mock_alerts.json").read_text(encoding="utf-8"))[0]
+    (tmp_path / "PUMP-08.json").write_text(json.dumps([alert]), encoding="utf-8")
+    r = TestClient(create_app(DATA, alerts_dir=tmp_path)).get("/api/alerts", params={"asset_id": "PUMP-08"}).json()
+    assert r["source"] == "engine" and len(r["alerts"]) == 1
+
+
+def test_unknown_asset_is_404(client):
+    assert client.get("/api/alerts", params={"asset_id": "PUMP-99"}).status_code == 404
+    assert client.get("/api/timeline", params={"asset_id": "PUMP-99"}).status_code == 404
+
+
+def test_timeline_has_labels_for_dev_pumps_only(client):
+    dev = client.get("/api/timeline", params={"asset_id": "PUMP-08"}).json()
+    assert dev["labels_public"] is True and len(dev["events"]) >= 1
+    test = client.get("/api/timeline", params={"asset_id": "PUMP-10"}).json()
+    assert test["labels_public"] is False and test["events"] == []
+
+
+def test_series_for_dev_pump_and_refused_for_test_pump(client):
+    r = client.get("/api/series", params={"asset_id": "PUMP-08", "channel": "discharge_pressure_kpa", "step_min": 30}).json()
+    assert len(r["t"]) == len(r["v"]) > 100
+    assert client.get("/api/series", params={"asset_id": "PUMP-10", "channel": "discharge_pressure_kpa"}).status_code == 403
+    assert client.get("/api/series", params={"asset_id": "PUMP-08", "channel": "flow_m3_h"}).status_code == 404   # no flow meter on PUMP-08
+    assert client.get("/api/series", params={"asset_id": "PUMP-08", "channel": "nope"}).status_code == 400

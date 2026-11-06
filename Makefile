@@ -23,10 +23,10 @@ predict:
 	@echo "make predict: not implemented yet" && exit 1
 
 api:
-	@echo "make api: not implemented yet" && exit 1
+	.venv/bin/python -m uvicorn watchkeeper.api.app:app --host 127.0.0.1 --port 8000
 
 web:
-	@echo "make web: not implemented yet" && exit 1
+	cd web && npm install --no-audit --no-fund && npm run dev
 
 demo:
 	@echo "make demo: not implemented yet" && exit 1

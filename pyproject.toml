@@ -19,7 +19,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4,<10", "jsonschema>=4.20,<5"]
+dev = ["pytest>=7.4,<10", "jsonschema>=4.20,<5", "httpx>=0.27,<1"]
+api = ["fastapi>=0.110,<1", "uvicorn>=0.27,<1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
