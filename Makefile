@@ -20,7 +20,7 @@ eval:
 	.venv/bin/python eval/run_eval.py --method b1
 
 predict:
-	@echo "make predict: not implemented yet" && exit 1
+	.venv/bin/python -m watchkeeper.predict --assets PUMP-10 PUMP-11 PUMP-12 --out submission/predictions_test.csv
 
 api:
 	.venv/bin/python -m uvicorn watchkeeper.api.app:app --host 127.0.0.1 --port 8000

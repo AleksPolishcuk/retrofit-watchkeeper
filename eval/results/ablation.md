@@ -21,3 +21,15 @@ Every row is fitted without the pump it is scored on. The validation column is t
 ## What is still missing (from the per-event table)
 
 Biggest remaining losses in fault-type points: misalignment (3 detected, 0 right type, mistaken for bearing wear), sensor drift (1 of 3 detected, 0 right type; organizer rules never output drift), sensor noise spikes (0 of 2), discharge restriction, air entrainment. The pump-curve reference (absolute, not self-baselined) is untested.
+
+## Experiments that did not help (kept out of the pipeline)
+
+Run offline on the leave-one-asset-out predictions of `wk` (composite 70.3, 71 alerts, 4 false-alert episodes, 8 excess repeats).
+
+| Change | Composite | Why it loses |
+|---|---|---|
+| Drop alerts with confidence below 0.25 / 0.35 / 0.5 | 68.1 / 61.1 / 56.1 | removes more true detections than false ones |
+| Hold other alerts on the same pump for 12 h (any class) | 66.6 | precision rises to 0.93 and excess repeats fall to 0, but recall falls from 0.83 to 0.71: a "repeat" is often the first detection of a second event |
+| Hold 6 h / 24 h, same class or any class | 64.5 to 67.1 | same trade-off |
+
+The composite rewards detection more than quiet, so the current policy (one alert per fault type per 12 h while the deviation lasts) stays. The jury also weighs false alarms under reliability, so the false-alert rate is reported next to the composite.

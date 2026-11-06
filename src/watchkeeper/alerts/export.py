@@ -84,6 +84,17 @@ def to_contract(pred: pd.DataFrame, assets: pd.DataFrame, source: str) -> list[d
     return alerts
 
 
+def write_predictions_csv(pred: pd.DataFrame, path) -> Path:
+    """Write the organizers' submission CSV (asset_id, alert_time_utc, event_class, fault_type, confidence, evidence, recommended_action)."""
+    cols = ["asset_id", "alert_time_utc", "event_class", "fault_type", "confidence", "evidence", "recommended_action"]
+    out = pred.reindex(columns=cols).copy()
+    out["confidence"] = out["confidence"].astype(float).round(3)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out.sort_values(["asset_id", "alert_time_utc"], kind="stable").to_csv(path, index=False)
+    return path
+
+
 def write_alerts(alerts: list[dict], out_dir, asset_ids=None) -> list[Path]:
     """Write artifacts/alerts/<asset_id>.json (an empty list for an asset without alerts)."""
     out = Path(out_dir)
