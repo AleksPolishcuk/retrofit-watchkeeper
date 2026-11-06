@@ -8,6 +8,7 @@ Every row is fitted without the pump it is scored on. The validation column is t
 | + causal expanding baseline (`b1c`) | 58.7 | 75.6 | 0.69 | 0.71 | 0.29 | 0.67 | passes the truncation test |
 | + learned diagnosis, no rules (RF, 300 trees) | 60.0 | 67.4 | 0.63 | 0.79 | 0.37 | 0.33 | machine types much better, instrument events lost |
 | + rules for gaps and frozen channels (`wk`, RF 100 trees) | 60.0 | 78.6 | 0.63 | 0.73 | 0.40 | 0.50 | passes the truncation test |
+| + cavitation from the estimated NPSH margin (physics, no training) | **66.7** | 78.6 | 0.71 | 0.76 | 0.49 | 0.50 | cavitation 3 of 4 found, all with the right type; healthy pumps never go below margin 3.3 |
 
 ## Reading
 
@@ -17,4 +18,4 @@ Every row is fitted without the pump it is scored on. The validation column is t
 
 ## What is still missing (from the per-event table)
 
-Not detected by any method here: cavitation 0 of 4 (short episodes on PUMP-06), sensor noise spikes 0 of 2, sensor drift 1 of 3. These need their own detectors (short-window suction-side detector, a spread-based noise detector, a ramp detector). The pump-curve reference (absolute, not self-baselined) is untested.
+Biggest remaining losses in fault-type points: misalignment (3 detected, 0 right type, mistaken for bearing wear), sensor drift (1 of 3 detected, 0 right type; organizer rules never output drift), sensor noise spikes (0 of 2), discharge restriction, air entrainment. The pump-curve reference (absolute, not self-baselined) is untested.

@@ -12,6 +12,7 @@ CORE_CHANNELS = ["suction_pressure_kpa", "flow_m3_h", "vibration_rms_mm_s", "bea
 
 _Z = re.compile(r"^(?P<ch>[a-z0-9_]+) z=(?P<z>[+-]?\d+(?:\.\d+)?)$")
 _ALONE = re.compile(r"^(?P<ch>[a-z0-9_]+) deviates alone \(z=(?P<z>[+-]?\d+(?:\.\d+)?)\)$")
+_NPSH = re.compile(r"^npsh_margin=(?P<v>[0-9.]+)$")
 _FROZEN = re.compile(r"^(?P<ch>[a-z0-9_]+) frozen$")
 
 
@@ -26,6 +27,8 @@ def parse_evidence(text: str) -> list[dict]:
         elif m := _Z.match(token):
             z = float(m["z"])
             items.append({"channel": m["ch"], "text": f"{z:+.1f} robust standard deviations from the baseline for this operating regime", "z": z})
+        elif m := _NPSH.match(token):
+            items.append({"channel": "npsh_margin (estimated)", "text": f"estimated NPSH margin {float(m['v']):.2f}; cavitation starts below about 1.15", "z": None})
         elif m := _FROZEN.match(token):
             items.append({"channel": m["ch"], "text": "constant value while the pump runs", "z": None})
         elif token == "missing rows":

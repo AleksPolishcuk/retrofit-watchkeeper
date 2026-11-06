@@ -1,13 +1,16 @@
 """Detection methods plugged into the evaluation kit. Add new methods to METHODS."""
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 from retrofit_sim import baselines as B
 
 from .evalkit import PRED_COLS, DevData, Method, concat_predictions, score_ids
 from .detect.alerting import alerts_from_flag, b1_flag
+from .detect.cavitation import cavitation_episodes
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of
 from .features.causal import CH, build_features, causal_zscores
+from .features.npsh import npsh_margin
 
 
 def _regime(data: DevData) -> pd.DataFrame:
@@ -111,21 +114,26 @@ class WKMethod(Method):
 
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
-    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True):
+    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
-        self.rules = rules
+        self.rules, self.cavitation = rules, cavitation
 
     def fit(self, data, train_ids):
         return DiagnosisModel(self.k_low, self.none_weight, self.trees).fit(_zf(data, True), _features(data), data.events, train_ids)
 
     def predict(self, model, data, asset_id):
-        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules)
+        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation)
         if key in data.cache:
             return data.cache[key]
         zf, X = _zf(data, True), _features(data)
         idx = zf.index[zf.asset_id == asset_id]
         g, Xa = zf.loc[idx].reset_index(drop=True), X.loc[idx]
         P = model.proba(Xa)
+        cav_rows, cav_active = [], np.zeros(len(g), dtype=bool)
+        if self.cavitation:
+            cav_rows, cav_active = cavitation_episodes(g, npsh_margin(g, data.assets.set_index("asset_id").loc[asset_id]).to_numpy())
+            for r in cav_rows:
+                r["recommended_action"] = ACTIONS["CAVITATION"]
         classes = model.classes_
         none_i = classes.index("NONE") if "NONE" in classes else None
         type_i = [i for i, c in enumerate(classes) if c != "NONE"]
@@ -135,6 +143,8 @@ class WKMethod(Method):
                 r = _rule_diagnosis(g.iloc[j])
                 if r is not None:
                     return r
+            if cav_active[j]:
+                return None                      # a confirmed cavitation episode explains the symptoms; do not add a second diagnosis
             p = P[j]
             pn = float(p[none_i]) if none_i is not None else 0.0
             if pn >= self.suppress:
@@ -146,7 +156,8 @@ class WKMethod(Method):
                     "evidence": _evidence(g.iloc[j]), "action": ACTIONS[ft]}
 
         rows = alerts_from_flag(g, b1_flag(g, self.k), self.persist, diag, "WK causal+learned")
-        out = pd.DataFrame(rows, columns=PRED_COLS)
+        rows += [dict(r, evidence="WK causal+learned: " + r["evidence"]) for r in cav_rows]
+        out = pd.DataFrame(sorted(rows, key=lambda r: r["alert_time_utc"]), columns=PRED_COLS)
         data.cache[key] = out
         return out
 
