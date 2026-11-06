@@ -25,3 +25,6 @@ web/dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Regenerable baseline prediction files
+eval/results/organizer_baselines/predictions_*.csv
