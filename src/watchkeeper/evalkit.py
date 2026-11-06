@@ -15,6 +15,7 @@ from retrofit_sim.scoring import score
 ROOT = Path(__file__).resolve().parents[2]
 DEV_SPLITS = ("train", "validation")
 PRED_COLS = ["asset_id", "alert_time_utc", "event_class", "fault_type", "confidence", "evidence", "recommended_action"]
+INTERNAL_COLS = PRED_COLS + ["rule", "alternatives"]      # extra columns for calibration and the cockpit; the submission CSV keeps PRED_COLS only
 METRICS = ["composite_score", "event_f1", "event_recall", "alert_precision", "false_alerts_per_asset_day", "timeliness",
            "fault_type_recall", "class_recall", "recall_machine", "recall_sensor", "median_lead_time_h"]
 
@@ -150,3 +151,35 @@ def check_causality(method: Method, params, data: DevData, asset_id: str, cut_ho
         if len(a) != len(b) or (len(a) and not a.equals(b)):
             problems.append(f"{asset_id}: cut at {h} h gives {len(b)} alerts up to the cut, the full run gives {len(a)}")
     return problems
+
+
+def alert_outcomes(pred: pd.DataFrame, data: DevData) -> pd.DataFrame:
+    """For every alert: does it fall in the window of a labelled event (`in_event`), with the right class (`class_ok`), with the
+    right fault type (`type_ok`). Windows follow the organizer scorer. Used to calibrate confidence, not to score."""
+    from retrofit_sim.scoring import POST_TOL, PRE_TOL, SOFT_END
+    ts = lambda x: pd.to_datetime(x, utc=True, format="ISO8601")
+    ws = dict(zip(data.assets.asset_id, ts(data.assets.window_start_utc)))
+    we = dict(zip(data.assets.asset_id, ts(data.assets.window_end_utc)))
+    ev = data.events.copy()
+    for c in ("onset_utc", "detectable_utc", "end_utc"):
+        ev[c] = ts(ev[c])
+    ev = ev[ev["observable"].astype(str).str.lower().isin(["true", "1"])]
+    out = pred.copy()
+    t = ts(out["alert_time_utc"])
+    flags = {"in_event": [], "class_ok": [], "type_ok": [], "matched_types": []}
+    for a, when, cls, ft in zip(out["asset_id"], t, out["event_class"], out["fault_type"]):
+        hit = []
+        for e in ev[ev.asset_id == a].itertuples():
+            start = max(e.onset_utc, ws[a])
+            if pd.notna(e.detectable_utc):
+                start = max(start, e.detectable_utc - PRE_TOL)
+            end = we[a] if pd.isna(e.end_utc) else min(e.end_utc + (POST_TOL if (e.fault_type in SOFT_END or e.event_class == "SENSOR") else pd.Timedelta(0)), we[a])
+            if start <= when <= end:
+                hit.append(e)
+        flags["in_event"].append(bool(hit))
+        flags["class_ok"].append(any(e.event_class == cls for e in hit))
+        flags["type_ok"].append(any(e.fault_type == ft for e in hit))
+        flags["matched_types"].append("|".join(e.fault_type for e in hit))
+    for k, v in flags.items():
+        out[k] = v
+    return out

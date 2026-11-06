@@ -55,6 +55,14 @@ def _sensor_check(event_class: str, fault_type: str, evidence: list[dict]) -> di
     return {"verdict": "machine", "reason": "one channel deviated; coupled channels were not available to confirm"}
 
 
+def _alternatives(row, confidence: float) -> list[dict]:
+    """Next-best fault types from the model, rescaled so that together with the main diagnosis they add up to at most one."""
+    raw = getattr(row, "alternatives", None)
+    alts = json.loads(raw) if isinstance(raw, str) and raw else []
+    total = sum(a["p"] for a in alts)
+    return [{"fault_type": a["fault_type"], "p": round(a["p"] / total * (1.0 - confidence), 3)} for a in alts] if total > 0 else []
+
+
 def to_contract(pred: pd.DataFrame, assets: pd.DataFrame, source: str) -> list[dict]:
     """One contract alert per prediction row, sorted by asset and time."""
     channels = {r.asset_id: set(str(r.channels_available).split("|")) for r in assets.itertuples()}
@@ -71,7 +79,7 @@ def to_contract(pred: pd.DataFrame, assets: pd.DataFrame, source: str) -> list[d
             "event_class": r.event_class,
             "fault_type": r.fault_type,
             "confidence": float(min(max(r.confidence, 0.0), 1.0)),
-            "alternatives": [],
+            "alternatives": _alternatives(r, float(min(max(r.confidence, 0.0), 1.0))),
             "evidence": evidence,
             "sensor_check": _sensor_check(r.event_class, r.fault_type, evidence),
             "uncertainty": {

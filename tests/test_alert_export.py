@@ -62,3 +62,14 @@ def test_cavitation_alert_explains_that_the_evidence_is_a_calculation():
     assert "0.62" in alert["evidence"][0]["text"]
     assert "calculated" in alert["sensor_check"]["reason"]
     assert [e.message for e in VALIDATOR.iter_errors(alert)] == []
+
+
+def test_alternatives_are_rescaled_to_the_remaining_probability():
+    row = _row()
+    row["confidence"] = 0.6
+    row["alternatives"] = json.dumps([{"fault_type": "CAVITATION", "p": 0.5}, {"fault_type": "UNKNOWN", "p": 0.5}])
+    alert = to_contract(pd.DataFrame([row]), ASSETS, "test")[0]
+    assert [a["p"] for a in alert["alternatives"]] == [0.2, 0.2]          # 0.4 left, split in the model's proportions
+    assert alert["confidence"] + sum(a["p"] for a in alert["alternatives"]) <= 1.0 + 1e-9
+    assert [e.message for e in VALIDATOR.iter_errors(alert)] == []
+    assert to_contract(pd.DataFrame([_row()]), ASSETS, "test")[0]["alternatives"] == []     # no column: no alternatives

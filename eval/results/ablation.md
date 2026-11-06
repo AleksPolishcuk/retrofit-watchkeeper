@@ -11,6 +11,7 @@ Every row is fitted without the pump it is scored on. The validation column is t
 | + cavitation from the estimated NPSH margin (physics, no training) | **66.7** | 78.6 | 0.71 | 0.76 | 0.49 | 0.50 | cavitation 3 of 4 found, all with the right type; healthy pumps never go below margin 3.3 |
 | + hours since last maintenance lockout as a feature (`wk-no-arbiter`) | 68.8 | 75.8 | 0.74 | 0.74 | 0.51 | 0.58 | misalignment and calibration offsets follow maintenance |
 | + single-channel arbiter incl. drift (`wk`) | **70.3** | 76.9 | 0.83 | 0.71 | 0.49 | 0.75 | recall and instrument events up, false alerts 0.14 to 0.19 per asset-day |
+| + arbiter limited to process instruments (pressures, flow, current, power, bearing temperature) | **70.9** | 75.8 | 0.80 | 0.76 | 0.51 | 0.75 | 13 of 24 arbiter alerts came from winding temperature and vibration, where lone deviations were machine effects (9 of them had no instrument fault); false alerts 0.19 to 0.14 per asset-day |
 
 ## Reading
 

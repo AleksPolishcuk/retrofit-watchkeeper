@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from retrofit_sim import baselines as B
 
-from .evalkit import PRED_COLS, DevData, Method, concat_predictions, score_ids
+from .evalkit import INTERNAL_COLS, DevData, Method, concat_predictions, score_ids
 from .detect.alerting import alerts_from_flag, b1_flag
 from .detect.cavitation import cavitation_episodes
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of
@@ -77,6 +77,10 @@ def _features(data: DevData) -> pd.DataFrame:
     return data.cache["X_causal"]
 
 
+# Process instruments on which an isolated deviation can be an instrument fault. Vibration channels come from one wireless sensor and
+# winding temperature is slow and mostly a machine effect, so a lone deviation there is treated as machine, not instrument. The public
+# fleet scenarios also place instrument faults on pressures, flow, motor current and bearing temperature only.
+ARBITER_KEYS = ("ps", "pd", "q", "i", "pw", "bt")
 STUCK_KEYS = ("pd", "ps", "q", "bt", "i", "tf")      # channels where a frozen value while running is a sensor fault
 
 
@@ -90,16 +94,16 @@ def _rule_diagnosis(row: pd.Series, xrow: pd.Series | None = None, kz: float = 6
     that deviates while every physically coupled channel stays quiet."""
     if _flag(row, "gap"):
         return {"event_class": "SENSOR", "fault_type": "COMMUNICATION_LOSS", "confidence": 0.9, "evidence": "missing rows",
-                "action": ACTIONS["COMMUNICATION_LOSS"]}
+                "action": ACTIONS["COMMUNICATION_LOSS"], "rule": "rule_gap"}
     if _flag(row, "steady"):
         for k in STUCK_KEYS:
             if _flag(row, "flat_" + k):
                 return {"event_class": "SENSOR", "fault_type": "SENSOR_STUCK", "confidence": 0.85, "evidence": f"{CH[k]} frozen",
-                        "action": ACTIONS["SENSOR_STUCK"]}
+                        "action": ACTIONS["SENSOR_STUCK"], "rule": "rule_stuck"}
     if arbiter and xrow is not None:
         zv = {c: row.get("z_" + c) for c in CH}
         zv = {c: float(v) for c, v in zv.items() if v is not None and not pd.isna(v)}
-        for c in sorted((c for c in zv if abs(zv[c]) > kz and c in B.COUPLED), key=lambda c: -abs(zv[c])):
+        for c in sorted((c for c in zv if abs(zv[c]) > kz and c in ARBITER_KEYS), key=lambda c: -abs(zv[c])):
             cpl = [zv[x] for x in B.COUPLED[c] if x in zv]
             if cpl and max(abs(v) for v in cpl) < kz / 3:
                 zs = row.get("zs_" + c)
@@ -109,7 +113,7 @@ def _rule_diagnosis(row: pd.Series, xrow: pd.Series | None = None, kz: float = 6
                     step = abs(float(xrow.get("d30_" + c, 0.0))) > 0.6 * abs(zv[c])        # a jump within 30 min is an offset, a ramp is drift
                     ft = "SENSOR_CALIBRATION_SHIFT" if step else "SENSOR_DRIFT"
                 return {"event_class": "SENSOR", "fault_type": ft, "confidence": 0.6, "evidence": f"{CH[c]} deviates alone (z={zv[c]:+.1f})",
-                        "action": ACTIONS[ft]}
+                        "action": ACTIONS[ft], "rule": "rule_arbiter"}
     return None
 
 
@@ -149,6 +153,7 @@ class WKMethod(Method):
             cav_rows, cav_active = cavitation_episodes(g, npsh_margin(g, data.assets.set_index("asset_id").loc[asset_id]).to_numpy())
             for r in cav_rows:
                 r["recommended_action"] = ACTIONS["CAVITATION"]
+                r["rule"], r["alternatives"] = "cavitation", "[]"
         classes = model.classes_
         none_i = classes.index("NONE") if "NONE" in classes else None
         type_i = [i for i, c in enumerate(classes) if c != "NONE"]
@@ -167,12 +172,14 @@ class WKMethod(Method):
             pt = p[type_i]
             ft = classes[type_i[int(pt.argmax())]] if pt.sum() > 0 else "UNKNOWN"
             conf = float(pt.max() / pt.sum() * (1 - pn)) if pt.sum() > 0 else 0.3
+            order = np.argsort(-pt)[1:4] if pt.sum() > 0 else []
+            alts = [{"fault_type": classes[type_i[int(i)]], "p": round(float(pt[i] / pt.sum()), 3)} for i in order if pt[i] / pt.sum() >= 0.05]
             return {"event_class": event_class_of(ft), "fault_type": ft, "confidence": min(max(conf, 0.05), 0.99),
-                    "evidence": _evidence(g.iloc[j]), "action": ACTIONS[ft]}
+                    "evidence": _evidence(g.iloc[j]), "action": ACTIONS[ft], "alternatives": alts, "rule": "model"}
 
         rows = alerts_from_flag(g, b1_flag(g, self.k), self.persist, diag, "WK causal+learned")
         rows += [dict(r, evidence="WK causal+learned: " + r["evidence"]) for r in cav_rows]
-        out = pd.DataFrame(sorted(rows, key=lambda r: r["alert_time_utc"]), columns=PRED_COLS)
+        out = pd.DataFrame(sorted(rows, key=lambda r: r["alert_time_utc"]), columns=INTERNAL_COLS)
         data.cache[key] = out
         return out
 

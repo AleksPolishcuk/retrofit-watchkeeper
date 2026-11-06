@@ -1,6 +1,7 @@
 """Alert timing shared by the methods. Same trigger as organizer B1 (sustained deviation), with a pluggable diagnosis."""
 from __future__ import annotations
 
+import json
 from typing import Callable
 
 import numpy as np
@@ -38,6 +39,7 @@ def alerts_from_flag(g: pd.DataFrame, flag: np.ndarray, persist: int, diag: Call
             if d["fault_type"] not in last or t - last[d["fault_type"]] > REFRACTORY:
                 rows.append({"asset_id": g["asset_id"].iloc[j], "alert_time_utc": t.strftime("%Y-%m-%dT%H:%M:%SZ"),
                              "event_class": d["event_class"], "fault_type": d["fault_type"], "confidence": float(d["confidence"]),
-                             "evidence": f"{source}: {d['evidence']}", "recommended_action": d["action"]})
+                             "evidence": f"{source}: {d['evidence']}", "recommended_action": d["action"],
+                             "rule": d.get("rule", "model"), "alternatives": json.dumps(d.get("alternatives", []))})
                 last[d["fault_type"]] = t
     return rows
