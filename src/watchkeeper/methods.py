@@ -4,8 +4,10 @@ from __future__ import annotations
 import pandas as pd
 from retrofit_sim import baselines as B
 
-from .evalkit import DevData, Method, concat_predictions, score_ids
-from .features.causal import causal_zscores
+from .evalkit import PRED_COLS, DevData, Method, concat_predictions, score_ids
+from .detect.alerting import alerts_from_flag, b1_flag
+from .diagnose import ACTIONS, DiagnosisModel, event_class_of
+from .features.causal import CH, build_features, causal_zscores
 
 
 def _regime(data: DevData) -> pd.DataFrame:
@@ -66,7 +68,92 @@ class B1CausalMethod(B1Method):
     CAUSAL = True
 
 
+def _features(data: DevData) -> pd.DataFrame:
+    if "X_causal" not in data.cache:
+        data.cache["X_causal"] = build_features(_zf(data, True), data.assets)
+    return data.cache["X_causal"]
+
+
+STUCK_KEYS = ("pd", "ps", "q", "bt", "i", "tf")      # channels where a frozen value while running is a sensor fault
+
+
+def _flag(row: pd.Series, key: str) -> bool:
+    v = row.get(key, False)
+    return bool(v) and not pd.isna(v)
+
+
+def _rule_diagnosis(row: pd.Series) -> dict | None:
+    """Deterministic instrument faults: a gateway gap, or a channel frozen while the pump runs steadily."""
+    if _flag(row, "gap"):
+        return {"event_class": "SENSOR", "fault_type": "COMMUNICATION_LOSS", "confidence": 0.9, "evidence": "missing rows",
+                "action": ACTIONS["COMMUNICATION_LOSS"]}
+    if _flag(row, "steady"):
+        for k in STUCK_KEYS:
+            if _flag(row, "flat_" + k):
+                return {"event_class": "SENSOR", "fault_type": "SENSOR_STUCK", "confidence": 0.85, "evidence": f"{CH[k]} frozen",
+                        "action": ACTIONS["SENSOR_STUCK"]}
+    return None
+
+
+def _evidence(row: pd.Series) -> str:
+    """Top deviating channels in the text format that the export parses."""
+    if bool(row.get("gap", False)):
+        return "missing rows"
+    zs = [(CH[k], row.get("z_" + k)) for k in CH]
+    zs = sorted([(c, float(v)) for c, v in zs if pd.notna(v) and abs(v) >= 2.0], key=lambda cv: -abs(cv[1]))[:3]
+    frozen = [CH[k] for k in CH if _flag(row, "flat_" + k)]
+    parts = [f"{c} z={v:+.1f}" for c, v in zs] + [f"{c} frozen" for c in frozen[:1]]
+    return ", ".join(parts) if parts else "no single channel stands out"
+
+
+class WKMethod(Method):
+    """Causal baseline, B1 trigger, learned diagnosis. `fit` trains the classifier on the given pumps only."""
+
+    name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
+
+    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True):
+        self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
+        self.rules = rules
+
+    def fit(self, data, train_ids):
+        return DiagnosisModel(self.k_low, self.none_weight, self.trees).fit(_zf(data, True), _features(data), data.events, train_ids)
+
+    def predict(self, model, data, asset_id):
+        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules)
+        if key in data.cache:
+            return data.cache[key]
+        zf, X = _zf(data, True), _features(data)
+        idx = zf.index[zf.asset_id == asset_id]
+        g, Xa = zf.loc[idx].reset_index(drop=True), X.loc[idx]
+        P = model.proba(Xa)
+        classes = model.classes_
+        none_i = classes.index("NONE") if "NONE" in classes else None
+        type_i = [i for i, c in enumerate(classes) if c != "NONE"]
+
+        def diag(j):
+            if self.rules:
+                r = _rule_diagnosis(g.iloc[j])
+                if r is not None:
+                    return r
+            p = P[j]
+            pn = float(p[none_i]) if none_i is not None else 0.0
+            if pn >= self.suppress:
+                return None
+            pt = p[type_i]
+            ft = classes[type_i[int(pt.argmax())]] if pt.sum() > 0 else "UNKNOWN"
+            conf = float(pt.max() / pt.sum() * (1 - pn)) if pt.sum() > 0 else 0.3
+            return {"event_class": event_class_of(ft), "fault_type": ft, "confidence": min(max(conf, 0.05), 0.99),
+                    "evidence": _evidence(g.iloc[j]), "action": ACTIONS[ft]}
+
+        rows = alerts_from_flag(g, b1_flag(g, self.k), self.persist, diag, "WK causal+learned")
+        out = pd.DataFrame(rows, columns=PRED_COLS)
+        data.cache[key] = out
+        return out
+
+
 METHODS = {
     "b1": B1Method,
     "b1c": B1CausalMethod,
+    "wk": WKMethod,
+    "wk-learned-only": lambda: WKMethod(rules=False),
 }

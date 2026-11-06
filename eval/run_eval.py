@@ -4,7 +4,6 @@
   .venv/bin/python eval/run_eval.py --method b1
 """
 import argparse
-import json
 import sys
 import time
 import warnings
@@ -38,13 +37,13 @@ def main(argv=None) -> int:
     table = markdown_table(rows)
     print(table)
 
-    out = Path(a.out) / method.name
+    out = Path(a.out) / (method.name + ("" if getattr(method, "rules", True) else "_no_rules"))
     out.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(loo["all"]["per_event"]).to_csv(out / "per_event_loo.csv", index=False)
     loo["predictions"].to_csv(out / "predictions_loo.csv", index=False)
     (out / "summary.md").write_text(
-        f"# {method.name}\n\nFixed split params (fit on train): `{fixed['params']}`\n\n"
-        f"Leave-one-asset-out params per held-out pump: `{json.dumps({k: list(v) if v is not None else None for k, v in loo['folds'].items()})}`\n\n"
+        f"# {method.name}\n\nFixed split: fitted on the train pumps. The train row is in-sample; read validation and leave-one-asset-out.\n\n"
+        f"Leave-one-asset-out: {len(loo['folds'])} folds, each fitted on the other eight pumps.\n\n"
         f"{table}\n", encoding="utf-8")
     print(f"written to {out} in {time.time() - t0:.0f} s")
     return 0

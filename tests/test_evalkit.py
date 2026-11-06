@@ -71,3 +71,15 @@ def test_causal_b1_does_not_change_early_alerts_when_telemetry_is_cut(dev):
     for asset in ("PUMP-04", "PUMP-06"):
         problems += check_causality(m, (6, 15), dev, asset, (6, 20, 55))
     assert problems == []
+
+
+def test_wk_method_is_causal_under_truncation(dev):
+    """Causal baseline, backward-looking features and a model fitted before prediction: cutting the data must not change early alerts."""
+    from watchkeeper.evalkit import check_causality
+    from watchkeeper.methods import WKMethod
+    m = WKMethod(trees=30)
+    model = m.fit(dev, dev.ids_of("train"))
+    problems = []
+    for asset in ("PUMP-04", "PUMP-08"):
+        problems += check_causality(m, model, dev, asset, (6, 20, 55))
+    assert problems == []
