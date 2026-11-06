@@ -20,7 +20,7 @@ FLOOR = {"v": 0.05, "a": 0.01, "c": 0.05, "bt": 0.3, "ps": 1.0, "pd": 2.0, "i": 
 KEYS = list(CH)                                   # v a c bt ps pd i pw q n wt tf vp
 FEATURE_COLUMNS = (
     [f"z_{k}" for k in KEYS] + [f"zs_{k}" for k in KEYS] + [f"m15_{k}" for k in KEYS] + [f"d30_{k}" for k in KEYS]
-    + [f"has_{k}" for k in KEYS] + ["flat_any", "gap", "speed_ratio"]
+    + [f"has_{k}" for k in KEYS] + ["flat_any", "gap", "speed_ratio", "since_lockout_h"]
 )
 
 
@@ -63,6 +63,21 @@ def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120)
     return pd.concat(out, ignore_index=True)
 
 
+def _hours_since_lockout(mode: np.ndarray, n: int, cap: float = 99.0) -> np.ndarray:
+    """Hours since the last minute in LOCKED_OUT (maintenance), looking backwards only. Misalignment and calibration offsets
+    often appear right after maintenance. `cap` when there has been no lockout yet."""
+    out = np.full(n, cap)
+    if len(mode) != n:
+        return out
+    last = None
+    for j in range(n):
+        if mode[j] == "LOCKED_OUT":
+            last = j
+        if last is not None:
+            out[j] = min((j - last) / 60.0, cap)
+    return out
+
+
 def build_features(zf: pd.DataFrame, assets: pd.DataFrame) -> pd.DataFrame:
     """Feature matrix aligned with `zf`. Rolling terms look backwards only. Channel availability comes from assets.csv."""
     avail = {r.asset_id: set(str(r.channels_available).split("|")) for r in assets.itertuples()}
@@ -81,5 +96,6 @@ def build_features(zf: pd.DataFrame, assets: pd.DataFrame) -> pd.DataFrame:
         X["flat_any"] = (g[fl].fillna(False).astype(bool).any(axis=1) & g["steady"]).astype(float) if fl else 0.0
         X["gap"] = g["gap"].astype(float)
         X["speed_ratio"] = g["speed_ratio"].fillna(-1.0) if "speed_ratio" in g else -1.0
+        X["since_lockout_h"] = _hours_since_lockout(g["operating_mode"].to_numpy() if "operating_mode" in g else np.array([]), len(g))
         parts.append(X[FEATURE_COLUMNS])
     return pd.concat(parts).loc[zf.index]

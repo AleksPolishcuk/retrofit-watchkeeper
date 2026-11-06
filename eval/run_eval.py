@@ -37,7 +37,7 @@ def main(argv=None) -> int:
     table = markdown_table(rows)
     print(table)
 
-    out = Path(a.out) / (method.name + ("" if getattr(method, "rules", True) else "_no_rules"))
+    out = Path(a.out) / (method.name + ("" if getattr(method, "rules", True) else "_no_rules") + ("" if getattr(method, "arbiter", True) else "_no_arbiter"))
     out.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(loo["all"]["per_event"]).to_csv(out / "per_event_loo.csv", index=False)
     loo["predictions"].to_csv(out / "predictions_loo.csv", index=False)

@@ -85,8 +85,9 @@ def _flag(row: pd.Series, key: str) -> bool:
     return bool(v) and not pd.isna(v)
 
 
-def _rule_diagnosis(row: pd.Series) -> dict | None:
-    """Deterministic instrument faults: a gateway gap, or a channel frozen while the pump runs steadily."""
+def _rule_diagnosis(row: pd.Series, xrow: pd.Series | None = None, kz: float = 6.0, arbiter: bool = False) -> dict | None:
+    """Deterministic instrument faults: a gateway gap, a channel frozen while the pump runs steadily, and (arbiter) one channel
+    that deviates while every physically coupled channel stays quiet."""
     if _flag(row, "gap"):
         return {"event_class": "SENSOR", "fault_type": "COMMUNICATION_LOSS", "confidence": 0.9, "evidence": "missing rows",
                 "action": ACTIONS["COMMUNICATION_LOSS"]}
@@ -95,6 +96,20 @@ def _rule_diagnosis(row: pd.Series) -> dict | None:
             if _flag(row, "flat_" + k):
                 return {"event_class": "SENSOR", "fault_type": "SENSOR_STUCK", "confidence": 0.85, "evidence": f"{CH[k]} frozen",
                         "action": ACTIONS["SENSOR_STUCK"]}
+    if arbiter and xrow is not None:
+        zv = {c: row.get("z_" + c) for c in CH}
+        zv = {c: float(v) for c, v in zv.items() if v is not None and not pd.isna(v)}
+        for c in sorted((c for c in zv if abs(zv[c]) > kz and c in B.COUPLED), key=lambda c: -abs(zv[c])):
+            cpl = [zv[x] for x in B.COUPLED[c] if x in zv]
+            if cpl and max(abs(v) for v in cpl) < kz / 3:
+                zs = row.get("zs_" + c)
+                if zs is not None and not pd.isna(zs) and zs > kz:
+                    ft = "SENSOR_NOISE_SPIKES"
+                else:
+                    step = abs(float(xrow.get("d30_" + c, 0.0))) > 0.6 * abs(zv[c])        # a jump within 30 min is an offset, a ramp is drift
+                    ft = "SENSOR_CALIBRATION_SHIFT" if step else "SENSOR_DRIFT"
+                return {"event_class": "SENSOR", "fault_type": ft, "confidence": 0.6, "evidence": f"{CH[c]} deviates alone (z={zv[c]:+.1f})",
+                        "action": ACTIONS[ft]}
     return None
 
 
@@ -114,15 +129,15 @@ class WKMethod(Method):
 
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
-    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True):
+    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
-        self.rules, self.cavitation = rules, cavitation
+        self.rules, self.cavitation, self.arbiter = rules, cavitation, arbiter
 
     def fit(self, data, train_ids):
         return DiagnosisModel(self.k_low, self.none_weight, self.trees).fit(_zf(data, True), _features(data), data.events, train_ids)
 
     def predict(self, model, data, asset_id):
-        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation)
+        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter)
         if key in data.cache:
             return data.cache[key]
         zf, X = _zf(data, True), _features(data)
@@ -140,7 +155,7 @@ class WKMethod(Method):
 
         def diag(j):
             if self.rules:
-                r = _rule_diagnosis(g.iloc[j])
+                r = _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, self.arbiter)
                 if r is not None:
                     return r
             if cav_active[j]:
@@ -167,4 +182,5 @@ METHODS = {
     "b1c": B1CausalMethod,
     "wk": WKMethod,
     "wk-learned-only": lambda: WKMethod(rules=False),
+    "wk-no-arbiter": lambda: WKMethod(arbiter=False),
 }
