@@ -1,0 +1,12 @@
+Third-party material
+
+This project uses the RETROFIT AI 2026 data pack published by the organizers of the
+Since AI Hackathon 2026 (challenge owner Business Turku, technical sparring partner Elomatic).
+The pack is not stored in this repository.
+
+- Synthetic data and documentation: Creative Commons Attribution 4.0 International (CC BY 4.0).
+  Attribution: "RETROFIT AI 2026 synthetic pump benchmark, Since AI Hackathon 2026".
+- Simulator, scorer, baselines, tools and tests (src/, baselines/, examples/, tests/ of the pack): MIT License.
+
+All data in the pack are synthetic. None is a measurement from any ship, plant, company or person.
+Team work, code and intellectual property are governed by the official Since AI 2026 hackathon terms.

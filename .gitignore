@@ -1,0 +1,26 @@
+# Data pack is never committed (symlink or folder)
+/data
+my_results/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Node
+node_modules/
+web/dist/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
