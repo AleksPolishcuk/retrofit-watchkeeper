@@ -60,3 +60,14 @@ def test_b1_with_organizer_parameters_reproduces_published_scores(dev):
         res = run_fixed_split(B1Method(fixed=(6, 15)), dev)
     assert res["validation"]["composite_score"] == pytest.approx(78.0, abs=0.1)
     assert res["train"]["composite_score"] == pytest.approx(58.2, abs=0.1)
+
+
+def test_causal_b1_does_not_change_early_alerts_when_telemetry_is_cut(dev):
+    """Cuts inside and after the 24 h baseline period, on the pumps where organizer B1 changed its early alerts."""
+    from watchkeeper.evalkit import check_causality
+    from watchkeeper.methods import B1CausalMethod
+    m = B1CausalMethod(fixed=(6, 15))
+    problems = []
+    for asset in ("PUMP-04", "PUMP-06"):
+        problems += check_causality(m, (6, 15), dev, asset, (6, 20, 55))
+    assert problems == []

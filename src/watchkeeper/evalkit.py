@@ -6,7 +6,7 @@ enter memory, and the loader refuses to return anything that belongs to a test a
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pandas as pd
@@ -129,3 +129,24 @@ def markdown_table(rows: dict[str, dict]) -> str:
                      f"{f(r['false_alerts_per_asset_day'])} | {f(r['timeliness'])} | {f(r['fault_type_recall'])} | {f(r['class_recall'])} | "
                      f"{f(r['recall_machine'])} | {f(r['recall_sensor'])} | {r['events_scored']} |")
     return "\n".join(lines)
+
+
+def check_causality(method: Method, params, data: DevData, asset_id: str, cut_hours) -> list[str]:
+    """Cut the asset's telemetry `h` hours after the window start, re-run, and compare the alerts raised up to the cut with
+    the full run. Returns a list of problems (empty means causal for these cuts)."""
+    feat = data.feat[data.feat.asset_id == asset_id].copy()
+    ts = pd.to_datetime(feat["window_start_utc"], utc=True)
+    t0 = ts.min()
+    full = method.predict(params, data, asset_id)
+    problems = []
+    for h in cut_hours:
+        cut = t0 + pd.Timedelta(hours=h)
+        sub = replace(data, feat=feat[ts < cut], cache={})
+        part = method.predict(params, sub, asset_id)
+        def upto(df):
+            t = pd.to_datetime(df["alert_time_utc"], utc=True) if len(df) else pd.Series([], dtype="datetime64[ns, UTC]")
+            return df[t <= cut][["alert_time_utc", "event_class", "fault_type"]].reset_index(drop=True) if len(df) else df
+        a, b = upto(full), upto(part)
+        if len(a) != len(b) or (len(a) and not a.equals(b)):
+            problems.append(f"{asset_id}: cut at {h} h gives {len(b)} alerts up to the cut, the full run gives {len(a)}")
+    return problems
