@@ -28,3 +28,4 @@ web/dist/
 
 # Regenerable baseline prediction files
 eval/results/organizer_baselines/predictions_*.csv
+eval/results/*/predictions_loo.csv
