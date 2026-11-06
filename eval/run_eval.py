@@ -4,6 +4,7 @@
   .venv/bin/python eval/run_eval.py --method b1
 """
 import argparse
+import json
 import sys
 import time
 import warnings
@@ -39,6 +40,11 @@ def main(argv=None) -> int:
 
     out = Path(a.out) / (method.name + ("" if getattr(method, "rules", True) else "_no_rules") + ("" if getattr(method, "arbiter", True) else "_no_arbiter"))
     out.mkdir(parents=True, exist_ok=True)
+    keep = ["composite_score", "event_f1", "event_recall", "alert_precision", "false_alerts_per_asset_day", "timeliness", "fault_type_recall",
+            "class_recall", "recall_machine", "recall_sensor", "early_warning_rate", "median_lead_time_h", "events_scored", "alerts_scored",
+            "asset_days", "false_alert_episodes", "excess_repeat_episodes"]
+    (out / "metrics.json").write_text(json.dumps({k: {m: v.get(m) for m in keep} for k, v in
+                                                  {"train": fixed["train"], "validation": fixed["validation"], "leave_one_asset_out": loo["all"]}.items()}, indent=2) + "\n", encoding="utf-8")
     pd.DataFrame(loo["all"]["per_event"]).to_csv(out / "per_event_loo.csv", index=False)
     loo["predictions"].to_csv(out / "predictions_loo.csv", index=False)
     (out / "summary.md").write_text(
