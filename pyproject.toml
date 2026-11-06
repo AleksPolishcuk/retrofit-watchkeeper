@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "watchkeeper"
+version = "0.0.1"
+description = "Read-only operator-assist layer for existing cooling-water pumps (RETROFIT AI, Since AI Hackathon 2026)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "numpy>=1.26,<3",
+  "pandas>=2.1,<4",
+  "pyarrow>=14,<27",
+  "scipy>=1.11,<2",
+  "scikit-learn>=1.3,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4,<10"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
