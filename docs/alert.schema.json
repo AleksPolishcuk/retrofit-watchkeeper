@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/watchkeeper/alert.schema.json",
+  "title": "Watchkeeper alert",
+  "description": "One advisory alert for a human operator. Advice only: nothing in this object is a command to a machine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["alert_id", "asset_id", "alert_time_utc", "event_class", "fault_type", "confidence", "evidence", "recommended_action", "requires_human_approval"],
+  "properties": {
+    "alert_id": { "type": "string", "minLength": 1 },
+    "asset_id": { "type": "string", "pattern": "^PUMP-[0-9]{2}$" },
+    "alert_time_utc": { "type": "string", "format": "date-time", "pattern": "Z$", "description": "UTC time the alert is raised. Must be derived from data with timestamps up to this time." },
+    "event_class": { "enum": ["MACHINE", "SENSOR"] },
+    "fault_type": {
+      "enum": [
+        "BEARING_WEAR", "SUCTION_STRAINER_CLOGGING", "CAVITATION", "DISCHARGE_RESTRICTION", "MISALIGNMENT", "IMBALANCE",
+        "IMPELLER_WEAR", "AIR_ENTRAINMENT", "SENSOR_DRIFT", "SENSOR_STUCK", "SENSOR_CALIBRATION_SHIFT",
+        "SENSOR_NOISE_SPIKES", "COMMUNICATION_LOSS", "UNKNOWN"
+      ]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fault_type", "p"],
+        "properties": {
+          "fault_type": { "type": "string" },
+          "p": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["channel", "text"],
+        "properties": {
+          "channel": { "type": "string" },
+          "text": { "type": "string" },
+          "z": { "type": ["number", "null"], "description": "Deviation in robust standard deviations against the regime baseline, if applicable." }
+        }
+      }
+    },
+    "sensor_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "reason"],
+      "properties": {
+        "verdict": { "enum": ["machine", "sensor", "unclear"] },
+        "reason": { "type": "string" }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "missing_channels": { "type": "array", "items": { "type": "string" } },
+        "data_quality": { "enum": ["ok", "degraded", "poor"] }
+      }
+    },
+    "recommended_action": { "type": "string", "minLength": 1 },
+    "requires_human_approval": { "const": true },
+    "what_if": {
+      "type": ["object", "null"],
+      "description": "Result of a simulation-only comparison. Never applied to a real machine."
+    },
+    "source": { "type": "string", "description": "Which method produced the alert, for example 'B1 mode-aware z' or 'mock'." }
+  }
+}

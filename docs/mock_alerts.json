@@ -1,0 +1,130 @@
+[
+  {
+    "alert_id": "PUMP-08-2025-09-10T06:15:00Z",
+    "asset_id": "PUMP-08",
+    "alert_time_utc": "2025-09-10T06:15:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.72,
+    "alternatives": [{ "fault_type": "CAVITATION", "p": 0.18 }, { "fault_type": "UNKNOWN", "p": 0.10 }],
+    "evidence": [
+      { "channel": "suction_pressure_kpa", "text": "9 kPa below the regime baseline at the same speed", "z": -6.2 },
+      { "channel": "motor_speed_rpm", "text": "drive speed is rising to hold cooling flow", "z": 3.9 },
+      { "channel": "motor_power_kw", "text": "power is up with the speed", "z": 3.1 }
+    ],
+    "sensor_check": { "verdict": "machine", "reason": "speed and power moved together with suction pressure" },
+    "uncertainty": { "missing_channels": ["flow_m3_h"], "data_quality": "ok" },
+    "recommended_action": "Inspect and clean the seawater suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": { "simulation_only": true, "action": "clean_strainer", "summary": "Mock value: flow expected to recover by about 11 percent." },
+    "source": "mock"
+  },
+  {
+    "alert_id": "PUMP-08-2025-09-11T14:40:00Z",
+    "asset_id": "PUMP-08",
+    "alert_time_utc": "2025-09-11T14:40:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_DRIFT",
+    "confidence": 0.64,
+    "alternatives": [{ "fault_type": "SENSOR_CALIBRATION_SHIFT", "p": 0.22 }],
+    "evidence": [
+      { "channel": "suction_pressure_kpa", "text": "slow ramp of 14 kPa over 6 h", "z": -5.4 },
+      { "channel": "motor_speed_rpm", "text": "unchanged at the same demand", "z": 0.4 },
+      { "channel": "motor_power_kw", "text": "unchanged", "z": 0.2 }
+    ],
+    "sensor_check": { "verdict": "sensor", "reason": "only the suction transmitter moved; speed, power and discharge pressure did not" },
+    "uncertainty": { "missing_channels": ["flow_m3_h"], "data_quality": "ok" },
+    "recommended_action": "Check the suction pressure transmitter against a reference gauge before any repair.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "mock"
+  },
+  {
+    "alert_id": "PUMP-08-2025-09-12T03:05:00Z",
+    "asset_id": "PUMP-08",
+    "alert_time_utc": "2025-09-12T03:05:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "COMMUNICATION_LOSS",
+    "confidence": 0.9,
+    "alternatives": [],
+    "evidence": [{ "channel": "GATEWAY", "text": "no telemetry rows for 38 minutes", "z": null }],
+    "sensor_check": { "verdict": "sensor", "reason": "all channels stopped together, which points at the gateway" },
+    "uncertainty": { "missing_channels": [], "data_quality": "poor" },
+    "recommended_action": "Check the gateway and network link. No machine fault can be assessed during the gap.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "mock"
+  },
+  {
+    "alert_id": "PUMP-08-2025-09-13T21:20:00Z",
+    "asset_id": "PUMP-08",
+    "alert_time_utc": "2025-09-13T21:20:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "UNKNOWN",
+    "confidence": 0.35,
+    "alternatives": [{ "fault_type": "IMPELLER_WEAR", "p": 0.30 }, { "fault_type": "DISCHARGE_RESTRICTION", "p": 0.25 }],
+    "evidence": [{ "channel": "discharge_pressure_kpa", "text": "lower than the pump curve predicts at this speed", "z": -4.8 }],
+    "sensor_check": { "verdict": "unclear", "reason": "no flow meter, so the pressure cannot be cross-checked" },
+    "uncertainty": { "missing_channels": ["flow_m3_h", "motor_winding_temp_c"], "data_quality": "degraded" },
+    "recommended_action": "Something is off but the cause is unclear. Schedule a performance check and compare with a handheld gauge.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "mock"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-12T14:02:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-12T14:02:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_STUCK",
+    "confidence": 0.6,
+    "alternatives": [],
+    "evidence": [{ "channel": "bearing_temp_c", "text": "constant for 25 minutes while load varies", "z": null }],
+    "sensor_check": { "verdict": "sensor", "reason": "winding and fluid temperature kept moving while the bearing temperature stayed flat" },
+    "uncertainty": { "missing_channels": [], "data_quality": "ok" },
+    "recommended_action": "Check the bearing temperature sensor and its wiring.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "mock"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-13T09:30:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-13T09:30:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "BEARING_WEAR",
+    "confidence": 0.81,
+    "alternatives": [{ "fault_type": "MISALIGNMENT", "p": 0.12 }],
+    "evidence": [
+      { "channel": "vibration_crest_factor", "text": "rose from 3.2 to 4.6", "z": 6.8 },
+      { "channel": "vibration_accel_rms_g", "text": "high-frequency acceleration is up", "z": 7.1 },
+      { "channel": "vibration_rms_mm_s", "text": "overall velocity still normal, which fits early damage", "z": 1.1 }
+    ],
+    "sensor_check": { "verdict": "machine", "reason": "acceleration, crest factor and bearing temperature agree" },
+    "uncertainty": { "missing_channels": [], "data_quality": "ok" },
+    "recommended_action": "Inspect the pump bearing, check lubrication and plan a bearing change in the next window.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "mock"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-14T18:10:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-14T18:10:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "DISCHARGE_RESTRICTION",
+    "confidence": 0.68,
+    "alternatives": [{ "fault_type": "IMPELLER_WEAR", "p": 0.20 }],
+    "evidence": [
+      { "channel": "discharge_pressure_kpa", "text": "higher than baseline at constant speed", "z": 5.5 },
+      { "channel": "flow_m3_h", "text": "flow is down", "z": -4.9 },
+      { "channel": "motor_current_a", "text": "current is down", "z": -4.2 }
+    ],
+    "sensor_check": { "verdict": "machine", "reason": "pressure, flow and current moved in the pattern of a restriction" },
+    "uncertainty": { "missing_channels": [], "data_quality": "ok" },
+    "recommended_action": "Check discharge valve position and heat-exchanger fouling.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "mock"
+  }
+]
