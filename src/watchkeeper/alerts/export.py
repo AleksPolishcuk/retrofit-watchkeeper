@@ -48,6 +48,8 @@ def _sensor_check(event_class: str, fault_type: str, evidence: list[dict]) -> di
     if fault_type == "UNKNOWN":
         return {"verdict": "unclear", "reason": "the pattern does not match a known machine or instrument fault"}
     channels = {e["channel"] for e in evidence if e["channel"] != "n/a"}
+    if any(c.startswith("npsh_margin") for c in channels):
+        return {"verdict": "machine", "reason": "calculated from suction pressure, fluid temperature and the pump data sheet, not read from one instrument"}
     if len(channels) >= 2:
         return {"verdict": "machine", "reason": "several related channels deviated together"}
     return {"verdict": "machine", "reason": "one channel deviated; coupled channels were not available to confirm"}

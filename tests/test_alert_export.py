@@ -53,3 +53,12 @@ def test_write_alerts_creates_a_file_per_asset_even_when_empty(tmp_path):
     paths = write_alerts(alerts, tmp_path, ["PUMP-08", "PUMP-09"])
     assert sorted(p.name for p in paths) == ["PUMP-08.json", "PUMP-09.json"]
     assert json.loads((tmp_path / "PUMP-09.json").read_text()) == []
+
+
+def test_cavitation_alert_explains_that_the_evidence_is_a_calculation():
+    pred = pd.DataFrame([_row("CAVITATION", "MACHINE", "WK causal+learned: npsh_margin=0.62")])
+    alert = to_contract(pred, ASSETS, "test")[0]
+    assert alert["evidence"][0]["channel"].startswith("npsh_margin")
+    assert "0.62" in alert["evidence"][0]["text"]
+    assert "calculated" in alert["sensor_check"]["reason"]
+    assert [e.message for e in VALIDATOR.iter_errors(alert)] == []
