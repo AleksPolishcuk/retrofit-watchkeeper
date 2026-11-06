@@ -32,4 +32,6 @@ Run offline on the leave-one-asset-out predictions of `wk` (composite 70.3, 71 a
 | Hold other alerts on the same pump for 12 h (any class) | 66.6 | precision rises to 0.93 and excess repeats fall to 0, but recall falls from 0.83 to 0.71: a "repeat" is often the first detection of a second event |
 | Hold 6 h / 24 h, same class or any class | 64.5 to 67.1 | same trade-off |
 
+| Spread-based noise rule (one channel with very high spread, coupled channels quiet) | 69.9 vs 70.3 | finds 1 of 2 noise events but names it a calibration shift, and adds 2 false alerts (spread z is unstable where the baseline spread is tiny) |
+
 The composite rewards detection more than quiet, so the current policy (one alert per fault type per 12 h while the deviation lasts) stays. The jury also weighs false alarms under reliability, so the false-alert rate is reported next to the composite.
