@@ -62,3 +62,26 @@ def test_series_for_dev_pump_and_refused_for_test_pump(client):
     assert client.get("/api/series", params={"asset_id": "PUMP-10", "channel": "discharge_pressure_kpa"}).status_code == 403
     assert client.get("/api/series", params={"asset_id": "PUMP-08", "channel": "flow_m3_h"}).status_code == 404   # no flow meter on PUMP-08
     assert client.get("/api/series", params={"asset_id": "PUMP-08", "channel": "nope"}).status_code == 400
+
+
+def test_whatif_compares_before_and_after_for_a_clogged_strainer(client):
+    r = client.get("/api/whatif", params={"asset_id": "PUMP-08", "time_utc": "2025-09-10T12:38:00Z", "fault_type": "SUCTION_STRAINER_CLOGGING"}).json()
+    assert r["available"] and r["simulation_only"] and r["accepted"]
+    flow = next(x for x in r["rows"] if x["label"] == "Cooling flow")
+    assert flow["proposed"] > flow["baseline"]                  # cleaning the strainer restores flow
+    assert r["intervention"]["estimated_cost_eur"] > 0
+    assert any("not connected to any controller" in c for c in r["caveats"])
+
+
+def test_whatif_says_so_when_no_simulated_action_exists(client):
+    r = client.get("/api/whatif", params={"asset_id": "PUMP-08", "time_utc": "2025-09-10T12:38:00Z", "fault_type": "SENSOR_DRIFT"}).json()
+    assert r["available"] is False and r["simulation_only"] is True
+
+
+def test_whatif_outside_the_data_window_is_refused_not_invented(client):
+    r = client.get("/api/whatif", params={"asset_id": "PUMP-08", "time_utc": "2030-01-01T00:00:00Z", "fault_type": "BEARING_WEAR"}).json()
+    assert r["accepted"] is False and r["rejection_reasons"]
+
+
+def test_whatif_unknown_asset_is_404(client):
+    assert client.get("/api/whatif", params={"asset_id": "PUMP-99", "time_utc": "2025-09-10T12:38:00Z", "fault_type": "BEARING_WEAR"}).status_code == 404

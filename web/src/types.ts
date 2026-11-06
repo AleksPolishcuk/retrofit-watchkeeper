@@ -76,3 +76,17 @@ export interface Series {
   t: string[]
   v: number[]
 }
+
+export interface WhatIfResult {
+  available: boolean
+  simulation_only: true
+  message?: string
+  accepted?: boolean
+  rejection_reasons?: string[]
+  warnings?: string[]
+  action?: string
+  assumed_condition?: string
+  rows?: { label: string; unit: string; baseline: number | null; proposed: number | null }[]
+  intervention?: { stop_h: number; labour_h: number; parts_eur: number; estimated_cost_eur: number } | null
+  caveats?: string[]
+}

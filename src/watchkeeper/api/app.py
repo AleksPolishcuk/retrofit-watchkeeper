@@ -20,6 +20,18 @@ CHANNELS = ["motor_speed_rpm", "motor_current_a", "motor_power_kw", "suction_pre
             "vibration_crest_factor", "valve_position_pct"]
 
 
+# What-if: which simulated action answers which diagnosis. The condition level is an assumption for illustration, because the detector does
+# not estimate severity. Only these three have a matching intervention in the organizers' sandbox.
+WHATIF = {
+    "SUCTION_STRAINER_CLOGGING": ("clean_strainer", {"clog": 2.0}, "strainer clogged (assumed level 2.0)"),
+    "BEARING_WEAR": ("replace_bearing", {"bearing_wear": 0.5}, "bearing wear at about half way to failure (assumed 0.5)"),
+    "MISALIGNMENT": ("realign", {"misalignment": 0.5}, "moderate misalignment (assumed 0.5)"),
+}
+WHATIF_ROWS = [("flow_m3h", "Cooling flow", "m3/h"), ("duty_satisfaction", "Share of required flow", "x"), ("input_kw", "Electrical power", "kW"),
+               ("vib_rms_mm_s", "Vibration", "mm/s"), ("bearing_temp_c", "Bearing temperature", "C"), ("npsh_margin", "NPSH margin", "x"),
+               ("risk_proxy", "Risk proxy (0-1)", ""), ("energy_eur_per_day", "Energy cost", "EUR/day")]
+
+
 def _clean(value):
     return None if isinstance(value, float) and pd.isna(value) else value
 
@@ -107,6 +119,31 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None) -> FastAPI:
         s = feature_cache[asset_id][col].dropna().resample(f"{step_min}min").mean().dropna()
         return {"asset_id": asset_id, "channel": channel, "step_min": step_min,
                 "t": [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in s.index], "v": [round(float(v), 3) for v in s.values]}
+
+    whatif_cache: dict = {}
+
+    @app.get("/api/whatif")
+    def whatif(asset_id: str, time_utc: str, fault_type: str):
+        """Simulation only. Compares the pump as it is with the pump after the matching maintenance action, in the organizers' sandbox."""
+        need(asset_id)
+        if fault_type not in WHATIF:
+            return {"available": False, "simulation_only": True,
+                    "message": "No simulated action is defined for this diagnosis; the recommendation stays a human decision."}
+        key = (asset_id, time_utc, fault_type)
+        if key not in whatif_cache:
+            from retrofit_sim.sandbox import what_if
+            action, hypothesis, assumed = WHATIF[fault_type]
+            r = what_if(str(data_dir), asset_id, time_utc, action, None, hypothesis)
+            out = {"available": True, "simulation_only": True, "accepted": bool(r.get("accepted")), "rejection_reasons": r.get("rejection_reasons", []),
+                   "warnings": r.get("warnings", []), "action": action, "assumed_condition": assumed, "rows": [], "intervention": None,
+                   "caveats": r.get("caveats", [])}
+            if "baseline" in r:
+                out["rows"] = [{"label": lab, "unit": unit, "baseline": r["baseline"].get(k), "proposed": r["proposed"].get(k)}
+                               for k, lab, unit in WHATIF_ROWS if r["baseline"].get(k) is not None]
+                iv = r["intervention"]
+                out["intervention"] = {"stop_h": iv["stop_h"], "labour_h": iv["labour_h"], "parts_eur": iv["parts_eur"], "estimated_cost_eur": iv["estimated_cost_eur"]}
+            whatif_cache[key] = out
+        return whatif_cache[key]
 
     return app
 

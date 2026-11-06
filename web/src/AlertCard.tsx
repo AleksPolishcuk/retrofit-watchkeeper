@@ -1,4 +1,5 @@
 import type { Alert } from './types'
+import WhatIf from './WhatIf'
 
 export type Decision = 'approved' | 'rejected'
 
@@ -84,6 +85,7 @@ export default function AlertCard({ alert, decision, onDecide }: Props) {
       <section className="action">
         <h3>Recommended action for a human</h3>
         <p>{alert.recommended_action}</p>
+        <WhatIf key={alert.alert_id} alert={alert} />
         {alert.what_if && (
           <p className="whatif">
             <b>Simulation only.</b> {alert.what_if.summary ?? 'A what-if comparison was run in the sandbox.'}
