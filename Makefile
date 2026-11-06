@@ -16,5 +16,20 @@ data:
 	@test -n "$(PACK)" || (echo "usage: make data PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026" && exit 1)
 	scripts/link_data.sh "$(PACK)"
 
-eval predict api web demo test:
-	@echo "make $@: not implemented yet" && exit 1
+eval:
+	@echo "make eval: not implemented yet" && exit 1
+
+predict:
+	@echo "make predict: not implemented yet" && exit 1
+
+api:
+	@echo "make api: not implemented yet" && exit 1
+
+web:
+	@echo "make web: not implemented yet" && exit 1
+
+demo:
+	@echo "make demo: not implemented yet" && exit 1
+
+test:
+	@echo "make test: not implemented yet" && exit 1
