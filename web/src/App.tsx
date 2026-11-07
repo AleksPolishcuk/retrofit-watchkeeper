@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api } from './api'
+import { SNAPSHOT, api } from './api'
 import type { Decision } from './decisions'
 import { headline } from './cases'
 import { incidentsOf } from './plain'
@@ -164,6 +164,10 @@ export default function App() {
         {route.key === 'value' && <Value data={results} />}
         {route.key === 'proof' && <Proof data={results} />}
         {route.key === 'retrofit' && <RetrofitPage data={results} />}
+        <footer className="legal">
+          Data: "RETROFIT AI 2026 synthetic pump benchmark, Since AI Hackathon 2026" (CC BY 4.0). Simulated pumps; nothing here is field evidence and nothing is connected to a machine.
+          {SNAPSHOT ? ' This page is a static snapshot of the read-only API; the live replay needs a running server.' : ''}
+        </footer>
       </main>
       <nav className="tabbar" aria-label="Sections">{TABS.map((t) => link(t, 'tb'))}</nav>
     </div>

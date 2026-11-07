@@ -1,3 +1,4 @@
+import { snapshotFile } from './snapshot'
 import type { Alert, Archived, Asset, DataHealth, LiveItem, LiveState, Results, Series, Timeline, WhatIfResult } from './types'
 
 export class ApiError extends Error {
@@ -8,8 +9,16 @@ export class ApiError extends Error {
   }
 }
 
+export const SNAPSHOT = import.meta.env.VITE_SNAPSHOT === '1'
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(path)
+  let url = path
+  if (SNAPSHOT) {
+    const f = snapshotFile(path)
+    if (!f) throw new ApiError(404, 'not part of the static snapshot')
+    url = `${import.meta.env.BASE_URL}snapshot/${f}`
+  }
+  const res = await fetch(url)
   if (!res.ok) {
     let detail = res.statusText
     try {

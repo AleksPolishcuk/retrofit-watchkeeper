@@ -595,6 +595,8 @@ a.kpi:hover { border-color: var(--primary); }
   .card, .panel { box-shadow: none; break-inside: avoid; }
 }
 
+.legal { margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8125rem; line-height: 1.5; max-width: 90ch; }
+
 /* do this first, level help, status announcer */
 .dofirst { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: center; border-left: 6px solid var(--primary); }
 .dofirst .eyebrow { grid-column: 1 / -1; }
