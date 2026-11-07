@@ -67,9 +67,11 @@ The organizers' data pack (`RETROFIT_AI_PARTICIPANTS_2026`) is not stored in thi
 make setup
 make setup-pack PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026
 make data PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026
-make test                      # unit tests and truncation (causality) tests
+make test                      # unit tests, truncation (causality) tests, review log logic (needs Node 22.18 or newer, skipped otherwise)
 make api                       # read-only API on http://127.0.0.1:8000
 make web                       # interface on http://localhost:5173
+make live-demo                 # optional: replay PUMP-08 as raw messages through the read-only ingest (a few minutes); shows in Monitor
+make archive                   # optional: immutable snapshots of artifacts/alerts per model version
 ```
 
 To regenerate the models and numbers (about 25 minutes on 8 cores):
@@ -87,8 +89,8 @@ make predict                   # needs a clean working tree
 ## Layout
 
 ```
-src/watchkeeper/   features (causal baselines, NPSH), detect (alert timing, cavitation, signature fusion), diagnose (model, knowledge),
-                   incidents, stage words, alerts (contract v2), what-if, api
+src/watchkeeper/   features (causal baselines, NPSH, input hygiene), detect (alert timing, cavitation, data health, range check), diagnose (model, knowledge),
+                   ingest (raw replay messages to minutes, live runner), incidents, stage words, alerts (contract v2, archive), what-if, api
 web/               four tabs: Monitor (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit (React, TypeScript, Vite; Inter and IBM Plex Mono bundled, no external font requests)
 eval/              experiments, probes, results tables
 scripts/           bank generation, data linking
@@ -111,6 +113,9 @@ All data are synthetic. See [NOTICE](NOTICE). Data: "RETROFIT AI 2026 synthetic 
 - The fault **type** is right for only about two in five faults, and machine faults are often named as instrument drift. The machine-or-instrument **class** is right more often (about three in five), and every alert says which instrument to check first.
 - Masked suction clogging on the trap fleets is a weak spot: below the baseline, and the type is never named.
 - False alerts on healthy simulated pumps are about 1.3 per pump-month, mostly at operating points not seen in the first 24 hours. A pilot would tune this with operators.
+- Bad data: of the 18 controlled situations of the organizers' enterprise reference, 11 are handled, 5 partly, and 2 are known gaps (a large deviation of 20 minutes that the classifier calls normal, and a value constant inside each minute that is called frozen). The Proof tab lists all 18; options that did not pass our own gate are off (`eval/results/data_quality_gate.md`).
+- The live replay re-runs the detector on all minutes received, so one run takes 1 to 3 seconds for up to a week of history and grows with it. It was run on replayed recorded data, not on a plant feed.
+- The review log lives in one browser. There are no roles, owners, escalation, work orders or maintenance-system integration.
 - No time-to-failure estimate is given ("not estimated"); stage words come from back-test counts on this simulator only.
 - Not certified, not class-approved and not a safety system. Existing alarms and trips remain authoritative.
 
