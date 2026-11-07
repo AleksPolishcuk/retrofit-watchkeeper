@@ -19,9 +19,10 @@ interface Props {
   alerts: Alert[]
   selectedId: string | null
   onSelect: (id: string) => void
+  cursor?: number | null
 }
 
-export default function TimelineChart({ tl, series, seriesNote, channel, alerts, selectedId, onSelect }: Props) {
+export default function TimelineChart({ tl, series, seriesNote, channel, alerts, selectedId, onSelect, cursor = null }: Props) {
   const t0 = Date.parse(tl.window_start_utc)
   const t1 = Date.parse(tl.window_end_utc)
   const x = (iso: string | number) => {
@@ -47,6 +48,9 @@ export default function TimelineChart({ tl, series, seriesNote, channel, alerts,
   return (
     <figure className="timeline" aria-label={`Timeline for ${tl.asset_id}`}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img">
+        {cursor !== null && (
+          <defs><clipPath id="reveal"><rect x={0} y={0} width={x(cursor)} height={H} /></clipPath></defs>
+        )}
         {/* lane labels */}
         <text className="lane" x={PAD} y={SIG.top + 8}>{channel.replace(/_/g, ' ')}</text>
         <text className="lane" x={PAD} y={EV.top - 6}>labelled events (training and validation pumps only)</text>
@@ -70,7 +74,7 @@ export default function TimelineChart({ tl, series, seriesNote, channel, alerts,
         {/* signal */}
         {path ? (
           <>
-            <path className="signal" d={path.d} />
+            <path className="signal" d={path.d} clipPath={cursor !== null ? 'url(#reveal)' : undefined} />
             <text className="tick" x={W - PAD} y={SIG.top + 8} textAnchor="end">{path.hi.toFixed(1)} max</text>
             <text className="tick" x={W - PAD} y={SIG.bottom - 2} textAnchor="end">{path.lo.toFixed(1)} min</text>
           </>
@@ -119,6 +123,7 @@ export default function TimelineChart({ tl, series, seriesNote, channel, alerts,
           )
         })}
         <line className="axis" x1={PAD} x2={W - PAD} y1={AXIS_Y - 4} y2={AXIS_Y - 4} />
+        {cursor !== null && <line className="cursor" x1={x(cursor)} x2={x(cursor)} y1={SIG.top} y2={AXIS_Y - 4} />}
       </svg>
       <figcaption className="legend">
         <span><i style={{ background: 'var(--machine)' }} /> machine</span>

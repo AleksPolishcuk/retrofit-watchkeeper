@@ -25,6 +25,14 @@ export interface Evidence {
   z: number | null
 }
 
+export type Stage = 'watch' | 'possible' | 'likely' | 'very_likely'
+
+export interface StageBasis {
+  n: number
+  correct: number
+  source: string
+}
+
 export interface Alert {
   alert_id: string
   asset_id: string
@@ -40,6 +48,15 @@ export interface Alert {
   requires_human_approval: true
   what_if?: { simulation_only?: boolean; action?: string; summary?: string } | null
   source?: string
+  incident_id?: string
+  consequence?: string
+  check?: string
+  time_to_act?: string | null
+  time_to_act_note?: string
+  stage?: Stage
+  stage_basis?: StageBasis | null
+  model_version?: string
+  tier?: Tier
 }
 
 export interface LabelEvent {
@@ -89,4 +106,60 @@ export interface WhatIfResult {
   rows?: { label: string; unit: string; baseline: number | null; proposed: number | null }[]
   intervention?: { stop_h: number; labour_h: number; parts_eur: number; estimated_cost_eur: number } | null
   caveats?: string[]
+}
+
+export interface ReportRow {
+  set: string
+  method: string
+  composite: number
+  lo: number | null
+  hi: number | null
+  f1: number
+  recall: number
+  prec: number
+  fa: number
+  type: number
+  cls: number
+  events: number
+}
+
+export interface Counts {
+  events: number
+  detected: number
+  right_type: number
+}
+
+export interface ReportSet {
+  wk: ReportRow
+  b1?: ReportRow
+  null_random_alerts: number
+  by_tier?: Record<string, Counts>
+  by_type?: Record<string, Counts>
+}
+
+export interface Healthy {
+  pump_days: number
+  alerts: number
+  false_episodes: number
+  per_pump_day: number
+  per_pump_month: number
+  upper95_per_pump_month: number
+}
+
+export interface Footprint {
+  model_file: string
+  model_mb: number
+  load_s: number
+  minutes_scored: number
+  score_s: number
+  ms_per_pump_minute: number
+  peak_rss_mb: number
+  python: string
+}
+
+export interface Results {
+  report: Record<string, ReportSet | Healthy> | null
+  stages: { edges: number[]; sets: string[]; basis: Record<Stage, StageBasis>; detail: Record<Stage, { alerts: number; at_a_real_event: number; right_class: number; right_type: number }>; note: string } | null
+  footprint: Footprint | null
+  tiers: { tier: Tier; pumps: number; channels: string[]; sometimes: string[] }[]
 }
