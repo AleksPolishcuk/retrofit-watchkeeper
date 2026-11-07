@@ -1,0 +1,17 @@
+{
+  "created_utc": "2026-11-07T09:45:50Z",
+  "commit": "6dc3c9394602a38819327aa52927ee87982946d3",
+  "tag": "freeze-v1",
+  "dirty": false,
+  "method": "wk",
+  "model_file": "wk_final.joblib",
+  "model_sha256": "1016b8b5b17a84e6b607e5fc15a70085d2bad26f2d8f6e8e363993015e6e45fa",
+  "targets": [
+    "PUMP-10",
+    "PUMP-11",
+    "PUMP-12"
+  ],
+  "alerts": 33,
+  "commit_before_history_rewrite": "7d784087baefc42c07a137564606f6952b17ec44",
+  "history_rewrite_note": "On 7 Nov 2026 the repository history was rewritten to remove an assistant instruction file. Code and model are unchanged; 'commit' is the rewritten hash of the same freeze commit (tag freeze-v1)."
+}
