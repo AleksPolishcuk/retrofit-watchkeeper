@@ -15,6 +15,7 @@ export default function Value({ data }: { data: Results | null }) {
       <h1>What it is worth to an operator</h1>
       <p className="lead muted">Four things an operator gets, each measured on simulated pumps with the organizers' scorer. None of this is field evidence.</p>
 
+      <h2 className="sr">Measured results</h2>
       <div className="outcomes">
         <div className="card outcome">
           <b>{b ? `${b.measured.caught_before_limit} of ${b.measured.events_with_limit}` : '—'}</b>

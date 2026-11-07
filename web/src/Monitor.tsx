@@ -80,7 +80,7 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
   const pumpAsset = assets.find((x) => x.asset_id === pumpId)
   const orderedLevels = [...STAGES].reverse().filter((s) => levels.includes(s))
   const incidents = useMemo(() => (levels.length === 0 ? scoped : scoped.filter((i) => levels.includes(i.head.stage ?? 'watch'))), [scoped, levels])
-  const narrow = useMedia('(max-width: 960px)')
+  const narrow = useMedia('(max-width: 60em)')
   const shortList = narrow ? 3 : 7
   const list = showAll ? incidents : incidents.slice(0, shortList)
   // the case on show is the one picked, otherwise the first in the list (strongest priority first), so the list and the detail always agree
@@ -226,9 +226,9 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
 
       <div className={`mgrid ${narrow ? (mobileCase ? 'show-case' : 'show-list') : ''}`}>
         <aside className="card caselist" aria-label="Things to look at">
-          <div className="seg2" role="tablist" aria-label="Case status">
-            <button role="tab" aria-selected={scope === 'active'} className={scope === 'active' ? 'on' : ''} onClick={() => { setScope('active'); setSelectedId(null); setShowAll(false) }}>Active <b>{activeCount}</b></button>
-            <button role="tab" aria-selected={scope === 'resolved'} className={scope === 'resolved' ? 'on' : ''} onClick={() => { setScope('resolved'); setSelectedId(null); setShowAll(false) }}>Resolved <b>{resolvedCount}</b></button>
+          <div className="seg2" role="group" aria-label="Show open or resolved cases">
+            <button aria-pressed={scope === 'active'} className={scope === 'active' ? 'on' : ''} onClick={() => { setScope('active'); setSelectedId(null); setShowAll(false) }}>Open <b>{activeCount}</b></button>
+            <button aria-pressed={scope === 'resolved'} className={scope === 'resolved' ? 'on' : ''} onClick={() => { setScope('resolved'); setSelectedId(null); setShowAll(false) }}>Resolved <b>{resolvedCount}</b></button>
           </div>
           <Dropdown
             label="Pump"
@@ -260,11 +260,15 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
               ? <>All priorities <span className="cnt">{scoped.length}</span></>
               : <span className="ddline">{orderedLevels.map((s) => <i key={s} className={`dot2 ${s}`} aria-hidden="true" />)}{orderedLevels.map((s) => STAGE_LABEL[s]).join(', ')}<span className="cnt">{incidents.length}</span></span>}
           />
-          <p className="hint">Priority is the evidence level; pick one or more. Numbers are cases.{levels.length > 0 ? ` Showing ${incidents.length} of ${scoped.length}.` : ''}</p>
+          <p className="hint">Numbers are cases.{levels.length > 0 ? ` Showing ${incidents.length} of ${scoped.length}.` : ''}</p>
+          <details className="levelhelp">
+            <summary>What do the priority levels mean?</summary>
+            <ul>{[...STAGES].reverse().map((st) => <li key={st}><span className={`stagechip s-${st}`}>{STAGE_LABEL[st]}</span><span>{STAGE_WORDS[st]}</span></li>)}</ul>
+          </details>
           <ul>
             {list.map((i) => (
               <li key={i.id}>
-                <button className={`${i.id === inc?.id && (!narrow || mobileCase) ? 'case on' : 'case'} s-${i.head.stage ?? 'watch'}`} onClick={() => { setSelectedId(i.id); setMobileCase(true); if (narrow) window.scrollTo(0, 0) }}>
+                <button aria-current={i.id === inc?.id && (!narrow || mobileCase) ? 'true' : undefined} className={`${i.id === inc?.id && (!narrow || mobileCase) ? 'case on' : 'case'} s-${i.head.stage ?? 'watch'}`} onClick={() => { setSelectedId(i.id); setMobileCase(true); if (narrow) window.scrollTo(0, 0) }}>
                   <span className="ct">{titleOf(i.head)}</span>
                   <span className="cm">
                     <span className={`stagechip s-${i.head.stage ?? 'watch'}`}>{STAGE_LABEL[i.head.stage ?? 'watch']}</span>
@@ -287,14 +291,20 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
               <div>
                 {narrow && <button className="btn sm back" onClick={() => setMobileCase(false)}><Icon name="back" /> All alerts</button>}
                 <p className="eyebrow"><span className="mono">{a.asset_id}</span> · {asset.system}</p>
-                <h1>{titleOf(a)}</h1>
+                <h2 className="casetitle">{titleOf(a)}</h2>
                 <p className="muted">Raised <span className="mono">{when(a.alert_time_utc)}</span>. <span className={`kind ${a.event_class === 'SENSOR' ? 'sensor' : 'machine'}`}><Icon name={a.event_class === 'SENSOR' ? 'sensor' : 'wrench'} /> {a.event_class === 'SENSOR' ? 'Instrument' : 'Machine'}</span>{inc && inc.members.length > 1 ? ` · ${inc.members.length} related alerts in this incident` : ''}</p>
               </div>
               {a.stage && <span className={`stagechip big s-${a.stage}`}>{STAGE_LABEL[a.stage]}</span>}
             </div>
 
+            <section className="card dofirst" aria-label="Do this first">
+              <p className="eyebrow">Do this first</p>
+              <p className="what">{a.check ?? a.recommended_action}</p>
+              <button className="btn" onClick={() => { const el = document.getElementById('decision'); el?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); el?.focus({ preventScroll: true }) }}>Go to the decision <Icon name="next" /></button>
+            </section>
+
             <section className="card step" aria-labelledby="s1">
-              <h2 id="s1"><b>1</b> What does the pump data show?</h2>
+              <h3 id="s1"><b>1</b> What does the pump data show?</h3>
               {asset.telemetry_served ? (
                 <>
                   <div className="replaybar">
@@ -328,7 +338,7 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
             </section>
 
             <section className="card step" aria-labelledby="s2">
-              <h2 id="s2"><b>2</b> What looks wrong?</h2>
+              <h3 id="s2"><b>2</b> What looks wrong?</h3>
               <ul className="found">
                 {a.evidence.slice(0, 3).map((e, i) => {
                   const c = CHANNEL[e.channel] ? compare(e.channel) : null
@@ -351,7 +361,7 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
             </section>
 
             <section className="card step" aria-labelledby="s3">
-              <h2 id="s3"><b>3</b> How sure are we?</h2>
+              <h3 id="s3"><b>3</b> How sure are we?</h3>
               {a.stage && (
                 <>
                   <Meter stage={a.stage} />
@@ -370,8 +380,8 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
               </div>
             </section>
 
-            <section className="card step action" aria-labelledby="s4">
-              <h2 id="s4"><b>4</b> What should I do?</h2>
+            <section className="card step action" id="decision" tabIndex={-1} aria-labelledby="s4">
+              <h3 id="s4"><b>4</b> What should I do?</h3>
               <ol className="todo">
                 <li><b>Check first</b><span>{a.check ?? a.recommended_action}</span></li>
                 <li><b>Then</b><span>{a.recommended_action}</span></li>

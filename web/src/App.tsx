@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from './api'
 import type { Decision } from './decisions'
 import { headline } from './cases'
@@ -58,11 +58,15 @@ export default function App() {
   const [results, setResults] = useState<Results | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [reviews, setReviews] = useState<Record<string, Review>>(loadReviews)
+  const mainRef = useRef<HTMLElement>(null)
+  const first = useRef(true)
 
   useEffect(() => {
     const on = () => {
       setRoute(parseRoute(window.location.hash))
       window.scrollTo(0, 0)
+      // a new page starts at the top of the content, so a keyboard or screen-reader user is not left in the menu
+      window.requestAnimationFrame(() => mainRef.current?.focus({ preventScroll: true }))
     }
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
@@ -102,6 +106,12 @@ export default function App() {
     saveReviews({})
   }, [])
 
+  const pageName = TABS.find((t) => t.key === route.key)?.label ?? 'Overview'
+  useEffect(() => {
+    document.title = `${pageName} · Watchkeeper`
+    first.current = false
+  }, [pageName])
+
   const urgent = headline(incidentsOf(alerts), reviews).urgent
   const nav = (cls: string) => TABS.map((t) => (
     <a key={t.key} href={t.hash} title={t.hint} className={`${cls}${route.key === t.key ? ' on' : ''}`} aria-current={route.key === t.key ? 'page' : undefined}>
@@ -113,7 +123,8 @@ export default function App() {
 
   return (
     <div className="app">
-      <aside className="side">
+      <button className="skip" onClick={() => mainRef.current?.focus()}>Skip to the main content</button>
+      <aside className="side" aria-label="Watchkeeper menu">
         <a className="brand" href="#/" aria-label="Watchkeeper, overview"><span className="mark" aria-hidden="true"><Icon name="shield" /></span><span className="bn">Watchkeeper</span></a>
         <nav className="sidenav" aria-label="Sections">{nav('sl')}</nav>
         <div className="sidefoot">
@@ -125,7 +136,8 @@ export default function App() {
         <a className="brand" href="#/"><span className="mark" aria-hidden="true"><Icon name="shield" /></span>Watchkeeper</a>
         <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only</span>
       </header>
-      <main className="page">
+      <main className="page" id="main" ref={mainRef} tabIndex={-1} aria-label={pageName}>
+        <p className="sr" role="status" aria-live="polite">{pageName}</p>
         {error && <div className="error" role="alert">{error}</div>}
         {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'mock' && (
           <p className="alertwarn" role="alert"><b>These are demo alerts, not engine output.</b> The alert files are missing, so there are no priority levels. Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
@@ -133,7 +145,7 @@ export default function App() {
         {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'engine' && alerts.some((x) => !x.stage) && (
           <p className="alertwarn" role="alert"><b>Some alert files are from an older engine version and have no priority level.</b> They are listed as Watch. Run <code>make alerts</code>, restart the API and reload.</p>
         )}
-        {route.key === 'overview' && <Overview assets={assets} alerts={alerts} reviews={reviews} results={results} />}
+        {route.key === 'overview' && <Overview assets={assets} alerts={alerts} reviews={reviews} />}
         {route.key === 'alerts' && <Monitor assets={assets} alerts={alerts} focus={route.param} results={results} reviews={reviews} act={act} clearReviews={clearReviews} />}
         {route.key === 'value' && <Value data={results} />}
         {route.key === 'proof' && <Proof data={results} />}

@@ -4,10 +4,10 @@ import { LEVELS, attention, headline, levelCounts, levelOf, pumpRows } from './c
 import type { Level } from './cases'
 import Icon from './icons'
 import LiveStrip from './LiveStrip'
-import { HEALTH_LABEL, TIER_SHORT, incidentsOf, titleOf } from './plain'
+import { HEALTH_LABEL, incidentsOf, titleOf } from './plain'
 import type { Review } from './reviews'
 import { STAGE_LABEL, when } from './stage'
-import type { Asset, Alert, DataHealth, Results, ReportSet, Series } from './types'
+import type { Asset, Alert, DataHealth, Series } from './types'
 import { Donut, Spark } from './viz'
 
 const PREFERRED = ['discharge_pressure_kpa', 'motor_current_a', 'motor_power_kw', 'fluid_temp_c']
@@ -52,17 +52,15 @@ interface Props {
   assets: Asset[]
   alerts: Alert[]
   reviews: Record<string, Review>
-  results: Results | null
 }
 
-export default function Overview({ assets, alerts, reviews, results }: Props) {
+export default function Overview({ assets, alerts, reviews }: Props) {
   const cases = useMemo(() => incidentsOf(alerts), [alerts])
   const h = headline(cases, reviews)
   const counts = levelCounts(cases, reviews)
   const rows = pumpRows(assets.map((a) => a.asset_id), cases, reviews)
   const first = attention(cases, reviews, 5)
   const visual = useVisuals(assets)
-  const hold = results?.report ? (Object.entries(results.report).find(([k]) => k.startsWith('hold fleets'))?.[1] as ReportSet | undefined) : undefined
   const urgent = h.urgent > 0
   const link = (id: string | null) => (id ? `#/alerts/${encodeURIComponent(id)}` : '#/alerts')
 
@@ -95,13 +93,14 @@ export default function Overview({ assets, alerts, reviews, results }: Props) {
 
       <LiveStrip />
 
-      <section className="kpis4" aria-label="Key figures">
+      <section className="kpirow" aria-label="Key figures">
         <article className="kpi">
           <p className="kl">Open cases</p>
           <p className="kv">{h.open}<span> of {h.total}</span></p>
           <div className="stack" role="img" aria-label={LEVELS.map((l) => `${counts[l]} ${STAGE_LABEL[l]}`).join(', ')}>
             {LEVELS.map((l) => counts[l] > 0 && <i key={l} className={`s-${l}`} style={{ flex: counts[l] }} />)}
           </div>
+          <p className="kn">{h.reviewed === 0 ? 'None reviewed yet' : `${h.reviewed} reviewed by people`}</p>
         </article>
         <article className="kpi">
           <p className="kl">Need a look first</p>
@@ -109,15 +108,10 @@ export default function Overview({ assets, alerts, reviews, results }: Props) {
           <p className="kn">Likely or Very likely, still open</p>
         </article>
         <article className="kpi">
-          <p className="kl">Reviewed by people</p>
-          <p className="kv">{h.reviewed}<span> of {h.total}</span></p>
-          <p className="kn">Kept in this browser</p>
+          <p className="kl">Pumps with open cases</p>
+          <p className="kv">{rows.filter((r) => r.open > 0).length}<span> of {assets.length}</span></p>
+          <p className="kn">Open the table below to pick one</p>
         </article>
-        <a className="kpi link" href="#/proof">
-          <p className="kl">Back-test score</p>
-          <p className="kv">{hold ? hold.wk.composite.toFixed(1) : '—'}</p>
-          <p className="kn">{hold?.b1 ? `organizers' baseline ${hold.b1.composite.toFixed(1)}` : 'see Proof'} · simulated pumps</p>
-        </a>
       </section>
 
       <div className="split">
@@ -165,7 +159,7 @@ export default function Overview({ assets, alerts, reviews, results }: Props) {
         </div>
         <div className="tablewrap flat">
           <table className="pumptable">
-            <thead><tr><th>Pump</th><th>Highest priority</th><th>Open</th><th>Recorded week</th><th>Data check</th></tr></thead>
+            <thead><tr><th>Pump</th><th>Highest priority</th><th>Open</th><th>Recorded week</th><th>Data</th></tr></thead>
             <tbody>
               {rows.map((r) => {
                 const a = assets.find((x) => x.asset_id === r.asset_id)
@@ -176,7 +170,6 @@ export default function Overview({ assets, alerts, reviews, results }: Props) {
                     <td data-label="Pump">
                       <a className="pumplink" href={`#/alerts/${r.asset_id}`}>
                         <span className="mono">{r.asset_id}</span>
-                        {a && <span className={`tier t${TIER_SHORT[a.instrumentation_tier]?.[1]}`}>{TIER_SHORT[a.instrumentation_tier]}</span>}
                         <span className="sys">{a?.system}</span>
                       </a>
                     </td>
@@ -191,7 +184,7 @@ export default function Overview({ assets, alerts, reviews, results }: Props) {
                       {a?.telemetry_served && v?.channel && v.series ? <span className="muted xs">{CHANNEL_NAME[v.channel]}</span> : null}
                     </td>
                     <td data-label="Data check">
-                      {!a?.telemetry_served ? <span className="muted small">not computed</span> : v?.health ? <span className={`hchip h-${v.health.status}`}>{HEALTH_LABEL[v.health.status]}</span> : <span className="muted small">{v ? '—' : '…'}</span>}
+                      {!a?.telemetry_served ? <span className="muted small">Not computed</span> : v?.health ? (v.health.status === 'OK' ? <span className="dataok"><Icon name="check" /> Data OK</span> : <span className={`hchip h-${v.health.status}`}>{HEALTH_LABEL[v.health.status]}</span>) : <span className="muted small">{v ? '—' : 'Checking…'}</span>}
                     </td>
                   </tr>
                 )

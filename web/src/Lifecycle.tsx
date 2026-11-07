@@ -54,6 +54,7 @@ export default function Lifecycle({ inc, all, asset, review, reviews, act }: Pro
 
   return (
     <div className="life">
+      <p className="sr" role="status" aria-live="polite">Case status: {STATUS_LABEL[status]}</p>
       {earlier && (
         <p className="returnnote">
           <Icon name="alert" />
