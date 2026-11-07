@@ -75,7 +75,7 @@ make predict                   # needs a clean working tree
 ```
 src/watchkeeper/   features (causal baselines, NPSH), detect (alert timing, cavitation, signature fusion), diagnose (model, knowledge),
                    incidents, stage words, alerts (contract v2), what-if, api
-web/               fleet overview, pump view with causal replay, results, retrofit (React, TypeScript, Vite)
+web/               dashboard, pumps, alerts, pump detail (overview with causal replay, diagnostics, evidence signals, recommendations), results, retrofit; three themes (React, TypeScript, Vite)
 eval/              experiments, probes, results tables
 scripts/           bank generation, data linking
 docs/              plan, audit, alert contract (JSON schema), business case, edge and transfer, technical note, demo script

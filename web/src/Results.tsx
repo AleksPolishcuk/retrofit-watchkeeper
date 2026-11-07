@@ -32,7 +32,7 @@ function Chart({ sets }: { sets: [string, ReportSet][] }) {
             {s.wk.lo !== null && s.wk.hi !== null && (
               <g className="whisker"><line x1={x(s.wk.lo)} x2={x(s.wk.hi)} y1={y} y2={y} /><line x1={x(s.wk.lo)} x2={x(s.wk.lo)} y1={y - 6} y2={y + 6} /><line x1={x(s.wk.hi)} x2={x(s.wk.hi)} y1={y - 6} y2={y + 6} /></g>
             )}
-            <text className="rval" x={x(s.wk.composite) - 6} y={y + 4} textAnchor="end">{s.wk.composite.toFixed(1)}</text>
+            <text className="rval" x={x(0) + 10} y={y + 4} textAnchor="start">{s.wk.composite.toFixed(1)}</text>
             {s.b1 && <polygon className="b1mark" points={`${x(s.b1.composite)},${y - 14} ${x(s.b1.composite) + 6},${y - 8} ${x(s.b1.composite)},${y - 2} ${x(s.b1.composite) - 6},${y - 8}`}><title>organizers' baseline B1: {s.b1.composite.toFixed(1)}</title></polygon>}
             <line className="nullmark" x1={x(s.null_random_alerts)} x2={x(s.null_random_alerts)} y1={y + 6} y2={y + 20}><title>random alerts, same count and type mix: {s.null_random_alerts.toFixed(1)}</title></line>
           </g>
@@ -57,13 +57,13 @@ export default function ResultsPage({ data }: { data: Results | null }) {
 
       <div className="callouts">
         {hold && (
-          <div className="callout">
+          <div className="card callout">
             <b>{hold.wk.composite.toFixed(1)}</b>
             <span>on {hold.wk.events} events from fleets the method never saw (95% interval {f(hold.wk.lo, 0)} to {f(hold.wk.hi, 0)}). The organizers' baseline scores {f(hold.b1?.composite, 1)} on the same fleets; random alerts score {f(hold.null_random_alerts, 1)}.</span>
           </div>
         )}
         {healthy && (
-          <div className="callout">
+          <div className="card callout">
             <b>{healthy.per_pump_month.toFixed(1)}</b>
             <span>false alert episodes per pump-month on {healthy.pump_days.toFixed(0)} pump-days with no faults (upper 95% bound {healthy.upper95_per_pump_month.toFixed(1)}). Still above what an operator would like; see limits.</span>
           </div>

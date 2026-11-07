@@ -49,7 +49,7 @@ export default function RetrofitPage({ data }: { data: Results | null }) {
         {(data?.tiers ?? []).map((t) => {
           const c = hold?.by_tier?.[t.tier]
           return (
-            <article key={t.tier} className="tiercard">
+            <article key={t.tier} className="card tiercard">
               <h3>{TIER_NAME[t.tier]}</h3>
               <p>{TIER_SEES[t.tier]}</p>
               <p className="small muted"><b>Always measured:</b> {t.channels.map(pretty).join(', ')}.</p>

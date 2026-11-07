@@ -1,32 +1,30 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { api, ApiError } from './api'
-import AlertCard, { type Decision } from './AlertCard'
-import Fleet from './Fleet'
+import { useCallback, useEffect, useState } from 'react'
+import { api } from './api'
+import Alerts from './Alerts'
+import Dashboard from './Dashboard'
+import type { Decision } from './decisions'
+import Icon from './icons'
+import PumpPage from './PumpPage'
+import Pumps from './Pumps'
 import ResultsPage from './Results'
 import RetrofitPage from './Retrofit'
-import { pretty, STAGE_LABEL, when } from './stage'
-import TimelineChart from './Timeline'
-import type { Alert, Asset, Results, Series, Timeline } from './types'
+import { stageRank } from './stage'
+import type { Alert, Asset, Results } from './types'
 
-const TIER: Record<string, string> = { T0_LEGACY: 'T0', T1_RETROFIT: 'T1', T2_FULL: 'T2' }
-const TIER_HELP: Record<string, string> = {
-  T0_LEGACY: 'Legacy: motor current, discharge pressure, temperatures',
-  T1_RETROFIT: 'Low-cost retrofit: adds suction pressure and a wireless vibration sensor',
-  T2_FULL: 'Fully instrumented: adds flow, power, winding temperature, fast vibration',
-}
-const PREFERRED = ['discharge_pressure_kpa', 'motor_current_a', 'motor_power_kw']
 const STORE = 'watchkeeper.decisions'
 const THEME_KEY = 'watchkeeper.theme'
-const THEMES = ['night', 'dusk', 'day'] as const
+const THEMES = ['day', 'dusk', 'night'] as const
 type Theme = (typeof THEMES)[number]
-type Route = { name: 'fleet' } | { name: 'pump'; id: string } | { name: 'results' } | { name: 'retrofit' }
+type Route = { name: 'dashboard' } | { name: 'pumps' } | { name: 'alerts' } | { name: 'pump'; id: string; alertId?: string } | { name: 'results' } | { name: 'retrofit' }
 
 function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/')
-  if (parts[0] === 'pump' && parts[1]) return { name: 'pump', id: decodeURIComponent(parts[1]) }
+  if (parts[0] === 'pump' && parts[1]) return { name: 'pump', id: decodeURIComponent(parts[1]), alertId: parts[2] ? decodeURIComponent(parts[2]) : undefined }
+  if (parts[0] === 'pumps') return { name: 'pumps' }
+  if (parts[0] === 'alerts') return { name: 'alerts' }
   if (parts[0] === 'results') return { name: 'results' }
   if (parts[0] === 'retrofit') return { name: 'retrofit' }
-  return { name: 'fleet' }
+  return { name: 'dashboard' }
 }
 
 function loadDecisions(): Record<string, Decision> {
@@ -44,7 +42,23 @@ function loadTheme(): Theme {
   } catch {
     /* storage may be unavailable */
   }
-  return 'night'
+  return 'day'
+}
+
+const NAV: { key: Route['name']; label: string; hash: string; icon: string }[] = [
+  { key: 'dashboard', label: 'Dashboard', hash: '#/', icon: 'home' },
+  { key: 'pumps', label: 'Pumps', hash: '#/pumps', icon: 'pump' },
+  { key: 'alerts', label: 'Alerts', hash: '#/alerts', icon: 'bell' },
+  { key: 'results', label: 'Results', hash: '#/results', icon: 'chart' },
+  { key: 'retrofit', label: 'Retrofit', hash: '#/retrofit', icon: 'plug' },
+]
+const TITLE: Record<Route['name'], [string, string]> = {
+  dashboard: ['Pump monitoring', 'Early detection, with the evidence and what limits it'],
+  pumps: ['Pumps', 'What is measured on each pump'],
+  alerts: ['Alerts', 'Strongest first; every one says what to check'],
+  pump: ['Pump detail', 'What is going on, why we think so, what to do'],
+  results: ['Measured results', 'On simulated pumps, with the limits stated'],
+  retrofit: ['Retrofit', 'What it needs and what it never touches'],
 }
 
 export default function App() {
@@ -77,9 +91,10 @@ export default function App() {
     api.results().then(setResults).catch(() => undefined)
   }, [])
 
-  const go = (hash: string) => {
+  const go = useCallback((hash: string) => {
     window.location.hash = hash
-  }
+    window.scrollTo(0, 0)
+  }, [])
 
   const decide = useCallback((id: string, d: Decision | undefined) => {
     setDecisions((prev) => {
@@ -95,219 +110,64 @@ export default function App() {
     })
   }, [])
 
-  const navItem = (key: Route['name'], label: string, hash: string) => (
-    <a key={key} href={hash} className={route.name === key ? 'nav on' : 'nav'} aria-current={route.name === key ? 'page' : undefined}>{label}</a>
-  )
+  const openPump = (id: string, alertId?: string) => go(`#/pump/${encodeURIComponent(id)}${alertId ? '/' + encodeURIComponent(alertId) : ''}`)
+  const urgent = fleetAlerts.filter((a) => stageRank(a.stage) >= 2 && !decisions[a.alert_id]).length
+  const activeKey: Route['name'] = route.name
+  const [title, sub] = TITLE[route.name]
 
   return (
     <div className="shell">
-      <header className="top">
-        <div className="brand"><span className="mark" aria-hidden="true" />Watchkeeper</div>
-        <nav aria-label="Sections">
-          {navItem('fleet', 'Fleet', '#/')}
-          {navItem('pump', 'Pump', route.name === 'pump' ? `#/pump/${route.id}` : '#/pump/PUMP-08')}
-          {navItem('results', 'Results', '#/results')}
-          {navItem('retrofit', 'Retrofit', '#/retrofit')}
+      <aside className="sidebar" aria-label="Main">
+        <div className="brand"><span className="mark" aria-hidden="true"><Icon name="shield" /></span>Watchkeeper</div>
+        <nav className="sidenav" aria-label="Sections">
+          {NAV.map((n) => (
+            <a key={n.key} href={n.hash} className={activeKey === n.key || (n.key === 'pumps' && route.name === 'pump') ? 'on' : ''} aria-current={activeKey === n.key ? 'page' : undefined}>
+              <Icon name={n.icon} /> {n.label}
+              {n.key === 'alerts' && urgent > 0 && <span className="badge-n" title="active alerts at Likely or above">{urgent}</span>}
+            </a>
+          ))}
         </nav>
-        <span className="pill safe" title="This interface only reads data">Advice only · no write path</span>
-        <label className="themepick">
-          <span className="sr">Theme</span>
-          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Colour theme">
-            <option value="night">Night watch</option>
-            <option value="dusk">Dusk</option>
-            <option value="day">Day</option>
-          </select>
-        </label>
-      </header>
-
-      {error && <div className="error" role="alert">{error}</div>}
-
-      {route.name === 'fleet' && <main className="page"><Fleet assets={assets} alerts={fleetAlerts} onOpen={(id) => go(`#/pump/${id}`)} /></main>}
-      {route.name === 'results' && <main className="page"><ResultsPage data={results} /></main>}
-      {route.name === 'retrofit' && <main className="page"><RetrofitPage data={results} /></main>}
-      {route.name === 'pump' && <PumpView assets={assets} assetId={route.id} onPick={(id) => go(`#/pump/${id}`)} decisions={decisions} decide={decide} setError={setError} />}
-    </div>
-  )
-}
-
-interface PumpProps {
-  assets: Asset[]
-  assetId: string
-  onPick: (id: string) => void
-  decisions: Record<string, Decision>
-  decide: (id: string, d: Decision | undefined) => void
-  setError: (m: string | null) => void
-}
-
-function PumpView({ assets, assetId, onPick, decisions, decide, setError }: PumpProps) {
-  const [allAlerts, setAllAlerts] = useState<Alert[]>([])
-  const [source, setSource] = useState<'engine' | 'mock'>('mock')
-  const [tl, setTl] = useState<Timeline | null>(null)
-  const [series, setSeries] = useState<Series | null>(null)
-  const [seriesNote, setSeriesNote] = useState<string | null>(null)
-  const [channel, setChannel] = useState<string>('discharge_pressure_kpa')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [cursor, setCursor] = useState<number | null>(null)
-  const [playing, setPlaying] = useState(false)
-  const timer = useRef<number | null>(null)
-
-  const asset = useMemo(() => assets.find((a) => a.asset_id === assetId), [assets, assetId])
-
-  useEffect(() => {
-    setSelectedId(null)
-    setCursor(null)
-    setPlaying(false)
-    Promise.all([api.alerts(assetId), api.timeline(assetId)])
-      .then(([a, t]) => {
-        setAllAlerts(a.alerts)
-        setSource(a.source)
-        setTl(t)
-        setSelectedId(a.alerts[0]?.alert_id ?? null)
-      })
-      .catch((e) => setError(e.message))
-  }, [assetId, setError])
-
-  useEffect(() => {
-    if (!asset) return
-    const ch = asset.channels_available.includes(channel) ? channel : PREFERRED.find((c) => asset.channels_available.includes(c)) ?? asset.channels_available[0]
-    if (ch !== channel) {
-      setChannel(ch)
-      return
-    }
-    setSeries(null)
-    setSeriesNote('Loading signal…')
-    api.series(assetId, ch).then((s) => {
-      setSeries(s)
-      setSeriesNote(null)
-    }).catch((e: ApiError) => setSeriesNote(e.status === 403 ? 'Telemetry for the test pumps is not shown in this build' : e.message))
-  }, [asset, assetId, channel])
-
-  const t0 = tl ? Date.parse(tl.window_start_utc) : 0
-  const t1 = tl ? Date.parse(tl.window_end_utc) : 0
-
-  useEffect(() => {
-    if (!playing || !tl) return
-    timer.current = window.setInterval(() => {
-      setCursor((c) => {
-        const next = (c ?? t0) + 3600_000 * 2
-        if (next >= t1) {
-          setPlaying(false)
-          return t1
-        }
-        return next
-      })
-    }, 90)
-    return () => {
-      if (timer.current !== null) window.clearInterval(timer.current)
-    }
-  }, [playing, tl, t0, t1])
-
-  // Replay is causal by construction: a cursor only reveals alerts raised at or before it.
-  const alerts = useMemo(() => (cursor === null ? allAlerts : allAlerts.filter((a) => Date.parse(a.alert_time_utc) <= cursor)), [allAlerts, cursor])
-  const selected = alerts.find((a) => a.alert_id === selectedId) ?? null
-
-  const incidents = useMemo(() => {
-    const groups = new Map<string, Alert[]>()
-    for (const a of alerts) {
-      const key = a.incident_id ?? a.alert_id
-      groups.set(key, [...(groups.get(key) ?? []), a])
-    }
-    return [...groups.entries()]
-  }, [alerts])
-  const sizeOf = (a: Alert) => allAlerts.filter((x) => (x.incident_id ?? x.alert_id) === (a.incident_id ?? a.alert_id)).length
-
-  const groups: [string, Asset[]][] = [
-    ['Training pumps', assets.filter((a) => a.split === 'train')],
-    ['Validation pumps', assets.filter((a) => a.split === 'validation')],
-    ['Test pumps (labels hidden)', assets.filter((a) => a.split === 'test')],
-  ]
-
-  return (
-    <div className="pumpview">
-      <aside className="side" aria-label="Pumps">
-        {groups.map(([title, list]) => (
-          <section key={title}>
-            <h3>{title}</h3>
-            <ul>
-              {list.map((a) => (
-                <li key={a.asset_id}>
-                  <button className={a.asset_id === assetId ? 'pump active' : 'pump'} onClick={() => onPick(a.asset_id)}>
-                    <span className="pid">{a.asset_id}</span>
-                    <span className="psys">{a.system}</span>
-                    <span className={`tier t${TIER[a.instrumentation_tier][1]}`} title={TIER_HELP[a.instrumentation_tier]}>{TIER[a.instrumentation_tier]}</span>
-                    <span className="count" title="alerts">{a.alert_count}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+        <div className="sidefoot">
+          <b><span className="dot-live" aria-hidden="true" /> Synthetic data</b>
+          <p>Recorded pumps replayed from the organizers' simulator. Nothing here is live and nothing is connected to a machine.</p>
+        </div>
       </aside>
 
-      <main className="main">
-        {asset && (
-          <>
-            <section className="assethead">
-              <h1>{asset.asset_id} <small>{asset.system}</small></h1>
-              <p className="muted">
-                {asset.site} · {asset.profile.replace(/_/g, ' ').toLowerCase()} · control {asset.control.replace(/_/g, ' ').toLowerCase()} ·
-                {' '}commissioned {asset.commissioned_year} · {asset.motor_rated_kw} kW · {asset.fluid}
-              </p>
-              <p className="tiernote"><span className={`tier t${TIER[asset.instrumentation_tier][1]}`}>{TIER[asset.instrumentation_tier]}</span> {TIER_HELP[asset.instrumentation_tier]}</p>
-              <div className="controls">
-                <label className="chan">
-                  Signal
-                  <select value={channel} onChange={(e) => setChannel(e.target.value)}>
-                    {asset.channels_available.map((c) => <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>)}
-                  </select>
-                </label>
-                {tl && (
-                  <div className="replay" role="group" aria-label="Replay">
-                    <button onClick={() => { if (cursor === null || cursor >= t1) setCursor(t0); setPlaying((p) => !p) }}>{playing ? 'Pause' : cursor === null ? 'Replay' : 'Play'}</button>
-                    <input type="range" min={t0} max={t1} step={3600_000} value={cursor ?? t1} aria-label="Replay time"
-                           onChange={(e) => { setPlaying(false); setCursor(Number(e.target.value)) }} />
-                    <span className="muted small">{cursor === null ? 'showing the whole week' : `only what was known by ${when(new Date(cursor).toISOString())}`}</span>
-                    {cursor !== null && <button className="ghost" onClick={() => { setPlaying(false); setCursor(null) }}>Show all</button>}
-                  </div>
-                )}
-              </div>
-              <p className="muted small">Alerts from {source === 'engine' ? 'the detector (a model that did not train on this pump)' : 'mock examples'}.</p>
-            </section>
+      <div className="content">
+        <header className="topbar">
+          <div className="ttl"><b>{title}</b><span>{sub}</span></div>
+          <span className="pill sim">Recorded replay</span>
+          <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only · no write path</span>
+          <label>
+            <span className="sr">Colour theme</span>
+            <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Colour theme">
+              <option value="day">Day</option>
+              <option value="dusk">Dusk</option>
+              <option value="night">Night watch</option>
+            </select>
+          </label>
+        </header>
 
-            {tl && <TimelineChart tl={tl} series={series} seriesNote={seriesNote} channel={channel} alerts={alerts} selectedId={selectedId} onSelect={setSelectedId} cursor={cursor} />}
+        {error && <div className="error" role="alert">{error}</div>}
 
-            <div className="lower">
-              <section className="alertlist" aria-label="Alerts">
-                <h3>Incidents ({incidents.length}) · alerts ({alerts.length})</h3>
-                {alerts.length === 0 && <p className="muted">{cursor === null ? 'No alerts for this pump yet.' : 'Nothing has been raised yet at this point in the replay.'}</p>}
-                {incidents.map(([key, list]) => (
-                  <div key={key} className="incident">
-                    {list.length > 1 && <p className="inchead">Incident {key.split('-').slice(-1)[0]} · {list.length} related alerts</p>}
-                    <ul>
-                      {list.map((a) => (
-                        <li key={a.alert_id}>
-                          <button className={a.alert_id === selectedId ? 'row active' : 'row'} onClick={() => setSelectedId(a.alert_id)}>
-                            <i className={`dot ${a.event_class === 'SENSOR' ? 'sensor' : 'machine'}`} />
-                            <span className="rt">{new Date(a.alert_time_utc).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}</span>
-                            <span className="rf">{pretty(a.fault_type)}</span>
-                            <span className={`stagechip s-${a.stage ?? 'watch'}`}>{STAGE_LABEL[a.stage ?? 'watch']}</span>
-                            {decisions[a.alert_id] && <span className={`dec ${decisions[a.alert_id]}`}>{decisions[a.alert_id]}</span>}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </section>
-              {selected ? (
-                <AlertCard alert={selected} incidentSize={sizeOf(selected)} decision={decisions[selected.alert_id]} onDecide={(d) => decide(selected.alert_id, d)} />
-              ) : (
-                <section className="card empty"><p className="muted">Select an alert to see the evidence behind it.</p></section>
-              )}
-            </div>
-          </>
-        )}
-      </main>
+        <main className="page">
+          {route.name === 'dashboard' && <Dashboard assets={assets} alerts={fleetAlerts} results={results} onOpen={openPump} />}
+          {route.name === 'pumps' && <Pumps assets={assets} alerts={fleetAlerts} onOpen={(id) => openPump(id)} />}
+          {route.name === 'alerts' && <Alerts alerts={fleetAlerts} decisions={decisions} onOpen={(a) => openPump(a.asset_id, a.alert_id)} />}
+          {route.name === 'results' && <ResultsPage data={results} />}
+          {route.name === 'retrofit' && <RetrofitPage data={results} />}
+          {route.name === 'pump' && <PumpPage assets={assets} assetId={route.id} alertId={route.alertId} decisions={decisions} decide={decide} setError={setError} go={go} />}
+        </main>
+      </div>
+
+      <nav className="bottomnav" aria-label="Sections">
+        {NAV.map((n) => (
+          <a key={n.key} href={n.hash} className={activeKey === n.key || (n.key === 'pumps' && route.name === 'pump') ? 'on' : ''}>
+            <Icon name={n.icon} />{n.label}
+            {n.key === 'alerts' && urgent > 0 && <span className="badge-n">{urgent}</span>}
+          </a>
+        ))}
+      </nav>
     </div>
   )
 }
