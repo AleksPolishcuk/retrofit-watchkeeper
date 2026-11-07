@@ -40,7 +40,7 @@ def summarize(pred, err):
     return f"{len(pred)} alert(s): " + "; ".join(f"{r.fault_type} {t.iloc[i].strftime('%d %b %H:%M')}" for i, r in enumerate(pred.itertuples()))[:150]
 
 
-def longest_running(feat: pd.DataFrame, after_h: float = 30, min_h: float = 3):
+def longest_running(feat: pd.DataFrame, after_h: float = 30):
     """Start index and length (minutes) of the longest continuous RUNNING stretch after `after_h` hours."""
     run = (feat["operating_mode"] == "RUNNING").to_numpy()
     best, start, n = (0, 0), None, 0
@@ -123,7 +123,7 @@ def main() -> int:
     add("A18", "rows arrive but every physical measurement is missing (2 h)", f, t2, "no alert is raised, but the Data check says every measurement is missing and nothing can be evaluated")
     if t1:
         base1 = d.feat[d.feat.asset_id == t1].reset_index(drop=True)
-        s1, n1 = longest_running(base1)
+        s1, _ = longest_running(base1)
         j = s1 + 60
         f = base1.copy()
         vib = [c for c in f.columns if c.startswith("vibration_rms_mm_s__mean")]

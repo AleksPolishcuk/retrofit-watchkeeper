@@ -1,10 +1,9 @@
 """The predict path must match the evaluation path and produce a file the organizers' scorer accepts."""
-import warnings
 from pathlib import Path
 
 import pandas as pd
 import pytest
-from retrofit_sim.scoring import load_predictions, score
+from retrofit_sim.scoring import load_predictions
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 pytestmark = [pytest.mark.skipif(not (DATA / "assets.csv").exists(), reason="data pack not linked"),

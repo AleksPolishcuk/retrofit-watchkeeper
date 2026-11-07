@@ -23,7 +23,6 @@ from watchkeeper.evalkit import concat_predictions, load_dev, score_ids  # noqa:
 from watchkeeper.stats import delay_summary  # noqa: E402
 
 GRID = ["-:-", "5:-", "6:-", "-:8", "-:12", "-:16", "6:12", "6:16"]
-DROP, TRAIN_HEALTHY = (), False
 
 
 def parse(s):

@@ -25,7 +25,6 @@ import numpy as np
 import pandas as pd
 
 META_KEYS = frozenset({"timestamp_utc", "operating_mode", "quality_flags", "sensor_source", "sample_interval_s"})
-STATS = ("mean", "std", "min", "max", "count")
 QUALITY_BITS = (1, 2, 4, 8, 16)
 
 

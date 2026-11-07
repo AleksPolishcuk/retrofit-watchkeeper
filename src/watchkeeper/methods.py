@@ -6,7 +6,7 @@ import pandas as pd
 from retrofit_sim import baselines as B
 
 from .evalkit import INTERNAL_COLS, DevData, Method, concat_predictions, score_ids
-from .detect.alerting import alerts_from_flag, alerts_from_flags, b1_flag, split_flags
+from .detect.alerting import alerts_from_flags, split_flags
 from .detect.cavitation import cavitation_episodes
 from .detect.signature import SIGNATURES, fused_flag, fused_type, slow_detect
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of

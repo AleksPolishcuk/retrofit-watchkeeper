@@ -119,23 +119,6 @@ def run_loo(method: Method, data: DevData) -> dict:
     return {"folds": folds, "predictions": pred, "all": score_ids(pred, data, data.ids, "leave_one_asset_out")}
 
 
-def metrics_row(result: dict) -> dict:
-    return {m: result.get(m) for m in METRICS} | {"events_scored": result["events_scored"], "alerts": result["alerts_scored"]}
-
-
-def markdown_table(rows: dict[str, dict]) -> str:
-    def f(x, d=2):
-        return "-" if x is None or (isinstance(x, float) and pd.isna(x)) else f"{x:.{d}f}"
-    head = ("| Run | Composite | F1 | Recall | Precision | FA / asset-day | Timeliness | Type recall | Class recall | Machine recall | Sensor recall | Events |\n"
-            "|---|---|---|---|---|---|---|---|---|---|---|---|")
-    lines = [head]
-    for name, r in rows.items():
-        lines.append(f"| {name} | {f(r['composite_score'], 1)} | {f(r['event_f1'])} | {f(r['event_recall'])} | {f(r['alert_precision'])} | "
-                     f"{f(r['false_alerts_per_asset_day'])} | {f(r['timeliness'])} | {f(r['fault_type_recall'])} | {f(r['class_recall'])} | "
-                     f"{f(r['recall_machine'])} | {f(r['recall_sensor'])} | {r['events_scored']} |")
-    return "\n".join(lines)
-
-
 def check_causality(method: Method, params, data: DevData, asset_id: str, cut_hours) -> list[str]:
     """Cut the asset's telemetry `h` hours after the window start, re-run, and compare the alerts raised up to the cut with
     the full run. Returns a list of problems (empty means causal for these cuts)."""

@@ -22,7 +22,6 @@ from watchkeeper import methods as M  # noqa: E402
 from watchkeeper.bank import load_set  # noqa: E402
 from watchkeeper.diagnose import DiagnosisModel  # noqa: E402
 from watchkeeper.evalkit import ROOT, concat_predictions, score_ids  # noqa: E402
-from watchkeeper.stats import delay_summary  # noqa: E402
 
 SCENARIOS = {
     "all channels": (),
@@ -51,7 +50,6 @@ def main() -> int:
         d = mask(hold, keys)
         pred = concat_predictions(M.WKMethod().predict(model, d, a) for a in d.ids)
         r = score_ids(pred, d, d.ids)
-        ds = delay_summary(r["per_event"])
         rows.append({"scenario": name, "composite": round(r["composite_score"], 1), "recall": round(r["event_recall"], 2), "precision": round(r["alert_precision"], 2),
                      "type recall": round(r["fault_type_recall"], 2), "class recall": round(r["class_recall"], 2), "false+repeat per pump-day": round(r["false_alerts_per_asset_day"], 2),
                      "events": r["events_scored"]})

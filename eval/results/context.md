@@ -19,6 +19,6 @@ Reading:
 
 - No variant meets the rule. The best tune score (61.7) is 1.8 above the current method, below the threshold, and the healthy count does not fall in any variant.
 - Splitting baselines by demand is clearly worse on healthy pumps: thinner cells mean shorter and noisier baselines, so more false alerts (43 against 13). The other differences are within noise: the composite has a 95% interval of about plus or minus 10, and a count of 13 healthy alerts has a Poisson spread of about 3.6.
-- The remaining false alerts of the current method are therefore not simple demand or temperature effects that a bin or a feature can remove. A better model of normal operation would need the physics of each loop (system curve and control law), which `eval/results/context_probe.md` started for variable-speed seawater pumps.
+- The remaining false alerts of the current method are therefore not simple demand or temperature effects that a bin or a feature can remove. A better model of normal operation would need the physics of each loop (system curve and control law).
 
 Decision: the options stay in the code, switched off (`ctx=()` in `WKMethod`), with tests. The submitted model (tag `freeze-v1`) is unchanged. The second untouched set `hold2` (seeds 211 to 213) was generated and never opened.

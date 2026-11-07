@@ -1,10 +1,10 @@
 """Business case for one retrofitted pump, built from our MEASURED benchmark metrics and clearly labelled assumptions.
 
-  python -m watchkeeper.business_case          # writes docs/business_case.md
+  .venv/bin/python eval/run_business_case.py          # writes docs/business_case.md and eval/results/business_case.json
 
 The arithmetic follows the organizers' worked example (`examples/business_case.py`, MIT). Measured inputs come from
-eval/results/WK_causal_learned/metrics.json (leave-one-asset-out on synthetic data). Every money input is an assumption, so the
-result is a worked example of the logic, not a promise of saving at any real site.
+eval/results/WK_hold (the 24 untouched hold fleets). Every money input is an assumption, so the result is a worked example of
+the logic, not a promise of saving at any real site.
 """
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-METRICS = ROOT / "eval" / "results" / "WK_causal_learned" / "metrics.json"
-PER_EVENT = ROOT / "eval" / "results" / "WK_causal_learned" / "per_event_loo.csv"
+METRICS = ROOT / "eval" / "results" / "WK_hold" / "metrics.json"
+PER_EVENT = ROOT / "eval" / "results" / "WK_hold" / "per_event.csv"
 OUT = ROOT / "docs" / "business_case.md"
 
 # Assumptions (same values as the organizers' example unless noted). Sources: RETROFIT_FEASIBILITY.md sections 2 and 5.
@@ -61,7 +61,7 @@ def _bisect(fn, lo: float, hi: float, target: float) -> float:
     return hi
 
 
-def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets_path: Path | None = None, source: str = "leave-one-asset-out on the public pumps") -> str:
+def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets_path: Path | None = None, source: str = "the 24 untouched hold fleets") -> str:
     m = json.loads(metrics_path.read_text(encoding="utf-8"))["leave_one_asset_out"]
     pe = pd.read_csv(per_event_path)
     days = m["asset_days"]
@@ -141,18 +141,6 @@ def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets
     return "\n".join(L)
 
 
-def main() -> int:
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    text = build()
-    OUT.write_text(text, encoding="utf-8")
-    print(text)
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-
-
 def summary(metrics_path: Path, per_event_path: Path) -> dict:
     """The same numbers as `build`, as data for the interface: measured inputs, base case under two conventions, and the four site types."""
     m = json.loads(metrics_path.read_text(encoding="utf-8"))["leave_one_asset_out"]
@@ -170,3 +158,15 @@ def summary(metrics_path: Path, per_event_path: Path) -> dict:
             "assumptions": {k: {"value": v[0], "unit": v[1], "basis": v[2]} for k, v in ASSUME.items()},
             "base": {"organizers_convention": clean(evaluate(org)), "refined": clean(evaluate(base))},
             "sites": [{"name": n, "downtime_eur_h": dt, "faults_per_year": ev, **clean(evaluate(dict(base, downtime_cost_eur_h=dt, events_per_year=ev)))} for n, dt, ev in SITES]}
+
+
+def main() -> int:
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    text = build()
+    OUT.write_text(text, encoding="utf-8")
+    print(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
