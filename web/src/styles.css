@@ -322,3 +322,16 @@ button.sim:disabled { opacity: .6; cursor: progress; }
 .hchip.h-BASELINE_LEARNING { background: var(--chip-possible-bg); color: var(--chip-possible-ink); }
 .hchip.h-DEGRADED { background: var(--chip-likely-bg); color: var(--chip-likely-ink); }
 .hchip.h-INSUFFICIENT_DATA, .hchip.h-NO_DATA { background: var(--chip-very-bg); color: var(--chip-very-ink); }
+
+/* live replay strip */
+.live { margin: 0 0 18px; padding: 14px 18px; border-left: 6px solid var(--cyan); }
+.livehead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.livehead h2 { margin: 0; font-size: 17px; }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+.pulse.on { background: var(--cyan); box-shadow: 0 0 0 0 var(--cyan); animation: pulse 1.6s ease-out infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.livenote { margin: 8px 0 0; font-size: 14px; }
+.livereasons { margin: 6px 0 0; padding-left: 20px; list-style: disc; color: var(--muted); font-size: 14px; }
+.liveempty { margin: 10px 0 0; font-size: 14.5px; color: var(--muted); }
+.livealerts { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.livealerts li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 14.5px; }

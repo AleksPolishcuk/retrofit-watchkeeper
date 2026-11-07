@@ -189,3 +189,27 @@ export interface DataHealth {
   hygiene: { rows_in: number; duplicates_dropped: number; conflicts: number; out_of_order: number } | null
   checks: { channel: string; message: string }[]
 }
+
+export interface LiveItem {
+  asset_id: string
+  status: 'running' | 'finished'
+  as_of_utc: string | null
+  minutes: number
+  alerts: number
+  health: HealthStatus | null
+  updated_wall_utc: string | null
+}
+
+export interface LiveState {
+  asset_id: string
+  status: 'running' | 'finished'
+  as_of_utc: string | null
+  minutes: number
+  every_minutes: number
+  model_version: string
+  ingest: Record<string, number>
+  latency: { evaluations: number; last_ms: number; p50_ms: number; p95_ms: number; max_ms: number; note: string }
+  health: Partial<DataHealth>
+  alerts: Alert[]
+  alert_log: Record<string, { first_seen_as_of_utc: string; published_minutes_after_alert_time: number }>
+}

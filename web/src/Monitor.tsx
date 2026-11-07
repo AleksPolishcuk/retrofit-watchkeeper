@@ -4,6 +4,7 @@ import { SignalChart } from './charts'
 import Dropdown from './Dropdown'
 import type { Decision } from './decisions'
 import Icon from './icons'
+import LiveStrip from './LiveStrip'
 import { CHANNEL, fmtNum, howFar, incidentsOf, median, nameOf, titleOf } from './plain'
 import { STAGE_LABEL, STAGES, stageRank, when } from './stage'
 import TimelineChart from './Timeline'
@@ -183,6 +184,8 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
         Watchkeeper reads a pump's existing sensor data, notices when something moves away from that pump's own normal, shows the evidence and how sure it is,
         and tells the operator what to check. It never controls the machine.
       </p>
+
+      <LiveStrip />
 
       <div className="mgrid">
         <aside className="card caselist" aria-label="Things to look at">

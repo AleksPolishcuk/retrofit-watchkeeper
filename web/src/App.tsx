@@ -79,7 +79,7 @@ export default function App() {
         </nav>
         <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only · it cannot control a machine</span>
       </header>
-      <div className="strip">Recorded simulated pumps, replayed. Nothing here is live and nothing is connected to a machine.</div>
+      <div className="strip">Recorded simulated pumps, replayed as if live. Nothing is connected to a real machine.</div>
       {error && <div className="error" role="alert">{error}</div>}
       <main className="page">
         {route === 'monitor' && <Monitor assets={assets} alerts={alerts} results={results} decisions={decisions} decide={decide} />}
