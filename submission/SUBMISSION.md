@@ -34,6 +34,11 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 4. After later code changes (interface, operating-context options that are switched off) the frozen model was run again into a scratch folder and produced the same 33 alerts with the same confidence values.
 5. Every alert is causal: it uses only data up to its own timestamp. `tests/test_evalkit.py` cuts telemetry at several points and checks that earlier alerts do not change; the organizers' own baseline B1 fails that test, ours passes.
 
+## History note
+
+On 7 Nov 2026 the repository history was rewritten once to remove an assistant instruction file from every commit. Code, models and results are unchanged; all commit hashes changed.
+The freeze commit that wrote the test-pump predictions is now `6dc3c93` (tag `freeze-v1`; it was `7d78408` before the rewrite). `submission/predictions_test.meta.json` records the new hash and, in `commit_before_history_rewrite`, the old one. The model hash and the CSV are untouched.
+
 ## Evidence discipline
 
 - Fitted on fleets generated with the organizers' simulator (rules allow the simulator), not on the public pumps.
