@@ -42,8 +42,9 @@ def _ts(x):
 
 
 class DiagnosisModel:
-    def __init__(self, k_low: float = 4.0, none_weight: float = 0.5, trees: int = 300, seed: int = 0):
+    def __init__(self, k_low: float = 4.0, none_weight: float = 0.5, trees: int = 300, seed: int = 0, min_leaf: int = 3, max_depth: int | None = None):
         self.k_low, self.none_weight, self.trees, self.seed = k_low, none_weight, trees, seed
+        self.min_leaf, self.max_depth = min_leaf, max_depth
         self.model: RandomForestClassifier | None = None
         self.classes_: list[str] = []
 
@@ -85,10 +86,24 @@ class DiagnosisModel:
 
     def fit(self, zf, X, events, ids) -> "DiagnosisModel":
         Xt, y, w = self.training_set(zf, X, events, ids)
-        self.model = RandomForestClassifier(n_estimators=self.trees, min_samples_leaf=3, random_state=self.seed, n_jobs=-1)
+        self.model = RandomForestClassifier(n_estimators=self.trees, min_samples_leaf=self.min_leaf, max_depth=self.max_depth, random_state=self.seed, n_jobs=-1)
         self.model.fit(Xt.to_numpy(), y, sample_weight=w * len(w) / w.sum())
         self.classes_ = [str(c) for c in self.model.classes_]
         return self
 
     def proba(self, Xa: pd.DataFrame) -> np.ndarray:
         return self.model.predict_proba(Xa.to_numpy())
+
+    def save(self, path) -> int:
+        """Write the fitted model compressed. Returns its size in bytes."""
+        import joblib
+        from pathlib import Path
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        self.model.n_jobs = 1
+        joblib.dump(self, path, compress=("xz", 3))
+        return Path(path).stat().st_size
+
+    @staticmethod
+    def load(path) -> "DiagnosisModel":
+        import joblib
+        return joblib.load(path)
