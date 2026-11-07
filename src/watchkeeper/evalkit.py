@@ -73,6 +73,8 @@ def score_ids(pred: pd.DataFrame, data: DevData, ids, label: str | None = None) 
     ids = list(ids)
     assets = data.assets[data.assets.asset_id.isin(ids)]
     events = data.events[data.events.asset_id.isin(ids)]
+    if events.empty:
+        return _result_without_events(pred, assets, label)
     # `split=None` on purpose: the scorer's `split` filters assets by their dataset split, and we already chose the assets.
     result = score(pred, events, assets, data.benign, split=None)
     result["split"] = label
@@ -183,3 +185,23 @@ def alert_outcomes(pred: pd.DataFrame, data: DevData) -> pd.DataFrame:
     for k, v in flags.items():
         out[k] = v
     return out
+
+
+def _result_without_events(pred: pd.DataFrame, assets: pd.DataFrame, label: str | None) -> dict:
+    """The organizer scorer cannot handle a set with no labelled events. Every alert on such pumps is false, so count 30-minute episodes directly."""
+    from retrofit_sim.scoring import _episodes, _ts, bursts, load_predictions
+    ws = dict(zip(assets["asset_id"], _ts(assets["window_start_utc"])))
+    we = dict(zip(assets["asset_id"], _ts(assets["window_end_utc"])))
+    p = load_predictions(pred if len(pred) else empty_predictions())
+    p = p[p["asset_id"].isin(ws)]
+    if len(p):
+        p = p[[ws[a] <= t < we[a] for a, t in zip(p["asset_id"], p["alert_time_utc"])]]
+    bu = bursts(p) if len(p) else pd.DataFrame(columns=["asset_id", "alert_time_utc"])
+    episodes = sum(_episodes(g["alert_time_utc"]) for _, g in bu.groupby("asset_id")) if len(bu) else 0
+    days = float(sum((we[a] - ws[a]).total_seconds() for a in ws) / 86400.0)
+    per_day = episodes / days if days else 0.0
+    return {"split": label, "assets": sorted(ws), "asset_days": round(days, 2), "alerts_scored": int(len(p)), "alert_bursts": int(len(bu)),
+            "events_scored": 0, "true_positive_events": 0, "false_alert_episodes": int(episodes), "excess_repeat_episodes": 0,
+            "event_recall": 0.0, "alert_precision": 0.0, "event_f1": 0.0, "false_alerts_per_asset_day": per_day, "timeliness": 0.0,
+            "fault_type_recall": 0.0, "class_recall": 0.0, "recall_machine": None, "recall_sensor": None, "early_warning_rate": None,
+            "median_lead_time_h": None, "composite_score": 100.0 * 0.10 * max(0.0, 1 - per_day / 2), "per_event": []}

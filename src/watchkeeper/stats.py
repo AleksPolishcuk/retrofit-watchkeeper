@@ -64,3 +64,18 @@ def poisson_upper(k: int, exposure_days: float, level: float = 0.975) -> float:
     """Upper confidence bound on a rate (events per day) after seeing k events in `exposure_days`."""
     from scipy.stats import chi2
     return float(chi2.ppf(level, 2 * (k + 1)) / 2 / exposure_days)
+
+
+def delay_summary(per_event: list) -> dict:
+    """How early are events found? Delay is hours between the moment the effect first exceeds 3 sigma on an instrumented channel
+    (`detectable_utc`) and the first alert. Negative means before. Missed events are counted separately, not as infinite delay."""
+    pe = pd.DataFrame(per_event)
+    if pe.empty:
+        return {"events": 0}
+    det = pe[pe["detected"]]
+    d = det["delay_after_detectable_h"].dropna()
+    lead = pe["lead_time_to_deadline_h"].dropna()
+    return {"events": int(len(pe)), "detected": int(len(det)), "median_delay_h": float(d.median()) if len(d) else None,
+            "p75_delay_h": float(d.quantile(0.75)) if len(d) else None, "within_1h": int((d <= 1).sum()), "within_6h": int((d <= 6).sum()),
+            "within_24h": int((d <= 24).sum()), "with_deadline": int(len(lead)), "before_deadline": int((lead > 0).sum()),
+            "median_lead_h": float(lead.median()) if len(lead) else None}

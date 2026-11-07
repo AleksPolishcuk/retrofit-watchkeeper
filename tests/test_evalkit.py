@@ -83,3 +83,14 @@ def test_wk_method_is_causal_under_truncation(dev):
     for asset in ("PUMP-04", "PUMP-08"):
         problems += check_causality(m, model, dev, asset, (6, 20, 55))
     assert problems == []
+
+
+def test_a_set_without_events_counts_every_alert_as_false_in_thirty_minute_episodes():
+    from watchkeeper.evalkit import DevData
+    assets = pd.DataFrame({"asset_id": ["H-02"], "window_start_utc": ["2025-01-01T00:00:00Z"], "window_end_utc": ["2025-01-08T00:00:00Z"], "split": ["train"]})
+    rows = [{"asset_id": "H-02", "alert_time_utc": t, "event_class": "MACHINE", "fault_type": "BEARING_WEAR", "confidence": 0.5, "evidence": "", "recommended_action": ""}
+            for t in ("2025-01-02T10:00:00Z", "2025-01-02T10:10:00Z", "2025-01-04T03:00:00Z")]          # 3 alerts, 2 episodes (the first two are within 30 min)
+    d = DevData(Path("."), assets, pd.DataFrame(), pd.DataFrame(columns=["asset_id"]), pd.DataFrame(), pd.DataFrame())
+    r = score_ids(pd.DataFrame(rows), d, ["H-02"])
+    assert r["false_alert_episodes"] == 2 and r["asset_days"] == 7.0 and r["events_scored"] == 0
+    assert score_ids(empty_predictions(), d, ["H-02"])["false_alert_episodes"] == 0
