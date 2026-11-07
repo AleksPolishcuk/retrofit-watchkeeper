@@ -15,8 +15,7 @@ from .features.hygiene import clean_minutes
 from .features.npsh import npsh_margin
 
 
-ROBUST = ("flatstrict", "longdev", "speedloss")       # longdev8 and longdev12 are the same rule with 8 and 12 hours of persistence
-OPTIONS_DOC = None       # data-quality options: stricter frozen-sensor rule, persistent unexplained deviation, speed-signal loss. Off by default (the submitted model is freeze-v1).
+ROBUST = ("flatstrict", "longdev", "speedloss")       # all data-quality options. longdev8 and longdev12 are the same rule with 8 and 12 hours of persistence. Only "speedloss" is on by default (it passed the gate).       # data-quality options: stricter frozen-sensor rule, persistent unexplained deviation, speed-signal loss. Off by default (the submitted model is freeze-v1).
 
 
 def _suspend_on_speed_loss(f: pd.DataFrame, assets: pd.DataFrame, hold_min: int = 15) -> pd.DataFrame:
@@ -199,7 +198,7 @@ class WKMethod(Method):
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
     def __init__(self, k=5.0, persist=12, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6, min_leaf=3, max_depth=None,
-                 sig_h=None, slow_h=None, slow_k=0.5, sig_smooth=15, sig_persist=12, drop=(), learn=True, ctx=()):
+                 sig_h=None, slow_h=None, slow_k=0.5, sig_smooth=15, sig_persist=12, drop=(), learn=True, ctx=("speedloss",)):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
         self.rules, self.cavitation, self.arbiter = rules, cavitation, arbiter
         self.thermal, self.hold = thermal, hold

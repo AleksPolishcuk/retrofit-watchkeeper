@@ -18,13 +18,15 @@ from watchkeeper.diagnose import DiagnosisModel  # noqa: E402
 from watchkeeper.evalkit import ROOT, DevData  # noqa: E402
 from watchkeeper.methods import WKMethod  # noqa: E402
 
+ALL_OPTIONS = ("flatstrict", "longdev12", "speedloss")
+
 MODEL = DiagnosisModel.load(ROOT / "models" / "wk.joblib")
 
 
-def run(feat: pd.DataFrame, assets: pd.DataFrame, asset: str):
+def run(feat: pd.DataFrame, assets: pd.DataFrame, asset: str, ctx: tuple = ()):
     d = DevData(Path("."), assets, feat.copy(), pd.DataFrame(columns=["asset_id"]), pd.DataFrame(), pd.DataFrame())
     try:
-        return WKMethod().predict(MODEL, d, asset), None
+        return WKMethod(ctx=ctx).predict(MODEL, d, asset), None
     except Exception as e:                                           # a crash is a result, not a script error
         return None, f"{type(e).__name__}: {str(e)[:70]}"
 
@@ -82,9 +84,9 @@ def main() -> int:
         return f
 
     def add(sid, name, feat, asset, note=""):
-        pred, err = run(feat, assets, asset)
-        rows.append((sid, name, summarize(pred, err), note))
-        print(sid, rows[-1][2], flush=True)
+        res = [summarize(*run(feat, assets, asset, ctx)) for ctx in ((), ("speedloss",), ALL_OPTIONS)]
+        rows.append((sid, name, *res, note))
+        print(sid, " | ".join(res), flush=True)
 
     add("A01", "stable, correct data", base2, t2)
     f = base2.drop(base2.index[ix:ix + 4]).reset_index(drop=True)
@@ -94,31 +96,31 @@ def main() -> int:
     f = base2.copy()
     for c in [c for c in f.columns if c.startswith("suction_pressure_kpa__")]:
         f.loc[f.index[ix:], c] = np.nan if not c.endswith("__count") else 0
-    add("A03", "suction pressure channel stops, gateway alive", f, t2, "no dynamic channel-loss notice")
+    add("A03", "suction pressure channel stops, gateway alive", f, t2, "no alert is raised, but the Data check in the case view and `/api/data-health` name the silent channel")
     f = base2.copy()
     for c in [c for c in f.columns if c.startswith("motor_speed_rpm__")]:
         f.loc[f.index[ix:], c] = np.nan if not c.endswith("__count") else 0
-    add("A04", "speed signal of the drive disappears", f, t2, "false alerts for days: the missing speed makes a new operating regime")
+    add("A04", "speed signal of the drive disappears", f, t2, "without the option the missing speed makes a new operating regime and gives false alerts for days; `speedloss` fixes it")
     add("A05", "flow and pressure deviation for 8 minutes", dev(base2, ix, ix + 8), t2)
     add("A06", "flow and pressure deviation for 20 minutes", dev(base2, ix, ix + 20), t2, "the trigger fires (z up to 31) but the classifier says NONE, 70 to 74 percent, so the alert is suppressed")
     f = dev(base2, ix, ix + 40)
     f.loc[f.index[ix:ix + 40], "quality_any"] = True
-    add("A11", "same deviation, readings flagged OUT_OF_RANGE", f, t2, "quality flags are not used")
+    add("A11", "same deviation, readings flagged OUT_OF_RANGE", f, t2, "the detector ignores quality flags; the Data check counts them")
     f = base2.copy()
     sd = "discharge_pressure_kpa__std"
     f.loc[f.index[ix:ix + 40], sd] = 0.0
     f.loc[f.index[ix:ix + 40], "discharge_pressure_kpa__mean"] = f.loc[f.index[ix:ix + 40], "discharge_pressure_kpa__mean"].to_numpy() + np.linspace(0, 3, 40)
-    add("A12", "pressure constant inside minutes, changing between minutes", f, t2, "stuck rule looks at spread inside a minute only")
+    add("A12", "pressure constant inside minutes, changing between minutes", f, t2, "the default rule looks at spread inside a minute only; `flatstrict` also requires no change between minutes but loses real events on the tuning fleets")
     f = pd.concat([base2.iloc[:ix + 5], base2.iloc[ix + 4:ix + 5], base2.iloc[ix + 5:]]).reset_index(drop=True)
-    add("A14", "a row with the same minute arrives twice", f, t2)
+    add("A14", "a row with the same minute arrives twice", f, t2, "crashed the first version of the probe; input hygiene now keeps the last row and counts the duplicate")
     f = dev(base2, ix, min(ix + 14 * 60, s0 + n0))
-    add("A15", f"continuous deviation for {min(14 * 60, n0 - 60) // 60} hours", f, t2, "contract v2 groups the reminders into one incident")
+    add("A15", f"continuous deviation for {min(14 * 60, n0 - 60) // 60} hours", f, t2, "only `longdev12` reports it (one UNKNOWN alert); contract v2 groups later reminders into one incident")
     f = base2.copy()
     for c in [c for c in f.columns if c.endswith(("__mean", "__std", "__min", "__max", "__last"))]:
         f.loc[f.index[ix:ix + 120], c] = np.nan
     for c in [c for c in f.columns if c.endswith("__count")]:
         f.loc[f.index[ix:ix + 120], c] = 0
-    add("A18", "rows arrive but every physical measurement is missing (2 h)", f, t2, "nothing tells the user that evaluation is impossible")
+    add("A18", "rows arrive but every physical measurement is missing (2 h)", f, t2, "no alert is raised, but the Data check says every measurement is missing and nothing can be evaluated")
     if t1:
         base1 = d.feat[d.feat.asset_id == t1].reset_index(drop=True)
         s1, n1 = longest_running(base1)
@@ -132,8 +134,9 @@ def main() -> int:
         add("A10", f"T1: {int(have.sum())} abnormal wireless vibration samples, 5 minutes apart", f, t1)
     out = ["# Scenario probe: how Watchkeeper behaves in the enterprise verification scenarios", "",
            "Real minute features of quiet healthy simulated pumps are perturbed as each scenario describes and run through the frozen model. No public or test pump is used.", "",
-           "| Scenario | What was done | Result | Note |", "|---|---|---|---|"]
-    out += [f"| {a} | {b} | {c} | {n} |" for a, b, c, n in rows]
+           "Three runs per scenario. **Without options** is the behaviour of the submitted model (freeze-v1). **Current default** adds `speedloss`, which passed the data-quality gate and is on by default in the code. **All options** adds `flatstrict` and `longdev12` as well; both failed the gate and are off (see `data_quality_gate.md`).", "",
+           "| Scenario | What was done | Without options (freeze-v1) | Current default | All options | Note |", "|---|---|---|---|---|---|"]
+    out += [f"| {a} | {b} | {c} | {d} | {e} | {n} |" for a, b, c, d, e, n in rows]
     Path(ROOT / "eval" / "results" / "scenarios_probe.md").write_text("\n".join(out) + "\n", encoding="utf-8")
     return 0
 

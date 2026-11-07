@@ -213,7 +213,7 @@ def test_e2e_a04_a_lost_speed_signal_raises_no_false_alerts_with_the_option(heal
     for c in [c for c in f.columns if c.startswith("motor_speed_rpm__")]:
         f.loc[f.index[1860:], c] = np.nan if not c.endswith("__count") else 0
     assert len(_run(healthy, f, robust=True)) == 0
-    assert len(_run(healthy, f)) > 0                                  # documents the behaviour of the default (submitted) configuration
+    assert len(_run(healthy, f)) > 0                                  # without the option (the behaviour of freeze-v1) the missing speed makes false alerts
 
 
 @e2e
@@ -238,3 +238,8 @@ def test_e2e_a06_a_large_sustained_deviation_is_reported_as_unexplained_with_the
     robust = _run(healthy, f, robust=True)
     assert len(plain) == 0                                            # the default stays silent: the classifier calls it normal
     assert "UNKNOWN" in set(robust.fault_type) and "persistent_unexplained" in set(robust.rule)
+
+
+def test_speed_loss_handling_is_on_by_default_and_the_other_options_are_not():
+    from watchkeeper.methods import WKMethod
+    assert WKMethod().ctx == ("speedloss",)
