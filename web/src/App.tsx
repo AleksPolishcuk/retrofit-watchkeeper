@@ -6,6 +6,7 @@ import { incidentsOf } from './plain'
 import { STORE as REVIEW_STORE, apply, load as loadReviews, migrateDecisions, save as saveReviews } from './reviews'
 import type { Action, Review } from './reviews'
 import Icon from './icons'
+import ThemeSwitch from './ThemeSwitch'
 import Monitor from './Monitor'
 import Overview from './Overview'
 import Proof from './Proof'
@@ -130,11 +131,14 @@ export default function App() {
         <div className="sidefoot">
           <p className="safe"><Icon name="shield" /><span><b>Advice only</b><br />It cannot control a machine</span></p>
           <p className="note">Recorded simulated pumps, replayed as if live.</p>
+          <ThemeSwitch />
         </div>
+        <div className="railtheme"><ThemeSwitch compact /></div>
       </aside>
       <header className="mtop">
         <a className="brand" href="#/"><span className="mark" aria-hidden="true"><Icon name="shield" /></span>Watchkeeper</a>
         <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only</span>
+        <ThemeSwitch compact />
       </header>
       <main className="page" id="main" ref={mainRef} tabIndex={-1} aria-label={pageName}>
         <p className="sr" role="status" aria-live="polite">{pageName}</p>

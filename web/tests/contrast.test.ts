@@ -11,9 +11,11 @@ function tokens(block: string): Record<string, string> {
   for (const m of block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g)) out[m[1]] = m[2].toLowerCase()
   return out
 }
-const lightBlock = css.slice(css.indexOf(':root {'), css.indexOf('@media (prefers-color-scheme: dark)'))
-const darkStart = css.indexOf('@media (prefers-color-scheme: dark)')
-const darkBlock = css.slice(css.indexOf(':root {', darkStart), css.indexOf('\n}\n', css.indexOf(':root {', darkStart)))
+const darkStart = css.indexOf(':root[data-theme="dark"] {')
+const lightBlock = css.slice(css.indexOf(':root {'), darkStart)
+const darkBlock = css.slice(darkStart, css.indexOf('\n}\n', darkStart))
+const autoStart = css.indexOf(':root[data-theme="auto"] {')
+const autoBlock = css.slice(autoStart, css.indexOf('\n  }\n', autoStart))
 const light = tokens(lightBlock)
 const dark = { ...light, ...tokens(darkBlock) }
 
@@ -62,6 +64,11 @@ for (const [theme, t] of [['light', light], ['dark', dark]] as const) {
     assert.deepEqual(failures, [])
   })
 }
+
+test('the Auto theme uses exactly the same dark colours as the Dark theme', () => {
+  assert.deepEqual(tokens(autoBlock), tokens(darkBlock))
+  assert.ok(Object.keys(tokens(darkBlock)).length > 20)
+})
 
 test('no body text is smaller than 12 px and nothing is set in capitals for reading', () => {
   const sizes = [...css.matchAll(/font-size:\s*([0-9.]+)(px|rem)/g)].map((m) => Number(m[1]) * (m[2] === 'rem' ? 16 : 1))
