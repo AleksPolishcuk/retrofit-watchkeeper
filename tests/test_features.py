@@ -84,3 +84,37 @@ def test_regime_learning_z_is_causal_and_still_sees_a_real_fault_in_a_learned_re
     cut = 2 * 24 * 60 + 400
     part = regime_learning_z(vals[:cut], reg[:cut], steady[:cut], floor=0.2)
     assert np.allclose(full[:cut], part, equal_nan=True)                        # truncation does not change earlier values
+
+
+def test_context_is_joined_by_time_and_pump_and_leaves_missing_pumps_alone(tmp_path):
+    import pandas as pd
+    from watchkeeper.features.ctxjoin import attach_context
+    feat = pd.DataFrame({"asset_id": ["A", "A", "B"], "window_start_utc": ["2025-01-01T00:00:00Z", "2025-01-01T00:01:00Z", "2025-01-01T00:00:00Z"], "x": [1, 2, 3]})
+    ctx = pd.DataFrame({"asset_id": ["A", "A"], "timestamp_utc": ["2025-01-01T00:00:00Z", "2025-01-01T00:01:00Z"], "duty_demand_pct": [50.0, 60.0],
+                        "supply_water_temp_c": [10.0, 11.0], "ambient_temp_c": [20.0, 21.0], "sea_temp_c": [None, None]})
+    p = tmp_path / "operating_context.csv"
+    ctx.to_csv(p, index=False)
+    out = attach_context(feat, p)
+    assert list(out["x"]) == [1, 2, 3]                                          # row order and content are kept
+    assert list(out["ctx_duty_demand_pct"].iloc[:2]) == [50.0, 60.0] and out["ctx_duty_demand_pct"].iloc[2] != out["ctx_duty_demand_pct"].iloc[2]   # pump B has no context: NaN
+    assert attach_context(feat, tmp_path / "missing.csv") is feat               # no file, no change
+
+
+def test_context_features_look_only_backwards():
+    import numpy as np
+    import pandas as pd
+    from watchkeeper.features.causal import CTX_FEATURES, build_features
+    n = 400
+    rng = np.random.default_rng(0)
+    g = pd.DataFrame({"asset_id": ["P"] * n, "window_start_utc": pd.date_range("2025-01-01", periods=n, freq="1min", tz="UTC"), "steady": True, "rows": 60,
+                      "operating_mode": "RUNNING", "speed_ratio": 0.9, "ctx_duty_demand_pct": np.r_[np.full(200, 50.0), np.full(200, 80.0)],
+                      "ctx_supply_water_temp_c": rng.normal(20, 1, n), "ctx_ambient_temp_c": rng.normal(30, 1, n)})
+    g["gap"] = False
+    assets = pd.DataFrame({"asset_id": ["P"], "channels_available": ["motor_speed_rpm"]})
+    full = build_features(g, assets, ctx_feat=True)
+    cut = build_features(g.iloc[:250].reset_index(drop=True), assets, ctx_feat=True)
+    assert set(CTX_FEATURES) <= set(full.columns)
+    assert np.allclose(full[CTX_FEATURES].iloc[:250].to_numpy(), cut[CTX_FEATURES].to_numpy())      # cutting the future changes nothing before the cut
+    assert full["ctx_dd30"].iloc[215] > 0.2 and full["ctx_dd30"].iloc[100] == 0                    # the demand step at minute 200 shows up in the 30 minute change
+    assert full["ctx_dd180"].iloc[300] > 0.2                                                       # and stays visible for three hours
+    assert not set(CTX_FEATURES) & set(build_features(g, assets).columns)                           # off by default

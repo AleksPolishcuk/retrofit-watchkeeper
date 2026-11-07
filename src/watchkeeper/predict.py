@@ -39,6 +39,8 @@ def target_data(dev: DevData, asset_ids: list[str]) -> DevData:
     if unknown:
         raise SystemExit(f"unknown assets {sorted(unknown)}")
     feat = pd.read_parquet(dev.root / "features_1min.parquet", filters=[("asset_id", "in", list(asset_ids))])
+    from .features.ctxjoin import attach_context
+    feat = attach_context(feat, dev.root / "operating_context.csv", list(asset_ids))
     empty = pd.DataFrame(columns=["asset_id"])
     return DevData(dev.root, assets, feat, empty, empty, empty)
 

@@ -22,7 +22,7 @@ from watchkeeper.methods import WKMethod  # noqa: E402
 
 def main() -> int:
     model = DiagnosisModel.load(ROOT / "models" / "wk.joblib")
-    hold = load_set("hold")
+    hold = load_set(sys.argv[1] if len(sys.argv) > 1 else "hold")
     wk = WKMethod()
     r = score_ids(concat_predictions(wk.predict(model, hold, a) for a in hold.ids), hold, hold.ids)
     out = ROOT / "eval" / "results" / "WK_hold"

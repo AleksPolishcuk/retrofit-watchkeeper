@@ -35,6 +35,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=str(ROOT / "models" / "wk.joblib"))
     ap.add_argument("--hold", action="store_true", help="include the untouched hold fleets (use once, at freeze)")
+    ap.add_argument("--hold-set", default="hold", help="which untouched set --hold opens: hold (freeze-v1) or hold2 (the next version)")
     ap.add_argument("--k", type=float, default=None)
     ap.add_argument("--persist", type=int, default=None)
     ap.add_argument("--out", default=str(ROOT / "eval" / "results" / "final"))
@@ -45,7 +46,7 @@ def main() -> int:
     wk = M.WKMethod(**kw)
     sets = {"9 public dev pumps": load_dev(), "tune fleets (16 pumps)": load_set("tune"), "masked-clogging trap (3 pumps)": load_trap()}
     if a.hold:
-        sets["hold fleets (24 pumps)"] = load_set("hold")
+        sets["hold fleets (24 pumps)"] = load_set(a.hold_set)
     rows, detail, jsonout = [], {}, {}
     for name, data in sets.items():
         preds = {"WK": run(wk, model, data), "B1 organizer": run(M.B1Method(fixed=(6, 15)), (6, 15), data), "B1 causal": run(M.B1CausalMethod(fixed=(6, 15)), (6, 15), data)}

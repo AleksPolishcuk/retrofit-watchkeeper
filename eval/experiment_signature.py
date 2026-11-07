@@ -36,17 +36,18 @@ def main() -> int:
     drop = tuple(x.split("=")[1].split(",") for x in args if x.startswith("--drop="))[0] if any(x.startswith("--drop=") for x in args) else ()
     train_healthy = "--train-healthy" in args
     learn = "--learn" in args
+    ctx = tuple(a.split("=")[1].split(",") for a in args if a.startswith("--ctx="))[0] if any(a.startswith("--ctx=") for a in args) else ()
     grid = [x for x in args if not x.startswith("--")] or GRID
     t0 = time.time()
     train = combine(load_set("train"), *([load_set("healthy_train")] if train_healthy else []))
-    model = M.WKMethod(trees=60, min_leaf=25, max_depth=14, drop=drop, learn=learn).fit(train, train.ids)
+    model = M.WKMethod(trees=60, min_leaf=25, max_depth=14, drop=drop, learn=learn, ctx=ctx).fit(train, train.ids)
     # the healthy set that is reported must not be the one that was trained on
     sets = {"tune": load_set("tune"), "dev9": load_dev(), "trap": load_trap(), ("healthy" if train_healthy else "healthy_train"): load_set("healthy" if train_healthy else "healthy_train")}
     print(f"trained [{time.time() - t0:.0f}s]", flush=True)
     rows = []
     for g in grid:
         sig_h, slow_h = parse(g)
-        wk = M.WKMethod(trees=60, min_leaf=25, max_depth=14, sig_h=sig_h, slow_h=slow_h, drop=drop, learn=learn)
+        wk = M.WKMethod(trees=60, min_leaf=25, max_depth=14, sig_h=sig_h, slow_h=slow_h, drop=drop, learn=learn, ctx=ctx)
         for sname, d in sets.items():
             pred = concat_predictions(wk.predict(model, d, a) for a in d.ids)
             r = score_ids(pred, d, d.ids)

@@ -39,7 +39,7 @@ The numbers in this table come from a model fitted only on fleets generated with
 ### What did not work
 
 - Fusing weak shifts across channels along each fault's signature, plus a slow cumulative-sum detector, was built and tested. It found more events, but added false alerts and no earlier warning. It stays in the code, switched off: [eval/results/signature.md](eval/results/signature.md).
-- A real fix for false alerts and early warning needs a better model of normal operation that uses the operating context (cooling demand, sea temperature); this was started but not integrated.
+- Using the operating context (cooling demand, supply water and ambient temperature) was tested in four ways: as part of the operating-point key, as a fluid temperature relative to the supply water, as classifier features, and combinations. None met the adoption rule that was fixed before the runs (healthy false alerts 1.3 per pump-month stayed or rose; scores moved within noise), so the submitted method does not use it: [eval/results/context.md](eval/results/context.md). A better model of normal operation would need each loop's physics, not more bins.
 
 ## Test-pump predictions
 

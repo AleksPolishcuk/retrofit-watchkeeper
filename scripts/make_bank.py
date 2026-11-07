@@ -7,7 +7,8 @@
 Sets (seeds are fixed so the bank is reproducible):
   train    201-205  five fleets of 8 pumps with random faults, extended with impeller wear and air entrainment
   tune     206-207  used only to choose thresholds
-  hold     208-210  untouched until a method is frozen; the number to quote
+  hold     208-210  untouched until a method is frozen; the number to quote (used once, for freeze-v1)
+  hold2    211-213  a second untouched set for the next method version (operating-context normalisation)
   healthy_train 311-316  more healthy fleets used only as training examples of normal operation (labelled NONE)
   healthy  301-306  fleets with no faults, to measure false alerts per pump-month. The generator needs at least one event per fleet, so pump -01
                     gets a 30 minute gateway outage and is left out of the count: 6 fleets x 7 pumps x 7 days = 294 pump-days
@@ -28,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 import retrofit_sim
 
 PACK = Path(retrofit_sim.__file__).resolve().parents[2]            # the organizers' pack that `make setup-pack` installed
-SETS = {"train": [201, 202, 203, 204, 205], "tune": [206, 207], "hold": [208, 209, 210], "healthy": [301, 302, 303, 304, 305, 306], "healthy_train": [311, 312, 313, 314, 315, 316]}
+SETS = {"train": [201, 202, 203, 204, 205], "tune": [206, 207], "hold": [208, 209, 210], "hold2": [211, 212, 213], "healthy": [301, 302, 303, 304, 305, 306], "healthy_train": [311, 312, 313, 314, 315, 316]}
 
 
 def plain(x):

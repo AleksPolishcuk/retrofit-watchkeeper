@@ -14,15 +14,20 @@ from .features.causal import CH, build_features, causal_zscores, hold_sparse
 from .features.npsh import npsh_margin
 
 
-def _regime(data: DevData, hold: int = 0) -> pd.DataFrame:
-    key = ("regime", hold)
+def _regime(data: DevData, hold: int = 0, ctx: tuple = ()) -> pd.DataFrame:
+    """Regime frame. With "demand" in `ctx`, the regime key also contains the cooling demand from the operating context (15 percent bins)."""
+    ctx = tuple(sorted(ctx))
+    key = ("regime", hold) + ((ctx,) if ctx else ())
     if key not in data.cache:
         f = B.regime_frame(data.feat, data.assets)
+        if "demand" in ctx and "ctx_duty_demand_pct" in f:
+            d = f["ctx_duty_demand_pct"].to_numpy(dtype=float)
+            f["regime"] = f["regime"].astype(int) * 100 + np.where(np.isnan(d), 0, np.clip(np.round(d / 15.0), 0, 9)).astype(int)
         data.cache[key] = hold_sparse(f, data.assets, hold) if hold else f
     return data.cache[key]
 
 
-def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0, drop: tuple = (), learn: bool = False) -> pd.DataFrame:
+def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0, drop: tuple = (), learn: bool = False, ctx: tuple = ()) -> pd.DataFrame:
     """Regime frame with robust z-scores for the assets in `data` (each asset uses only its own data).
 
     causal=False is the organizer's baseline (first 24 h of the window). causal=True uses an expanding baseline. `thermal` blanks thermal
@@ -30,10 +35,11 @@ def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0, dr
     `drop` names channel keys (such as "tf") that are blanked: they take no part in triggering, features or evidence.
     """
     drop = tuple(sorted(drop))
-    key = ("zf", causal, thermal, hold) + ((drop,) if drop else ()) + (("learn",) if learn else ())
+    ctx = tuple(sorted(ctx))
+    key = ("zf", causal, thermal, hold) + ((drop,) if drop else ()) + (("learn",) if learn else ()) + ((ctx,) if ctx else ())
     if key not in data.cache:
         if drop:
-            zf = _zf(data, causal, thermal, hold, (), learn).copy()
+            zf = _zf(data, causal, thermal, hold, (), learn, ctx).copy()
             for k in drop:
                 for pre in ("z_", "zs_"):
                     if pre + k in zf:
@@ -42,7 +48,7 @@ def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0, dr
                     zf["flat_" + k] = False
             data.cache[key] = zf
         else:
-            data.cache[key] = causal_zscores(_regime(data, hold), thermal_min=thermal, learn=learn) if causal else B.zscores(_regime(data, hold))
+            data.cache[key] = causal_zscores(_regime(data, hold, ctx), thermal_min=thermal, learn=learn, tf_adj="tfadj" in ctx) if causal else B.zscores(_regime(data, hold))
     return data.cache[key]
 
 
@@ -87,11 +93,12 @@ class B1CausalMethod(B1Method):
     CAUSAL = True
 
 
-def _features(data: DevData, thermal: int = 0, hold: int = 0, drop: tuple = (), learn: bool = False) -> pd.DataFrame:
+def _features(data: DevData, thermal: int = 0, hold: int = 0, drop: tuple = (), learn: bool = False, ctx: tuple = ()) -> pd.DataFrame:
     drop = tuple(sorted(drop))
-    key = ("X", thermal, hold) + ((drop,) if drop else ()) + (("learn",) if learn else ())
+    ctx = tuple(sorted(ctx))
+    key = ("X", thermal, hold) + ((drop,) if drop else ()) + (("learn",) if learn else ()) + ((ctx,) if ctx else ())
     if key not in data.cache:
-        data.cache[key] = build_features(_zf(data, True, thermal, hold, drop, learn), data.assets)
+        data.cache[key] = build_features(_zf(data, True, thermal, hold, drop, learn, ctx), data.assets, ctx_feat="feat" in ctx)
     return data.cache[key]
 
 
@@ -164,7 +171,7 @@ class WKMethod(Method):
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
     def __init__(self, k=5.0, persist=12, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6, min_leaf=3, max_depth=None,
-                 sig_h=None, slow_h=None, slow_k=0.5, sig_smooth=15, sig_persist=12, drop=(), learn=True):
+                 sig_h=None, slow_h=None, slow_k=0.5, sig_smooth=15, sig_persist=12, drop=(), learn=True, ctx=()):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
         self.rules, self.cavitation, self.arbiter = rules, cavitation, arbiter
         self.thermal, self.hold = thermal, hold
@@ -172,16 +179,17 @@ class WKMethod(Method):
         self.sig_h, self.slow_h, self.slow_k, self.sig_smooth, self.sig_persist = sig_h, slow_h, slow_k, sig_smooth, sig_persist
         self.drop = tuple(sorted(drop))
         self.learn = learn
+        self.ctx = tuple(sorted(ctx))
 
     def fit(self, data, train_ids):
-        return DiagnosisModel(self.k_low, self.none_weight, self.trees, min_leaf=self.min_leaf, max_depth=self.max_depth).fit(_zf(data, True, self.thermal, self.hold, self.drop, self.learn), _features(data, self.thermal, self.hold, self.drop, self.learn), data.events, train_ids)
+        return DiagnosisModel(self.k_low, self.none_weight, self.trees, min_leaf=self.min_leaf, max_depth=self.max_depth).fit(_zf(data, True, self.thermal, self.hold, self.drop, self.learn, self.ctx), _features(data, self.thermal, self.hold, self.drop, self.learn, self.ctx), data.events, train_ids)
 
     def predict(self, model, data, asset_id):
         key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter, self.thermal, self.hold,
-               self.sig_h, self.slow_h, self.slow_k, self.sig_smooth, self.sig_persist, self.drop, self.learn)
+               self.sig_h, self.slow_h, self.slow_k, self.sig_smooth, self.sig_persist, self.drop, self.learn, self.ctx)
         if key in data.cache:
             return data.cache[key]
-        zf, X = _zf(data, True, self.thermal, self.hold, self.drop, self.learn), _features(data, self.thermal, self.hold, self.drop, self.learn)
+        zf, X = _zf(data, True, self.thermal, self.hold, self.drop, self.learn, self.ctx), _features(data, self.thermal, self.hold, self.drop, self.learn, self.ctx)
         idx = zf.index[zf.asset_id == asset_id]
         g, Xa = zf.loc[idx].reset_index(drop=True), X.loc[idx]
         P = model.proba(Xa)

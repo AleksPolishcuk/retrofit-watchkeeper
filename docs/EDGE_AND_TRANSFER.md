@@ -66,6 +66,6 @@ Suggested sequence for a new site, from the organizers' pilot path: read-only da
 ## 6. Honest limits
 
 - All measurements are on synthetic data.
-- False alerts on healthy simulated pumps are about 1.3 per pump-month; a plant would tune this with its operators.
+- False alerts on healthy simulated pumps are about 1.3 per pump-month; a plant would tune this with its operators. Adding the operating context (demand, temperatures) did not lower it on this benchmark.
 - The fault type is right for about two in five faults; the machine-or-instrument class is right more often. Alerts say which instrument to check first for this reason.
 - Class approval for condition-based maintenance needs an approved maintenance scheme; a prototype earns none.

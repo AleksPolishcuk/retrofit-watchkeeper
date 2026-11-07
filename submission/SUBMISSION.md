@@ -31,7 +31,8 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 1. The method was frozen at git tag `freeze-v1`, with a clean working tree.
 2. `make predict` loaded `models/wk_final.joblib` and wrote the CSV once. Nothing is trained at predict time. The meta file records the commit, the tag, `dirty: false` and the model's SHA-256.
 3. The test pumps (PUMP-10, 11, 12) were never used to fit, select or tune anything. The evaluation code does not read their telemetry, and the API does not serve it.
-4. Every alert is causal: it uses only data up to its own timestamp. `tests/test_evalkit.py` cuts telemetry at several points and checks that earlier alerts do not change; the organizers' own baseline B1 fails that test, ours passes.
+4. After later code changes (interface, operating-context options that are switched off) the frozen model was run again into a scratch folder and produced the same 33 alerts with the same confidence values.
+5. Every alert is causal: it uses only data up to its own timestamp. `tests/test_evalkit.py` cuts telemetry at several points and checks that earlier alerts do not change; the organizers' own baseline B1 fails that test, ours passes.
 
 ## Evidence discipline
 

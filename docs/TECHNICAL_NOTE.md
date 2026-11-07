@@ -45,14 +45,15 @@ On the hold fleets: F1 0.71, recall 0.67, precision 0.76, fault-type recall 0.41
 ## 5. What did not work
 
 - **Fusing channels along fault signatures, plus a cumulative-sum detector on the fused score.** Built, unit-tested and measured. It finds more events (tune recall 0.62 to 0.69-0.73) but adds false alerts (healthy 6.8 to 9-14 per pump-month) and does not shorten the delay. Raising its thresholds does not remove the false alerts, because healthy pumps carry persistent offsets from the baseline. Switched off (`eval/results/signature.md`).
-- **Earlier warning by this route.** We measured delay after the moment an effect first exceeds 3 sigma; the median is about 1 to 3 hours on the tuning and public sets for the trigger as built, and slow faults take longer. A better model of normal using the operating context (cooling demand, sea temperature) is the next step and is not integrated.
+- **Earlier warning by this route.** We measured delay after the moment an effect first exceeds 3 sigma; the median is about 1 to 3 hours on the tuning and public sets for the trigger as built, and slow faults take longer.
+- **Operating context.** Cooling demand and temperatures from the operating-context table were tried as part of the operating-point key, as a fluid temperature relative to the supply water, and as classifier features. With an adoption rule fixed in advance, none helped: demand bins raised healthy false alerts from 1.3 to 4.4 per pump-month, and the other variants moved scores within noise (`eval/results/context.md`). The options stay in the code, switched off.
 
 ## 6. Limitations
 
 - Synthetic, reduced-order simulator; fault growth compressed to 7 days; no seal leaks or electrical rotor and stator faults.
 - Fault type is right for about two in five faults; the class (machine or instrument) for about three in five. Many machine faults are called instrument drift. The alert therefore states which instrument to check first.
 - Masked suction clogging is below the baseline, and its type is never named.
-- False alerts on healthy simulated pumps remain, mostly at operating points not seen in the first 24 hours.
+- False alerts on healthy simulated pumps remain (1.3 per pump-month); the operating context did not remove them.
 - No time-to-failure estimate. Stage words reflect this simulator only.
 - Not certified and not a safety system; existing alarms and trips remain authoritative.
 

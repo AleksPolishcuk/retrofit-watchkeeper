@@ -49,6 +49,8 @@ def load_dev(data_dir=None) -> DevData:
     ids = sorted(dev.asset_id)
     test_ids = set(assets_all[assets_all.split == "test"].asset_id)
     feat = pd.read_parquet(root / "features_1min.parquet", filters=[("asset_id", "in", ids)])
+    from .features.ctxjoin import attach_context
+    feat = attach_context(feat, root / "operating_context.csv", ids)
     events = pd.concat([pd.read_csv(root / "events_train.csv"), pd.read_csv(root / "events_validation.csv")], ignore_index=True)
     benign = pd.read_csv(root / "benign_windows_train_validation.csv")
     alarms = pd.read_csv(root / "alarms.csv")

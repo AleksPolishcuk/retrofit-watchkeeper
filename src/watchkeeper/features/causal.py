@@ -96,7 +96,7 @@ def regime_learning_z(vals: np.ndarray, reg: np.ndarray, steady: np.ndarray, flo
     return z
 
 
-def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0, learn: bool = False, min_regime: int = 120, learn_min: int = 180) -> pd.DataFrame:
+def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0, learn: bool = False, min_regime: int = 120, learn_min: int = 180, tf_adj: bool = False) -> pd.DataFrame:
     """`f` is the output of `retrofit_sim.baselines.regime_frame`. With `learn=True` the level baseline is per regime and regimes first seen after the
     baseline period are learned before they are judged (see `regime_learning_z`)."""
     out = []
@@ -128,8 +128,10 @@ def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120,
                     sb = base[s_col].median()
                     zs[sel] = ((g.loc[sel, s_col] - sb) / max(1.4826 * (base[s_col] - sb).abs().median(), 1e-3 + 0.05 * abs(sb))).to_numpy()
             if learn:
-                z = regime_learning_z(g[m].to_numpy(dtype=float), g["regime"].to_numpy(), g["steady"].to_numpy().astype(bool), FLOOR[k],
-                                      baseline_h * 60, min_regime, learn_min)
+                vals = g[m].to_numpy(dtype=float)
+                if tf_adj and k == "tf" and "ctx_supply_water_temp_c" in g:
+                    vals = vals - g["ctx_supply_water_temp_c"].to_numpy(dtype=float)       # fluid temperature relative to the supply water temperature from the operating context
+                z = regime_learning_z(vals, g["regime"].to_numpy(), g["steady"].to_numpy().astype(bool), FLOOR[k], baseline_h * 60, min_regime, learn_min)
             g["z_" + k] = z
             if s_col in g:
                 g["zs_" + k] = zs
@@ -154,7 +156,10 @@ def _hours_since_lockout(mode: np.ndarray, n: int, cap: float = 99.0) -> np.ndar
     return out
 
 
-def build_features(zf: pd.DataFrame, assets: pd.DataFrame) -> pd.DataFrame:
+CTX_FEATURES = ["ctx_demand", "ctx_dd30", "ctx_dd180", "ctx_temp", "ctx_amb"]
+
+
+def build_features(zf: pd.DataFrame, assets: pd.DataFrame, ctx_feat: bool = False) -> pd.DataFrame:
     """Feature matrix aligned with `zf`. Rolling terms look backwards only. Channel availability comes from assets.csv."""
     avail = {r.asset_id: set(str(r.channels_available).split("|")) for r in assets.itertuples()}
     parts = []
@@ -173,5 +178,18 @@ def build_features(zf: pd.DataFrame, assets: pd.DataFrame) -> pd.DataFrame:
         X["gap"] = g["gap"].astype(float)
         X["speed_ratio"] = g["speed_ratio"].fillna(-1.0) if "speed_ratio" in g else -1.0
         X["since_lockout_h"] = _hours_since_lockout(g["operating_mode"].to_numpy() if "operating_mode" in g else np.array([]), len(g))
-        parts.append(X[FEATURE_COLUMNS])
+        if ctx_feat:
+            # operating context as extra evidence for the classifier: a recent change of cooling demand makes a deviation more likely to be benign
+            if "ctx_duty_demand_pct" in g:
+                d = g["ctx_duty_demand_pct"].astype(float).ffill().fillna(0.0) / 100.0         # forward fill only: causal
+                X["ctx_demand"] = d
+                dd = (d - d.shift(30)).abs().fillna(0.0)
+                X["ctx_dd30"] = dd
+                X["ctx_dd180"] = dd.rolling(180, min_periods=1).max()
+                X["ctx_temp"] = g["ctx_supply_water_temp_c"].astype(float).ffill().fillna(0.0) / 50.0 if "ctx_supply_water_temp_c" in g else 0.0
+                X["ctx_amb"] = g["ctx_ambient_temp_c"].astype(float).ffill().fillna(0.0) / 50.0 if "ctx_ambient_temp_c" in g else 0.0
+            else:
+                for col in CTX_FEATURES:
+                    X[col] = 0.0
+        parts.append(X[FEATURE_COLUMNS + (CTX_FEATURES if ctx_feat else [])])
     return pd.concat(parts).loc[zf.index]

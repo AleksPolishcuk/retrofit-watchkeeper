@@ -45,7 +45,7 @@ def mask(data, keys):
 
 def main() -> int:
     model = DiagnosisModel.load(ROOT / "models" / "wk.joblib")
-    hold = load_set("hold")
+    hold = load_set(sys.argv[1] if len(sys.argv) > 1 else "hold")
     rows, t0 = [], time.time()
     for name, keys in SCENARIOS.items():
         d = mask(hold, keys)
