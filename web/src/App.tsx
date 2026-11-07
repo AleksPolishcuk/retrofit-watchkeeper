@@ -55,7 +55,7 @@ export default function App() {
   const [route, setRoute] = useState<Parsed>(() => parseRoute(window.location.hash))
   const [assets, setAssets] = useState<Asset[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
-  const [alertSource, setAlertSource] = useState<'engine' | 'mock' | null>(null)
+  const [alertSource, setAlertSource] = useState<'engine' | 'none' | null>(null)
   const [results, setResults] = useState<Results | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [reviews, setReviews] = useState<Record<string, Review>>(loadReviews)
@@ -153,8 +153,8 @@ export default function App() {
           </div>
         </div>
         {error && <div className="error" role="alert">{error}</div>}
-        {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'mock' && (
-          <p className="alertwarn" role="alert"><b>These are demo alerts, not engine output.</b> The alert files are missing, so there are no priority levels. Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
+        {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'none' && (
+          <p className="alertwarn" role="alert"><b>No alert files were found.</b> Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
         )}
         {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'engine' && alerts.some((x) => !x.stage) && (
           <p className="alertwarn" role="alert"><b>Some alert files are from an older engine version and have no priority level.</b> They are listed as Watch. Run <code>make alerts</code>, restart the API and reload.</p>

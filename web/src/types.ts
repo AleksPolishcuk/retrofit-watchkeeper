@@ -15,7 +15,7 @@ export interface Asset {
   fluid: string
   channels_available: string[]
   alert_count: number
-  alert_source: 'engine' | 'mock'
+  alert_source: 'engine' | 'none'
   telemetry_served: boolean
 }
 

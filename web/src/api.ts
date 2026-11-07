@@ -44,8 +44,8 @@ export const api = {
   liveOne: (asset_id: string) => get<LiveState>(`/api/live/${encodeURIComponent(asset_id)}`),
   dataHealthNow: (asset_id: string) => get<DataHealth>(`/api/data-health?${q({ asset_id })}`),
   dataHealth: (asset_id: string, as_of: string) => get<DataHealth>(`/api/data-health?${q({ asset_id, as_of })}`),
-  allAlerts: () => get<{ source: 'engine' | 'mock'; alerts: Alert[] }>('/api/alerts'),
-  alerts: (asset_id: string) => get<{ source: 'engine' | 'mock'; alerts: Alert[] }>(`/api/alerts?${q({ asset_id })}`),
+  allAlerts: () => get<{ source: 'engine' | 'none'; alerts: Alert[] }>('/api/alerts'),
+  alerts: (asset_id: string) => get<{ source: 'engine' | 'none'; alerts: Alert[] }>(`/api/alerts?${q({ asset_id })}`),
   timeline: (asset_id: string) => get<Timeline>(`/api/timeline?${q({ asset_id })}`),
   whatif: (asset_id: string, time_utc: string, fault_type: string) =>
     get<WhatIfResult>(`/api/whatif?${q({ asset_id, time_utc, fault_type })}`),

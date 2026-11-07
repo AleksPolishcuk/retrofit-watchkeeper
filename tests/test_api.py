@@ -32,14 +32,14 @@ def test_assets_list_has_twelve_pumps_with_tiers(client):
     assert {a["asset_id"] for a in r if not a["telemetry_served"]} == {"PUMP-10", "PUMP-11", "PUMP-12"}
 
 
-def test_alerts_fall_back_to_mock_when_the_engine_has_written_nothing(client):
+def test_alerts_say_none_when_there_are_no_alert_files_and_make_nothing_up(client):
     r = client.get("/api/alerts", params={"asset_id": "PUMP-08"}).json()
-    assert r["source"] == "mock" and len(r["alerts"]) >= 1
-    assert all(a["asset_id"] == "PUMP-08" for a in r["alerts"])
+    assert r["source"] == "none" and r["alerts"] == []
+    assert client.get("/api/alerts").json()["alerts"] == []
 
 
-def test_alerts_use_engine_file_when_present(tmp_path):
-    alert = json.loads((ROOT / "docs" / "mock_alerts.json").read_text(encoding="utf-8"))[0]
+def test_alerts_use_the_engine_files_when_present(tmp_path):
+    alert = json.loads((ROOT / "artifacts" / "alerts" / "PUMP-08.json").read_text(encoding="utf-8"))[0]
     (tmp_path / "PUMP-08.json").write_text(json.dumps([alert]), encoding="utf-8")
     r = TestClient(create_app(DATA, alerts_dir=tmp_path)).get("/api/alerts", params={"asset_id": "PUMP-08"}).json()
     assert r["source"] == "engine" and len(r["alerts"]) == 1

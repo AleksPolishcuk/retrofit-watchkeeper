@@ -3,7 +3,6 @@
 
 export type Level = 'watch' | 'possible' | 'likely' | 'very_likely'
 export const LEVELS: Level[] = ['very_likely', 'likely', 'possible', 'watch'] // strongest first
-export const URGENT: Level[] = ['very_likely', 'likely']
 
 /** A missing stage counts as Watch, the same as the priority filter does. */
 export const rankOf = (s?: string): number => (s === 'very_likely' ? 3 : s === 'likely' ? 2 : s === 'possible' ? 1 : 0)

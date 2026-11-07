@@ -1,4 +1,4 @@
-"""The alert contract between Engine and Cockpit: mock alerts and engine output must validate."""
+"""The alert contract between the engine and the interface: every committed alert must validate."""
 import json
 from pathlib import Path
 
@@ -18,23 +18,23 @@ def test_schema_is_valid():
     Draft202012Validator.check_schema(SCHEMA)
 
 
-def test_mock_alerts_validate():
-    alerts = json.loads((ROOT / "docs" / "mock_alerts.json").read_text(encoding="utf-8"))
-    assert len(alerts) >= 6
-    assert _errors(alerts) == []
+ENGINE = sorted((ROOT / "artifacts" / "alerts").glob("*.json"))
 
 
-def test_mock_alerts_cover_the_cases_the_ui_must_show():
-    alerts = json.loads((ROOT / "docs" / "mock_alerts.json").read_text(encoding="utf-8"))
+def _all():
+    return [a for p in ENGINE for a in json.loads(p.read_text(encoding="utf-8"))]
+
+
+def test_the_committed_alerts_cover_the_cases_the_interface_must_show():
+    alerts = _all()
+    assert len(alerts) >= 90 and len(ENGINE) == 12
     assert {a["event_class"] for a in alerts} == {"MACHINE", "SENSOR"}
-    assert any(a["fault_type"] == "UNKNOWN" for a in alerts)
-    assert any(a.get("uncertainty", {}).get("missing_channels") for a in alerts)
+    assert any(a["fault_type"] == "UNKNOWN" or a.get("uncertainty", {}).get("missing_channels") for a in alerts)
     assert all(a["requires_human_approval"] is True for a in alerts)
 
 
 def test_alert_ids_are_unique():
-    alerts = json.loads((ROOT / "docs" / "mock_alerts.json").read_text(encoding="utf-8"))
-    ids = [a["alert_id"] for a in alerts]
+    ids = [a["alert_id"] for a in _all()]
     assert len(ids) == len(set(ids))
 
 

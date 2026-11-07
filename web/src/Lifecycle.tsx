@@ -14,7 +14,7 @@ const FAULTS = [
 ]
 const name = (t: string) => (t === 'OTHER' ? 'Something else (describe it in the note)' : pretty(t).replace(/^./, (c) => c.toUpperCase()))
 const hours = (h: number) => (h < 10 ? h.toFixed(1) : Math.round(h).toString())
-const stamp = (iso: string) => new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+const stamp = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 interface Props {
   inc: Incident

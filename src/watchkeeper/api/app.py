@@ -1,6 +1,6 @@
 """Read-only API. Every route is GET: there is no way to send a command to a machine through this service.
 
-Alerts come from artifacts/alerts/<asset_id>.json (written by the engine) and fall back to docs/mock_alerts.json.
+Alerts come from artifacts/alerts/<asset_id>.json (written by the engine). If those files are missing the answer says so (source "none"); nothing is made up.
 Telemetry series are only served for the nine dev pumps. The three test pumps (PUMP-10, 11, 12) are not served here.
 """
 from __future__ import annotations
@@ -41,10 +41,9 @@ def _clean(value):
     return None if isinstance(value, float) and pd.isna(value) else value
 
 
-def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None, archive_dir=None) -> FastAPI:
+def create_app(data_dir=None, alerts_dir=None, live_dir=None, archive_dir=None) -> FastAPI:
     data_dir = Path(data_dir or os.environ.get("WATCHKEEPER_DATA", ROOT / "data"))
     alerts_dir = Path(alerts_dir or ROOT / "artifacts" / "alerts")
-    mock_path = Path(mock_path or ROOT / "docs" / "mock_alerts.json")
     live_dir = Path(live_dir or ROOT / "artifacts" / "live")
     archive_dir = Path(archive_dir or ROOT / "artifacts" / "alerts_archive")
 
@@ -62,14 +61,13 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None, ar
         return by_id[asset_id]
 
     def load_alerts(asset_id: str | None):
-        """Return (source, alerts). Engine file when it exists, otherwise the mock file."""
+        """Return (source, alerts): the engine's files, or ("none", []) when there are none."""
         if asset_id and (alerts_dir / f"{asset_id}.json").exists():
             return "engine", json.loads((alerts_dir / f"{asset_id}.json").read_text(encoding="utf-8"))
         if asset_id is None and alerts_dir.exists() and any(alerts_dir.glob("*.json")):
             merged = [a for p in sorted(alerts_dir.glob("*.json")) for a in json.loads(p.read_text(encoding="utf-8"))]
             return "engine", merged
-        mock = json.loads(mock_path.read_text(encoding="utf-8")) if mock_path.exists() else []
-        return "mock", [a for a in mock if asset_id is None or a["asset_id"] == asset_id]
+        return "none", []
 
     @app.get("/api/health")
     def health():
