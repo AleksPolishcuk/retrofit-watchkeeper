@@ -1,6 +1,6 @@
 # Watchkeeper
 
-Read-only operator-assist layer for existing cooling-water pumps.
+Read-only operator-assist layer for existing cooling-water pumps (ship seawater and fresh-water loops, cooling-tower pumps). The benchmark also contains two hot process-water transfer pumps; they are handled the same way.
 
 Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 November 2026) for the challenge **RETROFIT AI: Make Existing Machines Intelligent** (challenge owner Business Turku, technical sparring partner Elomatic).
 
@@ -40,6 +40,18 @@ The numbers in this table come from a model fitted only on fleets generated with
 | Tuning fleets (16 pumps, 48 events) | 59.9 (50 to 70) | 42.9 (35 to 51) | 37.5 |
 | 9 public development pumps (35 events) | 67.1 (58 to 73) | 63.4 | 43.6 |
 | Organizers' own split: 7 train pumps / 2 validation pumps | 63.0 / 79.5 | 58.2 / 78.0 | |
+
+Against all four reference baselines of the data pack, on the organizers' own split (`baselines/run_baselines.py`, re-run by us and identical to their README; Watchkeeper from `eval/results/final/report.md`):
+
+| Method | Train (7 pumps) | Validation (2 pumps, 9 events) |
+|---|---|---|
+| B0 the plant's own alarms | 27.6 | 23.1 |
+| B1 mode-aware z-score | 58.2 | 78.0 |
+| B2 CUSUM | 53.3 | 50.9 |
+| B3 isolation forest | 39.4 | 69.2 |
+| **Watchkeeper** | **63.0** | **79.5** |
+
+Validation is two pumps and nine events, so 79.5 against 78.0 is a tie within noise. Our evidence of a real margin over B1 is the larger sets above (24 unseen generated pumps: 62.8 against 52.1).
 | Masked-clogging trap (3 pumps, 6 events) | 48.1 | 52.1 | 40.9 |
 
 - An alert-free detector scores 10. The plant's existing alarms score 23 on the organizers' validation split.
@@ -58,6 +70,19 @@ The numbers in this table come from a model fitted only on fleets generated with
 ## Test-pump predictions
 
 `submission/predictions_test.csv` has 33 alerts for PUMP-10, 11 and 12, produced once from git tag `freeze-v1` by `make predict`. `predictions_test.meta.json` records the commit, the tag, a clean-tree flag and the model file's SHA-256. Test pumps were never used for fitting, selection or threshold choice.
+
+## Which provided data we use
+
+| File in the data pack | Use |
+|---|---|
+| `features_1min.parquet`, `telemetry/` | **Used.** The detector reads the 1-minute features; the 1-second telemetry is replayed through our read-only ingest and gives the same minutes (`eval/results/live_replay.md`). |
+| `assets.csv` | **Used**: ratings, instrumentation tier and channel list, pump-curve and suction values for the NPSH cavitation check. The bearing defect frequencies are **not** used. |
+| `events_*.csv`, `benign_windows_*.csv` | **Used** to fit and to score (public pumps only). The test pumps' labels are never read. |
+| `alarms.csv` | **Used** for the business case (how long before the plant's alarm limit the first alert comes), not by the detector. |
+| `operating_context.csv` | **Tested, not adopted**: as classifier features or as part of the operating point it did not help (`eval/results/context.md`). |
+| `vibration_snapshots.parquet` | **Not used.** Bearing defects are found from the vibration and acceleration channels of the 1-minute features; no spectra. This is the most obvious next step. |
+| `maintenance.csv` | **Not used.** The detector only knows a recent lock-out (maintenance) from the operating mode. |
+| Pump-curve reference | **Tested as a probe, not shipped** (`eval/results/pump_curve_probe.md`). |
 
 ## Run it
 

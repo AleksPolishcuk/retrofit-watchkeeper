@@ -9,7 +9,7 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 | Working prototype: ingest or replay, detect, evidence and uncertainty, recommended action | `make api` and `make web`; the Alerts page replays the data up to the alert; `make live-demo` streams raw replay messages through the read-only ingest and the detector (`src/watchkeeper/ingest/`, `eval/results/live_replay.md`); code in `src/watchkeeper/` and `web/` |
 | Alerts for the 3 test pumps in the template format | `submission/predictions_test.csv` (33 alerts) with `predictions_test.meta.json` (commit, tag `freeze-v1`, model SHA-256) |
 | Code and run instructions | `README.md` (Run it), `Makefile` |
-| Comparison with the provided baselines | `README.md` (Measured results), `eval/results/final/report.md` |
+| Comparison with the provided baselines | `README.md` (Measured results: B0, B1, B2, B3 on the organizers' split, B1 on 24 unseen generated pumps), `eval/results/final/report.md` |
 | Honest limitations | `README.md` (Limitations), Proof tab of the interface, `docs/TECHNICAL_NOTE.md` |
 | Short demo | A 2-minute video with voice and English subtitles; its script, narration and subtitles are in `docs/DEMO_SCRIPT.md`, `submission/demo_narration.txt` and `submission/demo_subtitles.en.srt`; the link goes in `submission/demo_video_link.txt` |
 | Optional: what-if in the sandbox | Alerts page, step 4, "Try it in the simulator" for strainer, bearing and alignment alerts (simulation only) |
