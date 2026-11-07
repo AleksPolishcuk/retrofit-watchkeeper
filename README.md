@@ -101,6 +101,10 @@ docs/              plan, audit, alert contract (JSON schema), business case, edg
 submission/        test-pump alerts and submission notes
 ```
 
+## Accessibility
+
+Axe finds no violations on any page (light and dark); a contrast test guards the colours; keyboard, 320 px reflow and larger text were checked; it has not been tested with screen readers or by assistive-technology users. Details and limits: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
+
 ## Data and attribution
 
 All data are synthetic. See [NOTICE](NOTICE). Data: "RETROFIT AI 2026 synthetic pump benchmark, Since AI Hackathon 2026" (CC BY 4.0). Simulator, scorer and baselines from the data pack are MIT-licensed.
