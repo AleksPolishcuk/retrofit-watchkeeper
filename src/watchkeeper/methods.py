@@ -6,7 +6,7 @@ import pandas as pd
 from retrofit_sim import baselines as B
 
 from .evalkit import INTERNAL_COLS, DevData, Method, concat_predictions, score_ids
-from .detect.alerting import alerts_from_flag, b1_flag
+from .detect.alerting import alerts_from_flag, alerts_from_flags, b1_flag, split_flags
 from .detect.cavitation import cavitation_episodes
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of
 from .features.causal import CH, build_features, causal_zscores, hold_sparse
@@ -93,18 +93,18 @@ def _flag(row: pd.Series, key: str) -> bool:
     return bool(v) and not pd.isna(v)
 
 
-def _rule_diagnosis(row: pd.Series, xrow: pd.Series | None = None, kz: float = 6.0, arbiter: bool = False) -> dict | None:
+def _rule_diagnosis(row: pd.Series, xrow: pd.Series | None = None, kz: float = 6.0, arbiter: bool = False, only: str | None = None) -> dict | None:
     """Deterministic instrument faults: a gateway gap, a channel frozen while the pump runs steadily, and (arbiter) one channel
     that deviates while every physically coupled channel stays quiet."""
-    if _flag(row, "gap"):
+    if only in (None, "gap") and _flag(row, "gap"):
         return {"event_class": "SENSOR", "fault_type": "COMMUNICATION_LOSS", "confidence": 0.9, "evidence": "missing rows",
                 "action": ACTIONS["COMMUNICATION_LOSS"], "rule": "rule_gap"}
-    if _flag(row, "steady"):
+    if only in (None, "stuck") and _flag(row, "steady"):
         for k in STUCK_KEYS:
             if _flag(row, "flat_" + k):
                 return {"event_class": "SENSOR", "fault_type": "SENSOR_STUCK", "confidence": 0.85, "evidence": f"{CH[k]} frozen",
                         "action": ACTIONS["SENSOR_STUCK"], "rule": "rule_stuck"}
-    if arbiter and xrow is not None:
+    if only in (None, "dev") and arbiter and xrow is not None:
         zv = {c: row.get("z_" + c) for c in CH}
         zv = {c: float(v) for c, v in zv.items() if v is not None and not pd.isna(v)}
         for c in sorted((c for c in zv if abs(zv[c]) > kz and c in ARBITER_KEYS), key=lambda c: -abs(zv[c])):
@@ -137,13 +137,14 @@ class WKMethod(Method):
 
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
-    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6):
+    def __init__(self, k=5.0, persist=12, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6, min_leaf=3, max_depth=None):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
         self.rules, self.cavitation, self.arbiter = rules, cavitation, arbiter
         self.thermal, self.hold = thermal, hold
+        self.min_leaf, self.max_depth = min_leaf, max_depth
 
     def fit(self, data, train_ids):
-        return DiagnosisModel(self.k_low, self.none_weight, self.trees).fit(_zf(data, True, self.thermal, self.hold), _features(data, self.thermal, self.hold), data.events, train_ids)
+        return DiagnosisModel(self.k_low, self.none_weight, self.trees, min_leaf=self.min_leaf, max_depth=self.max_depth).fit(_zf(data, True, self.thermal, self.hold), _features(data, self.thermal, self.hold), data.events, train_ids)
 
     def predict(self, model, data, asset_id):
         key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter, self.thermal, self.hold)
@@ -163,9 +164,13 @@ class WKMethod(Method):
         none_i = classes.index("NONE") if "NONE" in classes else None
         type_i = [i for i, c in enumerate(classes) if c != "NONE"]
 
-        def diag(j):
+        def diag(j, reason):
+            if reason in ("gap", "stuck"):
+                if self.rules:
+                    return _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, False, only=reason)
+                return None
             if self.rules:
-                r = _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, self.arbiter)
+                r = _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, self.arbiter, only="dev")
                 if r is not None:
                     return r
             if cav_active[j]:
@@ -182,7 +187,7 @@ class WKMethod(Method):
             return {"event_class": event_class_of(ft), "fault_type": ft, "confidence": min(max(conf, 0.05), 0.99),
                     "evidence": _evidence(g.iloc[j]), "action": ACTIONS[ft], "alternatives": alts, "rule": "model"}
 
-        rows = alerts_from_flag(g, b1_flag(g, self.k), self.persist, diag, "WK causal+learned")
+        rows = alerts_from_flags(g, split_flags(g, self.k), {"dev": self.persist, "gap": min(self.persist, 8), "stuck": self.persist}, diag, "WK causal+learned")
         rows += [dict(r, evidence="WK causal+learned: " + r["evidence"]) for r in cav_rows]
         out = pd.DataFrame(sorted(rows, key=lambda r: r["alert_time_utc"]), columns=INTERNAL_COLS)
         data.cache[key] = out
