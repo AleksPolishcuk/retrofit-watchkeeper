@@ -11,7 +11,7 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 | Code and run instructions | `README.md` (Run it), `Makefile` |
 | Comparison with the provided baselines | `README.md` (Measured results), `eval/results/final/report.md` |
 | Honest limitations | `README.md` (Limitations), Proof tab of the interface, `docs/TECHNICAL_NOTE.md` |
-| Short demo | `docs/DEMO_SCRIPT.md` (storyboard for a 3 minute recording: Overview, Alerts, Proof, Value, Retrofit) |
+| Short demo | A 2-minute video with voice and English subtitles; its script, narration and subtitles are in `docs/DEMO_SCRIPT.md`, `submission/demo_narration.txt` and `submission/demo_subtitles.en.srt`; the link goes in `submission/demo_video_link.txt` |
 | Optional: what-if in the sandbox | Alerts page, step 4, "Try it in the simulator" for strainer, bearing and alignment alerts (simulation only) |
 | Optional: edge design and transfer plan | `docs/EDGE_AND_TRANSFER.md`, Retrofit tab |
 | Optional: business case | `docs/business_case.md` (assumptions labelled, measured inputs from untouched fleets) |
