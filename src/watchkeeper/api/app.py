@@ -12,6 +12,10 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 
+from ..detect.datahealth import data_health
+from ..detect.rangecheck import check_ranges
+from ..features.hygiene import clean_minutes
+
 ROOT = Path(__file__).resolve().parents[3]
 ASSET_FIELDS = ["asset_id", "split", "site", "system", "profile", "control", "instrumentation_tier", "window_start_utc",
                 "window_end_utc", "commissioned_year", "motor_rated_kw", "fluid", "vibration_alarm_mm_s", "vibration_trip_mm_s"]
@@ -119,6 +123,26 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None) -> FastAPI:
         s = feature_cache[asset_id][col].dropna().resample(f"{step_min}min").mean().dropna()
         return {"asset_id": asset_id, "channel": channel, "step_min": step_min,
                 "t": [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in s.index], "v": [round(float(v), 3) for v in s.values]}
+
+    health_cache: dict = {}
+
+    @app.get("/api/data-health")
+    def data_health_route(asset_id: str, as_of: str | None = None):
+        """Can this pump be evaluated at `as_of` (default: the end of its window), and if not, why not? Public pumps only: the test pumps' telemetry is not read here."""
+        a = need(asset_id)
+        if asset_id not in dev_ids:
+            raise HTTPException(403, "data health is not computed for the test pumps in this build")
+        if asset_id not in health_cache:
+            df = pd.read_parquet(data_dir / "features_1min.parquet", filters=[("asset_id", "==", asset_id)])
+            cleaned, report = clean_minutes(df)
+            health_cache[asset_id] = (cleaned, report, check_ranges(cleaned, pd.Series(a)))
+        feat, report, checks = health_cache[asset_id]
+        try:
+            h = data_health(feat, pd.Series(a), as_of=as_of, hygiene=report)
+        except (ValueError, TypeError) as e:
+            raise HTTPException(400, f"bad as_of: {e}")
+        h["checks"] = checks
+        return json.loads(json.dumps(h, default=str))
 
     results_dir = ROOT / "eval" / "results"
 

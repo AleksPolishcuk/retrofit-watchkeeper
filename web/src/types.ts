@@ -172,3 +172,20 @@ export interface Business {
   base: Record<'organizers_convention' | 'refined', { benefit: number; nuisance: number; net: number; payback_yr: number | null }>
   sites: { name: string; downtime_eur_h: number; faults_per_year: number; benefit: number; nuisance: number; net: number; payback_yr: number | null }[]
 }
+
+export type HealthStatus = 'OK' | 'BASELINE_LEARNING' | 'DEGRADED' | 'INSUFFICIENT_DATA' | 'NO_DATA'
+
+export interface DataHealth {
+  status: HealthStatus
+  reasons: string[]
+  as_of: string | null
+  last_data_utc: string | null
+  minutes_since_last_data: number | null
+  mode: string | null
+  channels: { name: string; label: string; status: 'live' | 'stale' | 'missing'; last_seen_utc: string | null; age_minutes: number | null }[]
+  gaps: { start_utc: string; end_utc: string; minutes: number }[]
+  quality: { flagged_last_60: number; flagged_total: number; bits: Record<string, number> }
+  baseline_running_minutes: number
+  hygiene: { rows_in: number; duplicates_dropped: number; conflicts: number; out_of_order: number } | null
+  checks: { channel: string; message: string }[]
+}

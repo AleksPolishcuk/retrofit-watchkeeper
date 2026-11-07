@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
@@ -95,3 +96,13 @@ def test_results_endpoint_serves_measurements_and_tier_channels_from_files(clien
     assert set(t0["channels"]) < set(t2["channels"])                    # the legacy set is a subset of the full set
     assert "stages" in r and "footprint" in r and "report" in r and "business" in r        # absent files give null, not an error
     json.dumps(r, allow_nan=False)                                       # no NaN leaks into the response
+
+
+def test_data_health_says_whether_a_public_pump_can_be_evaluated_and_refuses_the_test_pumps(client):
+    h = client.get("/api/data-health", params={"asset_id": "PUMP-08"}).json()
+    assert h["status"] in {"OK", "BASELINE_LEARNING", "DEGRADED", "INSUFFICIENT_DATA", "NO_DATA"} and h["channels"] and "reasons" in h and "checks" in h
+    start = next(a for a in client.get("/api/assets").json() if a["asset_id"] == "PUMP-08")["window_start_utc"]
+    early = client.get("/api/data-health", params={"asset_id": "PUMP-08", "as_of": (pd.Timestamp(start) + pd.Timedelta(hours=1)).isoformat()}).json()
+    assert early["status"] == "BASELINE_LEARNING"                           # one hour into the window the pump's normal is not known yet
+    assert client.get("/api/data-health", params={"asset_id": "PUMP-10"}).status_code == 403
+    assert client.get("/api/data-health", params={"asset_id": "PUMP-08", "as_of": "not a time"}).status_code == 400

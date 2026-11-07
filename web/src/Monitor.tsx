@@ -8,10 +8,11 @@ import { CHANNEL, fmtNum, howFar, incidentsOf, median, nameOf, titleOf } from '.
 import { STAGE_LABEL, STAGES, stageRank, when } from './stage'
 import TimelineChart from './Timeline'
 import WhatIf from './WhatIf'
-import type { Alert, Asset, Results, Series, Stage, Timeline } from './types'
+import type { Alert, Asset, DataHealth, Results, Series, Stage, Timeline } from './types'
 
 const HOUR = 3600_000
 const DEFAULT_SIGNALS = ['vibration_rms_mm_s', 'discharge_pressure_kpa', 'motor_current_a', 'suction_pressure_kpa', 'bearing_temp_c']
+const HEALTH_LABEL: Record<string, string> = { OK: 'Data OK', BASELINE_LEARNING: 'Still learning', DEGRADED: 'Data degraded', INSUFFICIENT_DATA: 'Not enough data', NO_DATA: 'No data' }
 const STAGE_WORDS: Record<Stage, string> = {
   watch: 'Something moved. Keep an eye on it.',
   possible: 'Worth a look when convenient.',
@@ -57,6 +58,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
   const [tl, setTl] = useState<Timeline | null>(null)
   const [tlSeries, setTlSeries] = useState<Series | null>(null)
   const [techOpen, setTechOpen] = useState(false)
+  const [health, setHealth] = useState<DataHealth | 'hidden' | null>(null)
   const timer = useRef<number | null>(null)
 
   const allIncidents = useMemo(() => incidentsOf(pumpId === 'all' ? alerts : alerts.filter((a) => a.asset_id === pumpId)), [alerts, pumpId])
@@ -86,6 +88,19 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
   }, [a?.alert_id])
 
   const alertMs = a ? Date.parse(a.alert_time_utc) : 0
+
+  // was the pump's data good at the moment of the alert? (public pumps only)
+  useEffect(() => {
+    setHealth(null)
+    if (!a || !asset) return
+    if (!asset.telemetry_served) {
+      setHealth('hidden')
+      return
+    }
+    let live = true
+    api.dataHealth(asset.asset_id, a.alert_time_utc).then((h) => live && setHealth(h)).catch(() => live && setHealth('hidden'))
+    return () => { live = false }
+  }, [a?.alert_id, asset?.asset_id, asset?.telemetry_served])
   const t0 = asset ? Date.parse(asset.window_start_utc) : 0
   const t1 = asset ? Date.parse(asset.window_end_utc) : 0
   const fromMs = Math.max(t0, alertMs - 36 * HOUR)
@@ -240,6 +255,23 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
                   <div className="replaybar">
                     <button className="btn primary" onClick={play} disabled={playing}><Icon name="play" /> {playing ? 'Playing…' : 'Watch it happen'}</button>
                     <span className="muted small">The line is drawn as the data arrived. At the dashed line Watchkeeper raised the alert; nothing after that moment was used.</span>
+                  </div>
+                  <div className={`dcheck ${health && health !== 'hidden' ? 'h-' + health.status : ''}`} role="status">
+                    <b>Data check at the time of the alert:</b>{' '}
+                    {health === null && <span className="muted">checking…</span>}
+                    {health === 'hidden' && <span className="muted">not available for this pump.</span>}
+                    {health && health !== 'hidden' && (
+                      <>
+                        <span className={`hchip h-${health.status}`}>{HEALTH_LABEL[health.status]}</span>
+                        <ul>
+                          {health.reasons.slice(0, 4).map((r, i) => <li key={i}>{r}</li>)}
+                          {health.checks.map((c, i) => <li key={`c${i}`}>{c.message}</li>)}
+                        </ul>
+                        {health.hygiene && (health.hygiene.duplicates_dropped > 0 || health.hygiene.out_of_order > 0) && (
+                          <p className="muted small">Input clean-up: {health.hygiene.duplicates_dropped} repeated minute(s) dropped, {health.hygiene.conflicts} with conflicting values, {health.hygiene.out_of_order} out of order.</p>
+                        )}
+                      </>
+                    )}
                   </div>
                   <div className="sigs">
                     {channels.map((c, i) => <SignalChart key={c} series={seriesOf(c)} alertMs={alertMs} fromMs={fromMs} toMs={toMs} label={nameOf(c)} unit={CHANNEL[c]?.[1] ?? ''} progress={progress} height={i === 0 ? 190 : 140} />)}
