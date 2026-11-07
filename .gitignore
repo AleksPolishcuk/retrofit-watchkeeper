@@ -3,6 +3,7 @@
 my_results/
 /bank
 /build
+/local
 artifacts/*
 # the recorded alerts the interface shows are small and part of the submission; live state and the archive stay local
 !artifacts/alerts/
@@ -10,7 +11,6 @@ artifacts/*
 # Secrets
 .env
 .env.*
-!.env.example
 !.env.snapshot
 
 # Python

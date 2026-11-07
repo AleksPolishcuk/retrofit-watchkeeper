@@ -100,7 +100,7 @@ make live-demo                 # optional: replay PUMP-08 as raw messages throug
 make archive                   # optional: immutable snapshots of artifacts/alerts per model version
 ```
 
-If the interface says "These are demo alerts" or the priority filter shows nothing, the alert files are missing or old: `artifacts/alerts/*.json` is committed, so `git pull`, restart `make api` and reload. After training the models yourself, `make alerts` rewrites them (byte-identical for the same model). `models/*.joblib` and `bank/` are not committed.
+If the interface says "No alert files were found" or the priority filter shows nothing, the alert files are missing or old: `artifacts/alerts/*.json` is committed, so `git pull`, restart `make api` and reload. After training the models yourself, `make alerts` rewrites them (byte-identical for the same model). `models/*.joblib` and `bank/` are not committed.
 
 To regenerate the models and numbers (about 25 minutes on 8 cores):
 
@@ -118,11 +118,11 @@ make predict                   # needs a clean working tree
 
 ```
 src/watchkeeper/   features (causal baselines, NPSH, input hygiene), detect (alert timing, cavitation, data health, range check), diagnose (model, knowledge),
-                   ingest (raw replay messages to minutes, live runner), incidents, stage words, alerts (contract v2, archive), what-if, api
+                   ingest (raw replay messages to minutes, live runner), incidents, stage words, alerts (contract v2, archive), snapshot export, api (read-only, including the what-if route)
 web/               five pages: Overview (headline, four figures, pump table, active alerts, priority ring), Alerts (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit; sidebar on wide screens, icon rail on tablets, bottom tab bar on phones (React, TypeScript, Vite; Inter and IBM Plex Mono bundled, no external font requests)
 eval/              experiments, probes, results tables
-scripts/           bank generation, data linking
-docs/              plan, audit, alert contract (JSON schema), business case, edge and transfer, technical note, demo script
+scripts/           bank generation (fleets and the masked-clogging trap), data linking, export of the submitted alerts
+docs/              alert contract (JSON schema), business case, edge and transfer, technical note, accessibility, hosting
 submission/        test-pump alerts and submission notes
 ```
 

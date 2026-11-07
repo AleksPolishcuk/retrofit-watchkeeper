@@ -11,7 +11,7 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 | Code and run instructions | `README.md` (Run it), `Makefile` |
 | Comparison with the provided baselines | `README.md` (Measured results: B0, B1, B2, B3 on the organizers' split, B1 on 24 unseen generated pumps), `eval/results/final/report.md` |
 | Honest limitations | `README.md` (Limitations), Proof tab of the interface, `docs/TECHNICAL_NOTE.md` |
-| Short demo | A 2-minute video with voice and English subtitles; its script, narration and subtitles are in `docs/DEMO_SCRIPT.md`, `submission/demo_narration.txt` and `submission/demo_subtitles.en.srt`; the link goes in `submission/demo_video_link.txt` |
+| Short demo | A 2-minute video with voice and English subtitles (link in the submission form) |
 | Optional: what-if in the sandbox | Alerts page, step 4, "Try it in the simulator" for strainer, bearing and alignment alerts (simulation only) |
 | Optional: edge design and transfer plan | `docs/EDGE_AND_TRANSFER.md`, Retrofit tab |
 | Optional: business case | `docs/business_case.md` (assumptions labelled, measured inputs from untouched fleets) |
@@ -24,7 +24,7 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 | Technical quality (25%) | Causal per-pump baseline by operating point with regime learning, learned fault typing, physical cavitation check; 62.8 on 82 events from untouched fleets against 52.1 for the organizers' baseline and 36 for random alerts; bootstrap intervals; negative results published | tab **Proof**, `docs/TECHNICAL_NOTE.pdf`, `eval/results/` |
 | Reliability and safety (20%) | Read-only by construction and by test; causality enforced by a truncation test; human approves every action; uncertainty stated (four level words with back-test counts, missing channels, instrumentation level, time to act "not estimated"); sensor-versus-machine call; missing-sensor test; behaviour under bad data tested on the 18 controlled situations of the enterprise reference (11 handled, 5 partly, 2 known gaps, all listed); test pumps never used | tab **Proof** (sections 2 and 3), `tests/` |
 | Low-cost retrofit and transfer (20%) | Works on the data a pump already has; tested with legacy, retrofit and full instrumentation and with channels removed; edge footprint measured (6.6 MB, 1.3 s per pump-week, one core); read-only integration, pilot path and what does and does not transfer | tab **Retrofit**, `docs/EDGE_AND_TRANSFER.md` |
-| Working demo and clarity (10%) | One four-step flow per case: the data (replayed as it arrived), what looks wrong, how sure we are, what to do; plain wording; runs offline with `make demo` | page **Alerts**, `docs/DEMO_SCRIPT.md`; accessibility (axe clean, contrast test, keyboard, 320 px): `docs/ACCESSIBILITY.md` |
+| Working demo and clarity (10%) | One four-step flow per case: the data (replayed as it arrived), what looks wrong, how sure we are, what to do; plain wording; runs offline with `make demo` | page **Alerts**; accessibility (axe clean, contrast test, keyboard, 320 px): `docs/ACCESSIBILITY.md` |
 
 ## How the test-pump file was made
 
