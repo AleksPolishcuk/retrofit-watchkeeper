@@ -31,3 +31,14 @@ web/dist/
 eval/results/organizer_baselines/predictions_*.csv
 eval/results/*/predictions_loo.csv
 models/*.joblib
+
+# Assistant instruction and local tool files are never committed
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.claude/
+.cursor/
+.cursorrules
+.mcp.json
+.github/copilot-instructions.md
