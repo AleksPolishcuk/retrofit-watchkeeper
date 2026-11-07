@@ -73,3 +73,15 @@ def test_alternatives_are_rescaled_to_the_remaining_probability():
     assert alert["confidence"] + sum(a["p"] for a in alert["alternatives"]) <= 1.0 + 1e-9
     assert [e.message for e in VALIDATOR.iter_errors(alert)] == []
     assert to_contract(pd.DataFrame([_row()]), ASSETS, "test")[0]["alternatives"] == []     # no column: no alternatives
+
+
+def test_contract_v2_fields_are_present_and_valid():
+    pred = pd.DataFrame([_row(), _row("SENSOR_STUCK", "SENSOR", "B1 mode-aware z: bearing_temp_c frozen", "2025-09-11T01:00:00Z")])
+    ASSETS2 = ASSETS.assign(instrumentation_tier="T1_RETROFIT")
+    alerts = to_contract(pred, ASSETS2, "test", model_version="wk-test")
+    for a in alerts:
+        assert [e.message for e in VALIDATOR.iter_errors(a)] == []
+        assert a["incident_id"].startswith("PUMP-08-INC") and a["consequence"] and a["check"] and a["check"] != a["recommended_action"]
+        assert a["time_to_act"] is None and a["time_to_act_note"] == "not estimated"
+        assert a["stage"] in ("watch", "possible", "likely", "very_likely") and a["model_version"] == "wk-test" and a["tier"] == "T1_RETROFIT"
+    assert alerts[0]["incident_id"] != alerts[1]["incident_id"]          # machine and instrument problems are separate incidents

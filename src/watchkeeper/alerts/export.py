@@ -7,6 +7,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from ..diagnose.knowledge import knowledge
+from ..incidents import assign_incidents
+from ..stage import EDGES, load_basis, stage_of
+
 # Channels that change what we can conclude. Missing ones are reported as uncertainty.
 CORE_CHANNELS = ["suction_pressure_kpa", "flow_m3_h", "vibration_rms_mm_s", "bearing_temp_c", "motor_winding_temp_c"]
 
@@ -63,9 +67,13 @@ def _alternatives(row, confidence: float) -> list[dict]:
     return [{"fault_type": a["fault_type"], "p": round(a["p"] / total * (1.0 - confidence), 3)} for a in alts] if total > 0 else []
 
 
-def to_contract(pred: pd.DataFrame, assets: pd.DataFrame, source: str) -> list[dict]:
+def to_contract(pred: pd.DataFrame, assets: pd.DataFrame, source: str, model_version: str = "unversioned") -> list[dict]:
     """One contract alert per prediction row, sorted by asset and time."""
     channels = {r.asset_id: set(str(r.channels_available).split("|")) for r in assets.itertuples()}
+    tiers = dict(zip(assets.asset_id, assets["instrumentation_tier"])) if "instrumentation_tier" in assets else {}
+    basis = load_basis()
+    edges = tuple(basis["edges"]) if basis else EDGES
+    pred = assign_incidents(pred) if len(pred) else pred
     alerts, seen = [], {}
     for r in pred.sort_values(["asset_id", "alert_time_utc"], kind="stable").itertuples():
         evidence = parse_evidence(getattr(r, "evidence", ""))
@@ -90,7 +98,20 @@ def to_contract(pred: pd.DataFrame, assets: pd.DataFrame, source: str) -> list[d
             "requires_human_approval": True,
             "what_if": None,
             "source": source,
+            "incident_id": getattr(r, "incident_id", base),
+            "consequence": knowledge(r.fault_type)["consequence"],
+            "check": knowledge(r.fault_type)["check"],
+            "time_to_act": None,
+            "time_to_act_note": "not estimated",
+            "stage": stage_of(float(r.confidence), edges),
+            "stage_basis": (basis or {}).get("basis", {}).get(stage_of(float(r.confidence), edges)),
+            "model_version": model_version,
+            "tier": tiers.get(r.asset_id),
         })
+        if alerts[-1]["tier"] is None:
+            del alerts[-1]["tier"]
+        if alerts[-1]["stage_basis"] is None:
+            alerts[-1]["stage_basis"] = None
     return alerts
 
 
