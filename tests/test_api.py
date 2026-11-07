@@ -93,5 +93,5 @@ def test_results_endpoint_serves_measurements_and_tier_channels_from_files(clien
     t0 = next(t for t in r["tiers"] if t["tier"] == "T0_LEGACY")
     t2 = next(t for t in r["tiers"] if t["tier"] == "T2_FULL")
     assert set(t0["channels"]) < set(t2["channels"])                    # the legacy set is a subset of the full set
-    assert "stages" in r and "footprint" in r and "report" in r        # absent files give null, not an error
+    assert "stages" in r and "footprint" in r and "report" in r and "business" in r        # absent files give null, not an error
     json.dumps(r, allow_nan=False)                                       # no NaN leaks into the response

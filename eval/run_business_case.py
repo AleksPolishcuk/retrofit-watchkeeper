@@ -33,6 +33,7 @@ def main() -> int:
     hold.assets.to_csv(out / "assets.csv", index=False)
     text = BC.build(out / "metrics.json", out / "per_event.csv", out / "assets.csv", source="the 24 untouched hold fleets, 82 events, model not trained on them")
     BC.OUT.write_text(text, encoding="utf-8")
+    (ROOT / "eval" / "results" / "business_case.json").write_text(json.dumps(BC.summary(out / "metrics.json", out / "per_event.csv"), indent=2) + "\n", encoding="utf-8")
     print(text[:1500])
     return 0
 

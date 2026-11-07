@@ -137,7 +137,8 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None) -> FastAPI:
             tiers.append({"tier": tier, "pumps": int(len(g)), "channels": [c for c in CHANNELS if all(c in s for s in sets)],
                           "sometimes": [c for c in CHANNELS if any(c in s for s in sets) and not all(c in s for s in sets)]})
         return {"report": read_json(results_dir / "final" / "report.json"), "stages": read_json(ROOT / "models" / "stages.json"),
-                "footprint": read_json(results_dir / "footprint.json"), "missing_sensor": read_json(results_dir / "missing_sensor.json"), "tiers": tiers}
+                "footprint": read_json(results_dir / "footprint.json"), "missing_sensor": read_json(results_dir / "missing_sensor.json"),
+                "business": read_json(results_dir / "business_case.json"), "tiers": tiers}
 
     whatif_cache: dict = {}
 

@@ -1,0 +1,123 @@
+{
+  "measured": {
+    "events": 82,
+    "recall": 0.671,
+    "events_with_limit": 15,
+    "caught_before_limit": 6,
+    "lead_hours": [
+      0.3,
+      3.6,
+      27.6,
+      40.3,
+      48.7,
+      76.8
+    ],
+    "false_per_pump_day": 0.0298,
+    "repeat_per_pump_day": 0.0714,
+    "pump_days": 168.0
+  },
+  "assumptions": {
+    "events_per_year": {
+      "value": 0.6,
+      "unit": "1/yr",
+      "basis": "developing faults per duty pump that would otherwise end in an unplanned stop"
+    },
+    "unplanned_stop_h": {
+      "value": 10.0,
+      "unit": "h",
+      "basis": "detection by failure, diagnosis, parts, repair"
+    },
+    "planned_stop_h": {
+      "value": 3.0,
+      "unit": "h",
+      "basis": "the same work prepared and done in a planned window"
+    },
+    "downtime_cost_eur_h": {
+      "value": 1500.0,
+      "unit": "EUR/h",
+      "basis": "production loss of a mid-size line with no redundant pump"
+    },
+    "repair_unplanned_eur": {
+      "value": 9000.0,
+      "unit": "EUR",
+      "basis": "within a typical EUR 3-15 k pump overhaul range (itself an estimate)"
+    },
+    "repair_planned_eur": {
+      "value": 4000.0,
+      "unit": "EUR",
+      "basis": "damage limited when caught early"
+    },
+    "false_alert_cost_eur": {
+      "value": 120.0,
+      "unit": "EUR",
+      "basis": "about 1.5 h of technician time to check one false alert"
+    },
+    "repeat_alert_cost_eur": {
+      "value": 30.0,
+      "unit": "EUR",
+      "basis": "a repeat on a problem already known is a glance, not a check (our assumption)"
+    },
+    "capex_eur": {
+      "value": 4500.0,
+      "unit": "EUR",
+      "basis": "BOM option B about EUR 2.1-2.4 k from list prices plus cabling, enclosure and installation"
+    },
+    "opex_eur_yr": {
+      "value": 700.0,
+      "unit": "EUR/yr",
+      "basis": "connectivity, software maintenance, battery and sensor replacement"
+    }
+  },
+  "base": {
+    "organizers_convention": {
+      "benefit": 3720.0,
+      "nuisance": 4432.1,
+      "net": -1412.1,
+      "payback_yr": null
+    },
+    "refined": {
+      "benefit": 3720.0,
+      "nuisance": 2085.7,
+      "net": 934.3,
+      "payback_yr": 4.8
+    }
+  },
+  "sites": [
+    {
+      "name": "Ship seawater pump with a healthy standby",
+      "downtime_eur_h": 0.0,
+      "faults_per_year": 0.3,
+      "benefit": 600.0,
+      "nuisance": 2085.7,
+      "net": -2185.7,
+      "payback_yr": null
+    },
+    {
+      "name": "Cooling-tower circulation pump",
+      "downtime_eur_h": 400.0,
+      "faults_per_year": 0.6,
+      "benefit": 1872.0,
+      "nuisance": 2085.7,
+      "net": -913.7,
+      "payback_yr": null
+    },
+    {
+      "name": "Hot process-water transfer pump",
+      "downtime_eur_h": 600.0,
+      "faults_per_year": 0.6,
+      "benefit": 2208.0,
+      "nuisance": 2085.7,
+      "net": -577.7,
+      "payback_yr": null
+    },
+    {
+      "name": "Process pump with no redundancy (organizers' example)",
+      "downtime_eur_h": 1500.0,
+      "faults_per_year": 0.6,
+      "benefit": 3720.0,
+      "nuisance": 2085.7,
+      "net": 934.3,
+      "payback_yr": 4.8
+    }
+  ]
+}

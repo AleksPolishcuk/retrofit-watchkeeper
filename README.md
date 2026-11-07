@@ -34,7 +34,7 @@ The numbers in this table come from a model fitted only on fleets generated with
 - Intervals resample pumps (1000 draws). Full table, tier and fault-type breakdown: [eval/results/final/report.md](eval/results/final/report.md).
 - **False alerts:** on 294 pump-days of healthy simulated pumps, 1.3 false episodes per pump-month (upper 95% bound 2.3). That is still more than an operator would accept; see limitations.
 - **Sensors missing:** [eval/results/missing_sensor.md](eval/results/missing_sensor.md) removes whole channels from the hold fleets.
-- **Likelihood words:** counts per level from held-out back-tests are in `models/stages.json` and on the Results page.
+- **Likelihood words:** counts per level from held-out back-tests are in `models/stages.json` and in the Proof tab.
 
 ### What did not work
 
@@ -75,7 +75,7 @@ make predict                   # needs a clean working tree
 ```
 src/watchkeeper/   features (causal baselines, NPSH), detect (alert timing, cavitation, signature fusion), diagnose (model, knowledge),
                    incidents, stage words, alerts (contract v2), what-if, api
-web/               dashboard, pumps, alerts, pump detail (overview with causal replay, diagnostics, evidence signals, recommendations), results, retrofit; three themes (React, TypeScript, Vite)
+web/               four tabs: Monitor (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit (React, TypeScript, Vite)
 eval/              experiments, probes, results tables
 scripts/           bank generation, data linking
 docs/              plan, audit, alert contract (JSON schema), business case, edge and transfer, technical note, demo script

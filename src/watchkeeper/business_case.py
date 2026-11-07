@@ -151,3 +151,22 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def summary(metrics_path: Path, per_event_path: Path) -> dict:
+    """The same numbers as `build`, as data for the interface: measured inputs, base case under two conventions, and the four site types."""
+    m = json.loads(metrics_path.read_text(encoding="utf-8"))["leave_one_asset_out"]
+    pe = pd.read_csv(per_event_path)
+    days, n_false, n_rep, early = m["asset_days"], m["false_alert_episodes"], m["excess_repeat_episodes"], m["early_warning_rate"]
+    dl = pe[pe.lead_time_to_deadline_h.notna()]
+    leads = sorted(float(x) for x in dl[dl.lead_time_to_deadline_h > 0].lead_time_to_deadline_h)
+    base = {k: v[0] for k, v in ASSUME.items()}
+    base.update(caught=early, false_per_day=n_false / days, repeat_per_day=n_rep / days)
+    org = dict(base, false_per_day=m["false_alerts_per_asset_day"], repeat_per_day=0.0, false_alert_cost_eur=120.0)
+    clean = lambda r: {k: (None if v == float("inf") else round(float(v), 1)) for k, v in r.items()}
+    return {"measured": {"events": int(m["events_scored"]), "recall": round(float(m["event_recall"]), 3), "events_with_limit": int(len(dl)), "caught_before_limit": len(leads),
+                         "lead_hours": [round(x, 1) for x in leads], "false_per_pump_day": round(n_false / days, 4), "repeat_per_pump_day": round(n_rep / days, 4),
+                         "pump_days": round(float(days), 0)},
+            "assumptions": {k: {"value": v[0], "unit": v[1], "basis": v[2]} for k, v in ASSUME.items()},
+            "base": {"organizers_convention": clean(evaluate(org)), "refined": clean(evaluate(base))},
+            "sites": [{"name": n, "downtime_eur_h": dt, "faults_per_year": ev, **clean(evaluate(dict(base, downtime_cost_eur_h=dt, events_per_year=ev)))} for n, dt, ev in SITES]}

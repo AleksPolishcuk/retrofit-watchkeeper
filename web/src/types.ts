@@ -161,6 +161,14 @@ export interface Results {
   report: Record<string, ReportSet | Healthy> | null
   stages: { edges: number[]; sets: string[]; basis: Record<Stage, StageBasis>; detail: Record<Stage, { alerts: number; at_a_real_event: number; right_class: number; right_type: number }>; note: string } | null
   footprint: Footprint | null
+  business: Business | null
   missing_sensor: { scenario: string; composite: number; recall: number; 'type recall': number; 'class recall': number }[] | null
   tiers: { tier: Tier; pumps: number; channels: string[]; sometimes: string[] }[]
+}
+
+export interface Business {
+  measured: { events: number; recall: number; events_with_limit: number; caught_before_limit: number; lead_hours: number[]; false_per_pump_day: number; repeat_per_pump_day: number; pump_days: number }
+  assumptions: Record<string, { value: number; unit: string; basis: string }>
+  base: Record<'organizers_convention' | 'refined', { benefit: number; nuisance: number; net: number; payback_yr: number | null }>
+  sites: { name: string; downtime_eur_h: number; faults_per_year: number; benefit: number; nuisance: number; net: number; payback_yr: number | null }[]
 }
