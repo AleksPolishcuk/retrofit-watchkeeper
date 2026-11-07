@@ -15,6 +15,7 @@ Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 Novemb
 5. Uses graded words (Watch, Possible, Likely, Very likely) backed by back-test counts, never percentages that pretend to be calibrated.
 6. Recommends an inspection or maintenance action for a human to approve, and can compare an intervention in the organizers' simulation sandbox (simulation only).
 7. Says so when its own data are the problem: a silent gateway, a lost channel or speed signal, rows without measurements, a pump still learning its normal, quality flags, unit mix-ups (the **Data check** in the case view). Silence from the detector is never read as a healthy pump.
+8. Keeps a review log of what people decided, in the browser only: Open, On inspection, Result recorded, Recovery check, Closed. An inspection ends as no fault found, needs further inspection, or fault confirmed with the actual fault recorded next to what the model suggested. A new case of a kind already seen on the same pump is flagged as a possible return. The log has a summary (confirmed share, time to first decision) and a CSV and JSON export. The API never writes. `make archive` keeps an immutable snapshot of the alerts per model version, so a re-run does not erase what was shown before.
 
 ## Live replay (raw messages in, alerts out)
 
