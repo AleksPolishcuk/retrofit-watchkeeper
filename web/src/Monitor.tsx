@@ -48,6 +48,7 @@ function Meter({ stage }: { stage: Stage }) {
 export default function Monitor({ assets, alerts, results, decisions, decide }: Props) {
   const [pumpId, setPumpId] = useState('all')
   const [showAll, setShowAll] = useState(false)
+  const [levels, setLevels] = useState<Stage[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sig, setSig] = useState<Record<string, Series | 'none'>>({})
   const [progress, setProgress] = useState(1)
@@ -57,7 +58,13 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
   const [techOpen, setTechOpen] = useState(false)
   const timer = useRef<number | null>(null)
 
-  const incidents = useMemo(() => incidentsOf(pumpId === 'all' ? alerts : alerts.filter((a) => a.asset_id === pumpId)), [alerts, pumpId])
+  const allIncidents = useMemo(() => incidentsOf(pumpId === 'all' ? alerts : alerts.filter((a) => a.asset_id === pumpId)), [alerts, pumpId])
+  const countBy = (s: Stage) => allIncidents.filter((i) => i.head.stage === s).length
+  const incidents = useMemo(() => (levels.length === 0 ? allIncidents : allIncidents.filter((i) => i.head.stage && levels.includes(i.head.stage))), [allIncidents, levels])
+  const toggleLevel = (s: Stage) => {
+    setLevels((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]))
+    setShowAll(false)
+  }
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 960px)').matches
   const shortList = narrow ? 3 : 7
   const list = showAll ? incidents : incidents.slice(0, shortList)
@@ -171,10 +178,22 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
               {assets.map((x) => <option key={x.asset_id} value={x.asset_id}>{x.asset_id} · {x.system}</option>)}
             </select>
           </label>
+          <div className="prio" role="group" aria-label="Filter by priority">
+            <h3>Priority</h3>
+            <div className="chips">
+              <button className="fchip all" aria-pressed={levels.length === 0} onClick={() => { setLevels([]); setShowAll(false) }}>All <b>{allIncidents.length}</b></button>
+              {[...STAGES].reverse().map((s) => (
+                <button key={s} className={`fchip s-${s}`} aria-pressed={levels.includes(s)} onClick={() => toggleLevel(s)} title={STAGE_WORDS[s]}>
+                  <i aria-hidden="true" />{STAGE_LABEL[s]} <b>{countBy(s)}</b>
+                </button>
+              ))}
+            </div>
+            <p className="hint">Priority is the evidence level. Pick one or more; none picked shows all.{levels.length > 0 ? ` Showing ${incidents.length} of ${allIncidents.length}.` : ''}</p>
+          </div>
           <ul>
             {list.map((i) => (
               <li key={i.id}>
-                <button className={i.id === inc?.id ? 'case on' : 'case'} onClick={() => { setSelectedId(i.id); if (narrow) window.setTimeout(() => document.getElementById('case-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}>
+                <button className={`${i.id === inc?.id ? 'case on' : 'case'} s-${i.head.stage ?? 'watch'}`} onClick={() => { setSelectedId(i.id); if (narrow) window.setTimeout(() => document.getElementById('case-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}>
                   <span className="ct">{titleOf(i.head)}</span>
                   <span className="cm">
                     <span className={`stagechip s-${i.head.stage ?? 'watch'}`}>{STAGE_LABEL[i.head.stage ?? 'watch']}</span>
@@ -185,7 +204,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
                 </button>
               </li>
             ))}
-            {list.length === 0 && <li className="muted small">No alerts for this pump. Nothing stands out against its own normal.</li>}
+            {list.length === 0 && <li className="muted small">{levels.length > 0 ? 'No cases at this priority. Pick another level or clear the filter.' : 'No alerts for this pump. Nothing stands out against its own normal.'}</li>}
           </ul>
           {incidents.length > shortList && <button className="btn sm" onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show fewer' : `Show all ${incidents.length}`}</button>}
         </aside>
@@ -285,12 +304,12 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
             <details className="more card" onToggle={(e) => openTech((e.target as HTMLDetailsElement).open)}>
               <summary>Technical view: the whole week with the organizers' labels</summary>
               {techOpen && tl ? (
-                <TimelineChart tl={tl} series={tlSeries} seriesNote={asset.telemetry_served ? 'Loading…' : 'Telemetry for the test pumps is hidden'} channel={channels[0] ?? 'discharge_pressure_kpa'} alerts={pumpAlerts} selectedId={a.alert_id} onSelect={(id) => { const t = incidents.find((i) => i.members.some((m) => m.alert_id === id)); if (t) setSelectedId(t.id) }} cursor={null} />
+                <TimelineChart tl={tl} series={tlSeries} seriesNote={asset.telemetry_served ? 'Loading…' : 'Telemetry for the test pumps is hidden'} channel={channels[0] ?? 'discharge_pressure_kpa'} alerts={pumpAlerts} selectedId={a.alert_id} onSelect={(id) => { const t = allIncidents.find((i) => i.members.some((m) => m.alert_id === id)); if (t) { if (levels.length && t.head.stage && !levels.includes(t.head.stage)) setLevels([]); setSelectedId(t.id) } }} cursor={null} />
               ) : <p className="muted small">Loading…</p>}
             </details>
           </div>
         ) : (
-          <div className="card"><p className="muted" style={{ margin: 0 }}>Select a case on the left.</p></div>
+          <div className="card"><p className="muted" style={{ margin: 0 }}>Nothing to show. Choose a case on the left or change the priority filter.</p></div>
         )}
       </div>
     </div>
