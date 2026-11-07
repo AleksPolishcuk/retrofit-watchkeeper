@@ -282,3 +282,16 @@ h2 { font-size: 17px; margin: 28px 0 10px; }
 .tiercard { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
 .tiercard h3 { color: var(--ink); font-size: 14px; text-transform: none; letter-spacing: 0; margin-bottom: 6px; }
 .tiercard p { margin: 6px 0; }
+
+@media (max-width: 700px) {
+  .page { padding: 16px; }
+  .main { padding: 16px; }
+  .top { gap: 8px; padding: 10px 16px; }
+  .fleet .fleettable th:nth-child(2), .fleet .fleettable td:nth-child(2),
+  .fleet .fleettable th:nth-child(5), .fleet .fleettable td:nth-child(5),
+  .fleet .fleettable th:nth-child(6), .fleet .fleettable td:nth-child(6),
+  .fleet .fleettable th:nth-child(7), .fleet .fleettable td:nth-child(7) { display: none; }
+  .replay input[type=range] { width: 100%; }
+  .callout b { font-size: 28px; }
+  .stagebox { justify-items: start; text-align: left; }
+}

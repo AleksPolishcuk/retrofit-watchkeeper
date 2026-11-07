@@ -42,7 +42,7 @@ web:
 	cd web && npm install --no-audit --no-fund && npm run dev
 
 demo:
-	@echo "make demo: not implemented yet" && exit 1
+	$(MAKE) -j2 api web
 
 test:
 	.venv/bin/python -m pytest tests
