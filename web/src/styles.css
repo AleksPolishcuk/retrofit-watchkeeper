@@ -361,3 +361,23 @@ button.sim:disabled { opacity: .6; cursor: progress; }
 .kpis dd { margin: 2px 0 0; font-family: var(--mono); font-size: 20px; color: var(--slate); }
 .status-chip { display: inline-flex; font-size: 11.5px; font-weight: 700; letter-spacing: .03em; padding: 1px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); color: var(--ink); }
 .status-chip.closed { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+
+/* scenario table */
+.scenarios td, .scenarios th { vertical-align: top; }
+.scenarios td:nth-child(4) { min-width: 320px; }
+.scenarios td:first-child { white-space: nowrap; }
+.sstat { display: inline-flex; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.sstat.handled { background: var(--ok-bg); color: var(--ok); }
+.sstat.partly { background: var(--chip-likely-bg); color: var(--chip-likely-ink); }
+.sstat.gap { background: var(--chip-very-bg); color: var(--chip-very-ink); }
+@media (max-width: 720px) {
+  .scenarios, .scenarios tbody { display: block; width: 100%; }
+  .scenarios thead { display: none; }
+  .scenarios tr { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "id status" "sit sit" "now now" "where where"; gap: 4px 12px; align-items: center; padding: 14px 6px; border-bottom: 1px solid var(--line); }
+  .scenarios td { display: block; border: 0; padding: 0 8px; min-width: 0 !important; }
+  .scenarios td:nth-child(1) { grid-area: id; }
+  .scenarios td:nth-child(2) { grid-area: sit; font-weight: 600; font-size: 16px; }
+  .scenarios td:nth-child(3) { grid-area: status; justify-self: start; }
+  .scenarios td:nth-child(4) { grid-area: now; }
+  .scenarios td:nth-child(5) { grid-area: where; color: var(--muted); }
+}

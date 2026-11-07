@@ -1,3 +1,4 @@
+import { NOT_BUILT, SCENARIOS, STATUS_WORD, tally } from './scenarios'
 import { STAGE_LABEL, STAGES } from './stage'
 import { useWidth } from './useWidth'
 import type { Healthy, ReportSet, Results } from './types'
@@ -65,6 +66,7 @@ export default function Proof({ data }: { data: Results | null }) {
   const sets = ORDER.map(([k, label]) => [label, rep[keyOf(k)]] as [string, ReportSet]).filter(([, s]) => s)
   const hold = rep['hold fleets (24 pumps)']
   const healthy = data.report['healthy'] as unknown as Healthy | undefined
+  const counts = tally()
   return (
     <section aria-label="Technical quality, reliability and safety">
       <h1>Can you trust it?</h1>
@@ -118,7 +120,33 @@ export default function Proof({ data }: { data: Results | null }) {
         </>
       )}
 
-      <h2>4. Where does it fail?</h2>
+      <h2>4. What happens when the data go wrong?</h2>
+      <p className="muted">
+        The organizers' enterprise reference lists 18 controlled situations (A01 to A18). We perturbed real minute data of quiet simulated pumps for these and fixed what we could.
+        {' '}<b>{counts.handled} handled, {counts.partly} partly, {counts.gap} known gaps.</b> The gaps stay listed: a fix that cost real detections or added false alerts did not pass our own gate and is switched off.
+      </p>
+      <div className="tablewrap">
+        <table className="fleettable scenarios">
+          <thead><tr><th>ID</th><th>Situation</th><th>Status</th><th>What happens now</th><th>Checked by</th></tr></thead>
+          <tbody>
+            {SCENARIOS.map((s) => (
+              <tr key={s.id}>
+                <td className="mono">{s.id}</td>
+                <td>{s.situation}</td>
+                <td><span className={`sstat ${s.status}`}>{STATUS_WORD[s.status]}</span></td>
+                <td>{s.now}</td>
+                <td className="mono small">{s.where}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <details className="more card">
+        <summary>What a plant pilot would still need (not built, and why)</summary>
+        <ul className="limits">{NOT_BUILT.map(([t, why]) => <li key={t}><b>{t}.</b> {why}</li>)}</ul>
+      </details>
+
+      <h2>5. Where does it fail?</h2>
       <ul className="limits">
         <li><b>Simulated data only.</b> A reduced-order simulator, fault growth compressed into seven days. Nothing here is field evidence.</li>
         <li><b>The exact cause is often wrong.</b> Only about two in five faults get the right type; machine faults are often called instrument drift. The class (machine or instrument) is right about three times in five, which is why each alert says what to check first.</li>
