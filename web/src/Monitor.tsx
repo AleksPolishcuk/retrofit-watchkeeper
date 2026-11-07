@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
 import { SignalChart } from './charts'
+import Dropdown from './Dropdown'
 import type { Decision } from './decisions'
 import Icon from './icons'
 import { CHANNEL, fmtNum, howFar, incidentsOf, median, nameOf, titleOf } from './plain'
@@ -60,11 +61,11 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
 
   const allIncidents = useMemo(() => incidentsOf(pumpId === 'all' ? alerts : alerts.filter((a) => a.asset_id === pumpId)), [alerts, pumpId])
   const countBy = (s: Stage) => allIncidents.filter((i) => i.head.stage === s).length
+  const casesByPump = useMemo(() => Object.fromEntries(assets.map((x) => [x.asset_id, incidentsOf(alerts.filter((a) => a.asset_id === x.asset_id)).length])), [assets, alerts])
+  const tierOf = (x: Asset) => ({ T0_LEGACY: 'T0', T1_RETROFIT: 'T1', T2_FULL: 'T2' }[x.instrumentation_tier])
+  const pumpAsset = assets.find((x) => x.asset_id === pumpId)
+  const orderedLevels = [...STAGES].reverse().filter((s) => levels.includes(s))
   const incidents = useMemo(() => (levels.length === 0 ? allIncidents : allIncidents.filter((i) => i.head.stage && levels.includes(i.head.stage))), [allIncidents, levels])
-  const toggleLevel = (s: Stage) => {
-    setLevels((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]))
-    setShowAll(false)
-  }
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 960px)').matches
   const shortList = narrow ? 3 : 7
   const list = showAll ? incidents : incidents.slice(0, shortList)
@@ -171,25 +172,37 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
       <div className="mgrid">
         <aside className="card caselist" aria-label="Things to look at">
           <h2>Needs a look</h2>
-          <label className="pick">
-            <span className="sr">Pump</span>
-            <select value={pumpId} onChange={(e) => { setPumpId(e.target.value); setSelectedId(null); setShowAll(false) }} aria-label="Pump">
-              <option value="all">All {assets.length} pumps</option>
-              {assets.map((x) => <option key={x.asset_id} value={x.asset_id}>{x.asset_id} · {x.system}</option>)}
-            </select>
-          </label>
-          <div className="prio" role="group" aria-label="Filter by priority">
-            <h3>Priority</h3>
-            <div className="chips">
-              <button className="fchip all" aria-pressed={levels.length === 0} onClick={() => { setLevels([]); setShowAll(false) }}>All <b>{allIncidents.length}</b></button>
-              {[...STAGES].reverse().map((s) => (
-                <button key={s} className={`fchip s-${s}`} aria-pressed={levels.includes(s)} onClick={() => toggleLevel(s)} title={STAGE_WORDS[s]}>
-                  <i aria-hidden="true" />{STAGE_LABEL[s]} <b>{countBy(s)}</b>
-                </button>
-              ))}
-            </div>
-            <p className="hint">Priority is the evidence level. Pick one or more; none picked shows all.{levels.length > 0 ? ` Showing ${incidents.length} of ${allIncidents.length}.` : ''}</p>
-          </div>
+          <Dropdown
+            label="Pump"
+            minPanelWidth={360}
+            selected={[pumpId]}
+            onChange={([v]) => { setPumpId(v); setSelectedId(null); setShowAll(false) }}
+            options={[
+              { value: 'all', text: `All ${assets.length} pumps`, label: <span className="ddline"><b>All {assets.length} pumps</b></span>, count: alerts.length ? incidentsOf(alerts).length : 0 },
+              ...assets.map((x) => ({
+                value: x.asset_id,
+                text: `${x.asset_id}, ${x.system}`,
+                label: <span className="ddline"><span className="mono">{x.asset_id}</span><span className={`tier t${tierOf(x)?.[1]}`}>{tierOf(x)}</span><span className="sys">{x.system}</span></span>,
+                count: casesByPump[x.asset_id] ?? 0,
+              })),
+            ]}
+            summary={pumpAsset
+              ? <span className="ddline"><span className="mono">{pumpAsset.asset_id}</span><span className="sys">{pumpAsset.system}</span></span>
+              : <>All {assets.length} pumps</>}
+          />
+          <Dropdown
+            label="Priority"
+            multiple
+            allLabel="All priorities"
+            allCount={allIncidents.length}
+            selected={levels}
+            onChange={(v) => { setLevels(v as Stage[]); setShowAll(false) }}
+            options={[...STAGES].reverse().map((s) => ({ value: s, dot: s, text: STAGE_LABEL[s], label: <span title={STAGE_WORDS[s]}>{STAGE_LABEL[s]}</span>, count: countBy(s) }))}
+            summary={levels.length === 0
+              ? <>All priorities <span className="cnt">{allIncidents.length}</span></>
+              : <span className="ddline">{orderedLevels.map((s) => <i key={s} className={`dot2 ${s}`} aria-hidden="true" />)}{orderedLevels.map((s) => STAGE_LABEL[s]).join(', ')}<span className="cnt">{incidents.length}</span></span>}
+          />
+          <p className="hint">Priority is the evidence level; pick one or more. Numbers are cases.{levels.length > 0 ? ` Showing ${incidents.length} of ${allIncidents.length}.` : ''}</p>
           <ul>
             {list.map((i) => (
               <li key={i.id}>
