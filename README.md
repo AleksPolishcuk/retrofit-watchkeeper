@@ -14,6 +14,7 @@ Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 Novemb
 4. Shows the evidence behind every alert, what limits our certainty (missing channels, instrumentation level), what it may mean and what to check first.
 5. Uses graded words (Watch, Possible, Likely, Very likely) backed by back-test counts, never percentages that pretend to be calibrated.
 6. Recommends an inspection or maintenance action for a human to approve, and can compare an intervention in the organizers' simulation sandbox (simulation only).
+7. Says so when its own data are the problem: a silent gateway, a lost channel or speed signal, rows without measurements, a pump still learning its normal, quality flags, unit mix-ups (the **Data check** in the case view). Silence from the detector is never read as a healthy pump.
 
 ## Measured results
 
@@ -39,6 +40,7 @@ The numbers in this table come from a model fitted only on fleets generated with
 ### What did not work
 
 - Fusing weak shifts across channels along each fault's signature, plus a slow cumulative-sum detector, was built and tested. It found more events, but added false alerts and no earlier warning. It stays in the code, switched off: [eval/results/signature.md](eval/results/signature.md).
+- Three data-quality options were gated before use (`eval/results/data_quality_gate.md`): handling of a lost speed signal passed and is on; a stricter frozen-sensor rule loses real events and stays off; reporting a six-to-twelve hour sustained deviation that the model calls normal closes a real gap but adds false alerts, so it stays off (cautious pilot setting: 12 hours).
 - Using the operating context (cooling demand, supply water and ambient temperature) was tested in four ways: as part of the operating-point key, as a fluid temperature relative to the supply water, as classifier features, and combinations. None met the adoption rule that was fixed before the runs (healthy false alerts 1.3 per pump-month stayed or rose; scores moved within noise), so the submitted method does not use it: [eval/results/context.md](eval/results/context.md). A better model of normal operation would need each loop's physics, not more bins.
 
 ## Test-pump predictions
