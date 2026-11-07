@@ -96,7 +96,7 @@ def regime_learning_z(vals: np.ndarray, reg: np.ndarray, steady: np.ndarray, flo
     return z
 
 
-def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0, learn: bool = False, min_regime: int = 120, learn_min: int = 180, tf_adj: bool = False) -> pd.DataFrame:
+def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0, learn: bool = False, min_regime: int = 120, learn_min: int = 180, tf_adj: bool = False, flat_strict: bool = False) -> pd.DataFrame:
     """`f` is the output of `retrofit_sim.baselines.regime_frame`. With `learn=True` the level baseline is per regime and regimes first seen after the
     baseline period are learned before they are judged (see `regime_learning_z`)."""
     out = []
@@ -135,7 +135,10 @@ def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120,
             g["z_" + k] = z
             if s_col in g:
                 g["zs_" + k] = zs
-                g["flat_" + k] = (g[s_col] == 0) & g[f"{col}__count"].ge(30)
+                flat = (g[s_col] == 0) & g[f"{col}__count"].ge(30)
+                if flat_strict:                      # a frozen sensor repeats the same value minute after minute: a pressure that is steady inside each minute but moves between minutes is not frozen
+                    flat &= g[m].diff().abs().le(1e-5 * g[m].abs().clip(lower=1.0))       # float32 means of a frozen value differ by rounding only
+                g["flat_" + k] = flat
         g["gap"] = g["rows"] < 30
         out.append(g)
     return thermal_warmup(pd.concat(out, ignore_index=True), thermal_min)

@@ -11,15 +11,43 @@ from .detect.cavitation import cavitation_episodes
 from .detect.signature import SIGNATURES, fused_flag, fused_type, slow_detect
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of
 from .features.causal import CH, build_features, causal_zscores, hold_sparse
+from .features.hygiene import clean_minutes
 from .features.npsh import npsh_margin
 
 
+ROBUST = ("flatstrict", "longdev", "speedloss")       # longdev8 and longdev12 are the same rule with 8 and 12 hours of persistence
+OPTIONS_DOC = None       # data-quality options: stricter frozen-sensor rule, persistent unexplained deviation, speed-signal loss. Off by default (the submitted model is freeze-v1).
+
+
+def _suspend_on_speed_loss(f: pd.DataFrame, assets: pd.DataFrame, hold_min: int = 15) -> pd.DataFrame:
+    """A drive that had a speed signal and loses it while running: after `hold_min` minutes no minute counts as steady until the signal returns.
+    Without this the missing speed makes a new operating regime and the pump is judged against a baseline learned from whatever followed (scenario A04)."""
+    has_speed = {r.asset_id: "motor_speed_rpm" in str(r.channels_available).split("|") for r in assets.itertuples()}
+    f = f.copy()
+    for a, idx in f.groupby("asset_id").groups.items():
+        if not has_speed.get(a) or "speed_ratio" not in f:
+            continue
+        lost = ((f.loc[idx, "operating_mode"] == "RUNNING") & f.loc[idx, "speed_ratio"].isna()).to_numpy()
+        run, flag = 0, np.zeros(len(lost), dtype=bool)
+        for j, v in enumerate(lost):
+            run = run + 1 if v else 0
+            flag[j] = run > hold_min
+        if flag.any():
+            f.loc[idx[flag], "steady"] = False
+    return f
+
+
 def _regime(data: DevData, hold: int = 0, ctx: tuple = ()) -> pd.DataFrame:
-    """Regime frame. With "demand" in `ctx`, the regime key also contains the cooling demand from the operating context (15 percent bins)."""
+    """Regime frame. Repeated minutes are removed first (scenario A14). With "demand" in `ctx`, the regime key also contains the cooling demand from the operating
+    context (15 percent bins); with "speedloss", minutes after the speed signal was lost are not steady. `ctx` is a tuple of option names."""
     ctx = tuple(sorted(ctx))
     key = ("regime", hold) + ((ctx,) if ctx else ())
     if key not in data.cache:
-        f = B.regime_frame(data.feat, data.assets)
+        feat, report = clean_minutes(data.feat)
+        data.cache[("hygiene", "report")] = report
+        f = B.regime_frame(feat, data.assets)
+        if "speedloss" in ctx:
+            f = _suspend_on_speed_loss(f, data.assets)
         if "demand" in ctx and "ctx_duty_demand_pct" in f:
             d = f["ctx_duty_demand_pct"].to_numpy(dtype=float)
             f["regime"] = f["regime"].astype(int) * 100 + np.where(np.isnan(d), 0, np.clip(np.round(d / 15.0), 0, 9)).astype(int)
@@ -48,7 +76,7 @@ def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0, dr
                     zf["flat_" + k] = False
             data.cache[key] = zf
         else:
-            data.cache[key] = causal_zscores(_regime(data, hold, ctx), thermal_min=thermal, learn=learn, tf_adj="tfadj" in ctx) if causal else B.zscores(_regime(data, hold))
+            data.cache[key] = causal_zscores(_regime(data, hold, ctx), thermal_min=thermal, learn=learn, tf_adj="tfadj" in ctx, flat_strict="flatstrict" in ctx) if causal else B.zscores(_regime(data, hold))
     return data.cache[key]
 
 
@@ -206,6 +234,9 @@ class WKMethod(Method):
         flags = split_flags(g, self.k)
         persist = {"dev": self.persist, "gap": min(self.persist, 8), "stuck": self.persist}
         kinds = {}
+        long_min = 720 if "longdev12" in self.ctx else 480 if "longdev8" in self.ctx else 360 if "longdev" in self.ctx else 0
+        if long_min:
+            flags["long"], persist["long"] = flags["dev"].copy(), long_min
         if self.sig_h is not None:
             flags["sig"], persist["sig"] = fused_flag(g, self.sig_h, self.sig_smooth), self.sig_persist
             kinds["sig"] = fused_type(g, self.sig_smooth).to_numpy()
@@ -221,6 +252,17 @@ class WKMethod(Method):
                 how = "fused weak shifts" if reason == "sig" else "slow cumulative change"
                 return {"event_class": event_class_of(ft), "fault_type": ft, "confidence": 0.5 if reason == "sig" else 0.4,
                         "evidence": _signature_evidence(Xa.iloc[j], ft, how), "action": ACTIONS[ft], "alternatives": [], "rule": "signature_" + reason}
+            if reason == "long":
+                # six hours of departure from the pump's own normal that the model keeps explaining away as normal: say so instead of staying silent
+                if cav_active[j]:
+                    return None
+                if self.rules and _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, self.arbiter, only="dev") is not None:
+                    return None
+                pn = float(P[j][none_i]) if none_i is not None else 0.0
+                if pn < self.suppress:
+                    return None                  # the model path alerts by itself
+                return {"event_class": event_class_of("UNKNOWN"), "fault_type": "UNKNOWN", "confidence": 0.4, "alternatives": [], "rule": "persistent_unexplained",
+                        "evidence": f"persistent departure from this pump's own normal for {persist['long'] // 60} hours, cause not identified: " + _evidence(g.iloc[j]), "action": ACTIONS["UNKNOWN"]}
             if reason in ("gap", "stuck"):
                 if self.rules:
                     return _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, False, only=reason)
