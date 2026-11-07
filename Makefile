@@ -1,7 +1,7 @@
 PY ?= python3
 PACK ?=
 
-.PHONY: snapshot alerts archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
+.PHONY: package snapshot alerts archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
 
 setup:
 	$(PY) -m venv .venv
@@ -43,6 +43,10 @@ web:
 
 demo:
 	$(MAKE) -j2 api web
+
+# The zip for the jury: tracked files of HEAD plus the two frozen model files (build/watchkeeper-submission.zip). Needs a clean working tree.
+package:
+	scripts/make_package.sh
 
 # Writes every answer of the read-only API for the recorded pumps to web/public/snapshot (about 4 MB), so the interface can be hosted without a Python
 # server (see docs/DEPLOY_VERCEL.md). Needs the data pack and artifacts/alerts; the files are committed.

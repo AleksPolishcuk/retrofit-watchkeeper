@@ -2,6 +2,7 @@
 /data
 my_results/
 /bank
+/build
 artifacts/*
 # the recorded alerts the interface shows are small and part of the submission; live state and the archive stay local
 !artifacts/alerts/
