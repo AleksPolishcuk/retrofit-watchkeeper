@@ -1,0 +1,8 @@
+{
+ "created_utc": "2026-11-07T17:35:06Z",
+ "files": 458,
+ "bytes": 3578164,
+ "attribution": "RETROFIT AI 2026 synthetic pump benchmark, Since AI Hackathon 2026 (CC BY 4.0)",
+ "note": "Static snapshot of the read-only API for the recorded simulated pumps. No telemetry of the test pumps, no live replay.",
+ "skipped": []
+}
