@@ -9,24 +9,27 @@ from .evalkit import INTERNAL_COLS, DevData, Method, concat_predictions, score_i
 from .detect.alerting import alerts_from_flag, b1_flag
 from .detect.cavitation import cavitation_episodes
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of
-from .features.causal import CH, build_features, causal_zscores
+from .features.causal import CH, build_features, causal_zscores, hold_sparse
 from .features.npsh import npsh_margin
 
 
-def _regime(data: DevData) -> pd.DataFrame:
-    if "regime" not in data.cache:
-        data.cache["regime"] = B.regime_frame(data.feat, data.assets)
-    return data.cache["regime"]
-
-
-def _zf(data: DevData, causal: bool = False) -> pd.DataFrame:
-    """Regime frame with robust z-scores for the dev assets (each asset uses only its own data).
-
-    causal=False is the organizer's baseline (first 24 h of the window). causal=True uses an expanding baseline.
-    """
-    key = "zf_causal" if causal else "zf"
+def _regime(data: DevData, hold: int = 0) -> pd.DataFrame:
+    key = ("regime", hold)
     if key not in data.cache:
-        data.cache[key] = causal_zscores(_regime(data)) if causal else B.zscores(_regime(data))
+        f = B.regime_frame(data.feat, data.assets)
+        data.cache[key] = hold_sparse(f, data.assets, hold) if hold else f
+    return data.cache[key]
+
+
+def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0) -> pd.DataFrame:
+    """Regime frame with robust z-scores for the assets in `data` (each asset uses only its own data).
+
+    causal=False is the organizer's baseline (first 24 h of the window). causal=True uses an expanding baseline. `thermal` blanks thermal
+    channels for that many minutes after a restart; `hold` carries sparse wireless reports forward for that many minutes.
+    """
+    key = ("zf", causal, thermal, hold)
+    if key not in data.cache:
+        data.cache[key] = causal_zscores(_regime(data, hold), thermal_min=thermal) if causal else B.zscores(_regime(data, hold))
     return data.cache[key]
 
 
@@ -71,10 +74,11 @@ class B1CausalMethod(B1Method):
     CAUSAL = True
 
 
-def _features(data: DevData) -> pd.DataFrame:
-    if "X_causal" not in data.cache:
-        data.cache["X_causal"] = build_features(_zf(data, True), data.assets)
-    return data.cache["X_causal"]
+def _features(data: DevData, thermal: int = 0, hold: int = 0) -> pd.DataFrame:
+    key = ("X", thermal, hold)
+    if key not in data.cache:
+        data.cache[key] = build_features(_zf(data, True, thermal, hold), data.assets)
+    return data.cache[key]
 
 
 # Process instruments on which an isolated deviation can be an instrument fault. Vibration channels come from one wireless sensor and
@@ -133,18 +137,19 @@ class WKMethod(Method):
 
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
-    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True):
+    def __init__(self, k=6.0, persist=15, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
         self.rules, self.cavitation, self.arbiter = rules, cavitation, arbiter
+        self.thermal, self.hold = thermal, hold
 
     def fit(self, data, train_ids):
-        return DiagnosisModel(self.k_low, self.none_weight, self.trees).fit(_zf(data, True), _features(data), data.events, train_ids)
+        return DiagnosisModel(self.k_low, self.none_weight, self.trees).fit(_zf(data, True, self.thermal, self.hold), _features(data, self.thermal, self.hold), data.events, train_ids)
 
     def predict(self, model, data, asset_id):
-        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter)
+        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter, self.thermal, self.hold)
         if key in data.cache:
             return data.cache[key]
-        zf, X = _zf(data, True), _features(data)
+        zf, X = _zf(data, True, self.thermal, self.hold), _features(data, self.thermal, self.hold)
         idx = zf.index[zf.asset_id == asset_id]
         g, Xa = zf.loc[idx].reset_index(drop=True), X.loc[idx]
         P = model.proba(Xa)

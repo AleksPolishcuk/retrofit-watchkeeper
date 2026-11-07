@@ -24,7 +24,48 @@ FEATURE_COLUMNS = (
 )
 
 
-def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120) -> pd.DataFrame:
+SPARSE_CHANNELS = ("vibration_rms_mm_s", "vibration_accel_rms_g", "vibration_crest_factor", "bearing_temp_c")
+THERMAL_KEYS = ("wt", "bt", "tf")
+
+
+def hold_sparse(f: pd.DataFrame, assets: pd.DataFrame, limit: int = 6) -> pd.DataFrame:
+    """Carry the last report of a battery wireless sensor forward for up to `limit` minutes (looking backwards only).
+
+    A T1 pump reports vibration and bearing temperature every 5 minutes, so on the 1-minute grid only about one minute in five has a value and a
+    trigger that needs 15 minutes in a row can never fire on it. Holding the last report makes the channel continuous without using the future.
+    """
+    wireless = set(assets.loc[assets["wireless_update_s"].notna(), "asset_id"]) if "wireless_update_s" in assets else set()
+    out = f.copy()
+    for a in wireless & set(out["asset_id"]):
+        m = (out["asset_id"] == a).to_numpy()
+        for c in SPARSE_CHANNELS:
+            col = f"{c}__mean"
+            if col in out:
+                out.loc[m, col] = out.loc[m, col].ffill(limit=limit).to_numpy()
+    return out
+
+
+def thermal_warmup(zf: pd.DataFrame, minutes: int) -> pd.DataFrame:
+    """After a restart the motor and bearing are still cold, which looks like a large negative deviation. Blank the thermal channels until the pump
+    has run `minutes` in a row. Causal: only the past run length is used."""
+    if minutes <= 0:
+        return zf
+    out = zf.copy()
+    run = ((out["operating_mode"] == "RUNNING") & (out["running_fraction"] >= 0.99)).to_numpy()
+    age = np.zeros(len(out), dtype=int)
+    for _, idx in out.groupby("asset_id").indices.items():
+        r = run[idx]
+        grp = np.cumsum(~r)
+        age[idx] = pd.Series(r.astype(int)).groupby(grp).cumsum().to_numpy()
+    young = age < minutes
+    for k in THERMAL_KEYS:
+        for pre in ("z_", "zs_"):
+            if pre + k in out:
+                out.loc[young, pre + k] = np.nan
+    return out
+
+
+def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0) -> pd.DataFrame:
     """`f` is the output of `retrofit_sim.baselines.regime_frame`."""
     out = []
     for _, g in f.groupby("asset_id", sort=False):
@@ -60,7 +101,7 @@ def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120)
                 g["flat_" + k] = (g[s_col] == 0) & g[f"{col}__count"].ge(30)
         g["gap"] = g["rows"] < 30
         out.append(g)
-    return pd.concat(out, ignore_index=True)
+    return thermal_warmup(pd.concat(out, ignore_index=True), thermal_min)
 
 
 def _hours_since_lockout(mode: np.ndarray, n: int, cap: float = 99.0) -> np.ndarray:
