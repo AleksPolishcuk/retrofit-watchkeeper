@@ -6,14 +6,20 @@ Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 Novemb
 
 > **Advice only. No write path.** Watchkeeper reads telemetry and recommends actions for a human to approve. It never sends commands to a pump, drive, valve, PLC or safety system.
 
-## What it will do
+## Our Solution
 
-1. Ingest or replay pump telemetry (read-only, MQTT-style messages).
-2. Detect developing machine and instrument problems early, taking the operating regime into account.
-3. Tell a sensor fault from a machine fault.
-4. Show the evidence behind every alert and say how certain it is.
-5. Recommend an inspection or maintenance action for a human to review.
-6. Optionally compare an intervention in the provided digital sandbox (simulation only).
+Watchkeeper provides a read-only intelligence layer for existing industrial cooling-water pumps.
+
+The system analyses telemetry, identifies abnormal operating patterns, investigates potential fault categories, and presents its findings through an operator-focused dashboard.
+
+Its primary objectives are to:
+
+1. Detect unusual machine behavior.
+2. Identify potential machine and sensor faults.
+3. Provide evidence supporting each alert.
+4. Communicate uncertainty and avoid presenting suspected faults as confirmed failures.
+5. Recommend appropriate inspection or maintenance actions.
+6. Support human oversight throughout the decision-making process.
 
 ## Status
 
