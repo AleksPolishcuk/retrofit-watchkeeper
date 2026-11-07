@@ -69,6 +69,10 @@ export default function Overview({ assets, alerts, reviews }: Props) {
     <div className="overview">
       <section className={`hero ${urgent ? 'urgent' : 'calm'}`} aria-labelledby="hero-title">
         <div className="herocopy">
+          {alerts.length > 0 && (
+            <span className={`heroicon ${urgent ? 'warn' : 'ok'}`} aria-hidden="true"><Icon name={urgent ? 'alert' : 'check'} /></span>
+          )}
+          <div className="herotext">
           <p className="heroeyebrow"><i aria-hidden="true" />Pump fleet · recorded simulation, replayed</p>
           <h1 id="hero-title">
             {alerts.length === 0 ? 'No alerts to show yet' : urgent ? `${h.urgent} ${plural(h.urgent, 'case needs', 'cases need')} a look first` : 'Nothing urgent right now'}
@@ -81,6 +85,7 @@ export default function Overview({ assets, alerts, reviews }: Props) {
                 : `No open case at Likely or Very likely priority. ${h.open} lower-priority ${plural(h.open, 'case is', 'cases are')} still open.`}
           </p>
           <a className="btn primary herocta" href={link(h.topId)}>{urgent ? 'Review the first case' : 'Open the alerts'} <Icon name="next" /></a>
+          </div>
         </div>
         <PumpArt className="heroart" />
       </section>
