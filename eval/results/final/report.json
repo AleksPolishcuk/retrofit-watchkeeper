@@ -14,7 +14,105 @@
       "cls": 0.6,
       "events": 35
     },
-    "null_random_alerts": 43.588080026707196
+    "null_random_alerts": 43.588080026707196,
+    "b1": {
+      "set": "9 public dev pumps",
+      "method": "B1 organizer",
+      "composite": 63.36436402898017,
+      "lo": 51.31591635679529,
+      "hi": 75.15865757739084,
+      "f1": 0.7647058823529412,
+      "recall": 0.7428571428571429,
+      "prec": 0.7878787878787878,
+      "fa": 0.1111111111111111,
+      "type": 0.3142857142857143,
+      "cls": 0.6285714285714286,
+      "events": 35
+    },
+    "by_tier": {
+      "T0_LEGACY": {
+        "events": 5,
+        "detected": 3,
+        "right_type": 2
+      },
+      "T1_RETROFIT": {
+        "events": 15,
+        "detected": 11,
+        "right_type": 9
+      },
+      "T2_FULL": {
+        "events": 15,
+        "detected": 11,
+        "right_type": 6
+      }
+    },
+    "by_type": {
+      "AIR_ENTRAINMENT": {
+        "events": 2,
+        "detected": 2,
+        "right_type": 1
+      },
+      "BEARING_WEAR": {
+        "events": 4,
+        "detected": 3,
+        "right_type": 2
+      },
+      "CAVITATION": {
+        "events": 4,
+        "detected": 3,
+        "right_type": 3
+      },
+      "COMMUNICATION_LOSS": {
+        "events": 2,
+        "detected": 2,
+        "right_type": 2
+      },
+      "DISCHARGE_RESTRICTION": {
+        "events": 3,
+        "detected": 2,
+        "right_type": 1
+      },
+      "IMBALANCE": {
+        "events": 1,
+        "detected": 1,
+        "right_type": 1
+      },
+      "IMPELLER_WEAR": {
+        "events": 2,
+        "detected": 0,
+        "right_type": 0
+      },
+      "MISALIGNMENT": {
+        "events": 3,
+        "detected": 3,
+        "right_type": 1
+      },
+      "SENSOR_CALIBRATION_SHIFT": {
+        "events": 2,
+        "detected": 2,
+        "right_type": 0
+      },
+      "SENSOR_DRIFT": {
+        "events": 3,
+        "detected": 1,
+        "right_type": 1
+      },
+      "SENSOR_NOISE_SPIKES": {
+        "events": 2,
+        "detected": 0,
+        "right_type": 0
+      },
+      "SENSOR_STUCK": {
+        "events": 3,
+        "detected": 2,
+        "right_type": 2
+      },
+      "SUCTION_STRAINER_CLOGGING": {
+        "events": 4,
+        "detected": 4,
+        "right_type": 3
+      }
+    }
   },
   "tune fleets (16 pumps)": {
     "wk": {
@@ -31,7 +129,95 @@
       "cls": 0.5416666666666666,
       "events": 48
     },
-    "null_random_alerts": 37.490887840254
+    "null_random_alerts": 37.490887840254,
+    "b1": {
+      "set": "tune fleets (16 pumps)",
+      "method": "B1 organizer",
+      "composite": 42.86876468567807,
+      "lo": 35.28988143435473,
+      "hi": 51.34356572333917,
+      "f1": 0.5054945054945056,
+      "recall": 0.4791666666666667,
+      "prec": 0.5348837209302325,
+      "fa": 0.17857142857142858,
+      "type": 0.16666666666666666,
+      "cls": 0.375,
+      "events": 48
+    },
+    "by_tier": {
+      "T0_LEGACY": {
+        "events": 19,
+        "detected": 11,
+        "right_type": 7
+      },
+      "T1_RETROFIT": {
+        "events": 17,
+        "detected": 8,
+        "right_type": 5
+      },
+      "T2_FULL": {
+        "events": 12,
+        "detected": 12,
+        "right_type": 5
+      }
+    },
+    "by_type": {
+      "AIR_ENTRAINMENT": {
+        "events": 5,
+        "detected": 3,
+        "right_type": 2
+      },
+      "BEARING_WEAR": {
+        "events": 1,
+        "detected": 1,
+        "right_type": 1
+      },
+      "COMMUNICATION_LOSS": {
+        "events": 4,
+        "detected": 4,
+        "right_type": 4
+      },
+      "DISCHARGE_RESTRICTION": {
+        "events": 12,
+        "detected": 5,
+        "right_type": 2
+      },
+      "IMPELLER_WEAR": {
+        "events": 6,
+        "detected": 4,
+        "right_type": 1
+      },
+      "MISALIGNMENT": {
+        "events": 2,
+        "detected": 2,
+        "right_type": 1
+      },
+      "SENSOR_CALIBRATION_SHIFT": {
+        "events": 3,
+        "detected": 3,
+        "right_type": 2
+      },
+      "SENSOR_DRIFT": {
+        "events": 6,
+        "detected": 4,
+        "right_type": 3
+      },
+      "SENSOR_NOISE_SPIKES": {
+        "events": 6,
+        "detected": 2,
+        "right_type": 0
+      },
+      "SENSOR_STUCK": {
+        "events": 2,
+        "detected": 2,
+        "right_type": 1
+      },
+      "SUCTION_STRAINER_CLOGGING": {
+        "events": 1,
+        "detected": 1,
+        "right_type": 0
+      }
+    }
   },
   "masked-clogging trap (3 pumps)": {
     "wk": {
@@ -48,7 +234,45 @@
       "cls": 0.6666666666666666,
       "events": 6
     },
-    "null_random_alerts": 40.91138648740714
+    "null_random_alerts": 40.91138648740714,
+    "b1": {
+      "set": "masked-clogging trap (3 pumps)",
+      "method": "B1 organizer",
+      "composite": 52.13655882977088,
+      "lo": NaN,
+      "hi": NaN,
+      "f1": 0.625,
+      "recall": 0.8333333333333334,
+      "prec": 0.5,
+      "fa": 0.23809523809523808,
+      "type": 0.0,
+      "cls": 0.8333333333333334,
+      "events": 6
+    },
+    "by_tier": {
+      "T1_RETROFIT": {
+        "events": 4,
+        "detected": 2,
+        "right_type": 0
+      },
+      "T2_FULL": {
+        "events": 2,
+        "detected": 2,
+        "right_type": 0
+      }
+    },
+    "by_type": {
+      "SENSOR_DRIFT": {
+        "events": 3,
+        "detected": 3,
+        "right_type": 0
+      },
+      "SUCTION_STRAINER_CLOGGING": {
+        "events": 3,
+        "detected": 1,
+        "right_type": 0
+      }
+    }
   },
   "hold fleets (24 pumps)": {
     "wk": {
@@ -65,7 +289,105 @@
       "cls": 0.5853658536585366,
       "events": 82
     },
-    "null_random_alerts": 35.97009072342987
+    "null_random_alerts": 35.97009072342987,
+    "b1": {
+      "set": "hold fleets (24 pumps)",
+      "method": "B1 organizer",
+      "composite": 52.08547711283894,
+      "lo": 44.103915315670086,
+      "hi": 60.17319361531753,
+      "f1": 0.6308724832214765,
+      "recall": 0.573170731707317,
+      "prec": 0.7014925373134329,
+      "fa": 0.11904761904761904,
+      "type": 0.23170731707317074,
+      "cls": 0.5,
+      "events": 82
+    },
+    "by_tier": {
+      "T0_LEGACY": {
+        "events": 25,
+        "detected": 15,
+        "right_type": 7
+      },
+      "T1_RETROFIT": {
+        "events": 38,
+        "detected": 30,
+        "right_type": 20
+      },
+      "T2_FULL": {
+        "events": 19,
+        "detected": 10,
+        "right_type": 7
+      }
+    },
+    "by_type": {
+      "AIR_ENTRAINMENT": {
+        "events": 8,
+        "detected": 2,
+        "right_type": 2
+      },
+      "BEARING_WEAR": {
+        "events": 4,
+        "detected": 4,
+        "right_type": 4
+      },
+      "CAVITATION": {
+        "events": 6,
+        "detected": 5,
+        "right_type": 5
+      },
+      "COMMUNICATION_LOSS": {
+        "events": 6,
+        "detected": 6,
+        "right_type": 6
+      },
+      "DISCHARGE_RESTRICTION": {
+        "events": 10,
+        "detected": 5,
+        "right_type": 3
+      },
+      "IMBALANCE": {
+        "events": 2,
+        "detected": 1,
+        "right_type": 0
+      },
+      "IMPELLER_WEAR": {
+        "events": 10,
+        "detected": 7,
+        "right_type": 0
+      },
+      "MISALIGNMENT": {
+        "events": 7,
+        "detected": 6,
+        "right_type": 5
+      },
+      "SENSOR_CALIBRATION_SHIFT": {
+        "events": 8,
+        "detected": 5,
+        "right_type": 2
+      },
+      "SENSOR_DRIFT": {
+        "events": 5,
+        "detected": 3,
+        "right_type": 2
+      },
+      "SENSOR_NOISE_SPIKES": {
+        "events": 4,
+        "detected": 4,
+        "right_type": 0
+      },
+      "SENSOR_STUCK": {
+        "events": 6,
+        "detected": 5,
+        "right_type": 4
+      },
+      "SUCTION_STRAINER_CLOGGING": {
+        "events": 6,
+        "detected": 2,
+        "right_type": 1
+      }
+    }
   },
   "healthy": {
     "pump_days": 294.0,

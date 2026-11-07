@@ -85,3 +85,13 @@ def test_whatif_outside_the_data_window_is_refused_not_invented(client):
 
 def test_whatif_unknown_asset_is_404(client):
     assert client.get("/api/whatif", params={"asset_id": "PUMP-99", "time_utc": "2025-09-10T12:38:00Z", "fault_type": "BEARING_WEAR"}).status_code == 404
+
+
+def test_results_endpoint_serves_measurements_and_tier_channels_from_files(client):
+    r = client.get("/api/results").json()
+    assert {t["tier"] for t in r["tiers"]} == {"T0_LEGACY", "T1_RETROFIT", "T2_FULL"}
+    t0 = next(t for t in r["tiers"] if t["tier"] == "T0_LEGACY")
+    t2 = next(t for t in r["tiers"] if t["tier"] == "T2_FULL")
+    assert set(t0["channels"]) < set(t2["channels"])                    # the legacy set is a subset of the full set
+    assert "stages" in r and "footprint" in r and "report" in r        # absent files give null, not an error
+    json.dumps(r, allow_nan=False)                                       # no NaN leaks into the response

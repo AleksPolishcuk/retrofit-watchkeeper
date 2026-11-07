@@ -120,6 +120,25 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None) -> FastAPI:
         return {"asset_id": asset_id, "channel": channel, "step_min": step_min,
                 "t": [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in s.index], "v": [round(float(v), 3) for v in s.values]}
 
+    results_dir = ROOT / "eval" / "results"
+
+    def read_json(path: Path):
+        """JSON file or None. NaN in the report (an interval that could not be computed) becomes null."""
+        if not path.exists():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"), parse_constant=lambda c: None)
+
+    @app.get("/api/results")
+    def results():
+        """Measured results, the stage table behind the likelihood words, the edge footprint and the instrumentation tiers. All read from files."""
+        tiers = []
+        for tier, g in assets.groupby("instrumentation_tier"):
+            sets = [set(str(c).split("|")) for c in g["channels_available"]]
+            tiers.append({"tier": tier, "pumps": int(len(g)), "channels": [c for c in CHANNELS if all(c in s for s in sets)],
+                          "sometimes": [c for c in CHANNELS if any(c in s for s in sets) and not all(c in s for s in sets)]})
+        return {"report": read_json(results_dir / "final" / "report.json"), "stages": read_json(ROOT / "models" / "stages.json"),
+                "footprint": read_json(results_dir / "footprint.json"), "tiers": tiers}
+
     whatif_cache: dict = {}
 
     @app.get("/api/whatif")

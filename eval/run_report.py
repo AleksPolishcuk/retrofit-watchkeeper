@@ -62,7 +62,10 @@ def main() -> int:
                 detail[name] = {"tier": pe.groupby("tier").agg(events=("event_id", "count"), detected=("detected", "sum"), right_type=("type_correct", "sum")),
                                 "type": pe.groupby("fault_type").agg(events=("event_id", "count"), detected=("detected", "sum"), right_type=("type_correct", "sum")),
                                 "null": random_alerts(pred, data, draws=10)}
-        jsonout[name] = {"wk": next(r for r in rows if r["set"] == name and r["method"] == "WK"), "null_random_alerts": detail[name]["null"]}
+        jsonout[name] = {"wk": next(r for r in rows if r["set"] == name and r["method"] == "WK"), "null_random_alerts": detail[name]["null"],
+                         "b1": next(r for r in rows if r["set"] == name and r["method"] == "B1 organizer"),
+                         "by_tier": {i: {"events": int(r.events), "detected": int(r.detected), "right_type": int(r.right_type)} for i, r in detail[name]["tier"].iterrows()},
+                         "by_type": {i: {"events": int(r.events), "detected": int(r.detected), "right_type": int(r.right_type)} for i, r in detail[name]["type"].iterrows()}}
         print(f"{name}: done [{time.time() - t0:.0f}s]", flush=True)
     hd = load_set("healthy")
     hp = run(wk, model, hd)
