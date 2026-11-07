@@ -51,3 +51,36 @@ def test_wired_pumps_are_not_touched_by_the_hold():
     f = pd.DataFrame({"asset_id": ["W"] * 6, "vibration_rms_mm_s__mean": [1.0, np.nan, np.nan, np.nan, np.nan, np.nan]})
     assets = pd.DataFrame({"asset_id": ["W"], "wireless_update_s": [np.nan]})
     assert hold_sparse(f, assets, 6)["vibration_rms_mm_s__mean"].isna().sum() == 5
+
+
+def test_a_regime_first_seen_after_the_baseline_is_learned_before_it_is_judged():
+    """Organizer fallback: an unseen speed bin is compared with all baseline bins, so a healthy demand change gives z of 20 for days. Here it gets NaN, then ~0."""
+    import numpy as np
+    from watchkeeper.features.causal import regime_learning_z
+    rng = np.random.default_rng(0)
+    n = 24 * 60 * 5
+    reg = np.where(np.arange(n) < 2 * 24 * 60, 18, 19)                          # day 3 on, the drive runs one speed bin higher
+    vals = np.where(reg == 18, 40.0, 51.0) + rng.normal(0, 0.5, n)
+    steady = np.ones(n, dtype=bool)
+    z = regime_learning_z(vals, reg, steady, floor=0.2)
+    new = np.flatnonzero(reg == 19)
+    assert np.isnan(z[new[:120]]).all()                                        # nothing is judged while the regime has fewer than 120 steady minutes
+    assert np.nanmax(np.abs(z[new])) < 6                                        # no bogus 20-sigma values
+    assert abs(np.nanmedian(z[new[300:]])) < 0.5                                # judged against its own baseline
+    assert np.nanmax(np.abs(z[: 2 * 24 * 60][np.arange(2 * 24 * 60) >= 60])) < 6
+
+
+def test_regime_learning_z_is_causal_and_still_sees_a_real_fault_in_a_learned_regime():
+    import numpy as np
+    from watchkeeper.features.causal import regime_learning_z
+    rng = np.random.default_rng(1)
+    n = 24 * 60 * 4
+    reg = np.where(np.arange(n) < 24 * 60 * 2, 18, 19)
+    vals = np.where(reg == 18, 40.0, 51.0) + rng.normal(0, 0.5, n)
+    vals[3 * 24 * 60:] += 8.0                                                  # a real +8 kW shift on day 4, in the learned regime
+    steady = np.ones(n, dtype=bool)
+    full = regime_learning_z(vals, reg, steady, floor=0.2)
+    assert np.nanmedian(full[3 * 24 * 60 + 120:]) > 8                           # 8 kW at MAD-scaled 0.5 noise is a large z: still detected
+    cut = 2 * 24 * 60 + 400
+    part = regime_learning_z(vals[:cut], reg[:cut], steady[:cut], floor=0.2)
+    assert np.allclose(full[:cut], part, equal_nan=True)                        # truncation does not change earlier values

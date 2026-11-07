@@ -85,6 +85,20 @@ def test_wk_method_is_causal_under_truncation(dev):
     assert problems == []
 
 
+def test_signature_detectors_are_causal_under_truncation(dev):
+    """The fused-score and slow-change detectors raise alerts from backward-looking scores only: cutting the data must not change early alerts."""
+    from watchkeeper.evalkit import check_causality
+    from watchkeeper.methods import WKMethod
+    m = WKMethod(trees=30, sig_h=4.0, slow_h=6.0)         # low thresholds on purpose, so that the signature alerts actually occur
+    model = m.fit(dev, dev.ids_of("train"))
+    full = m.predict(model, dev, "PUMP-04")
+    assert full["rule"].astype(str).str.startswith("signature").any(), "the test needs at least one signature alert to mean something"
+    problems = []
+    for asset in ("PUMP-04", "PUMP-08"):
+        problems += check_causality(m, model, dev, asset, (6, 20, 55, 90))
+    assert problems == []
+
+
 def test_a_set_without_events_counts_every_alert_as_false_in_thirty_minute_episodes():
     from watchkeeper.evalkit import DevData
     assets = pd.DataFrame({"asset_id": ["H-02"], "window_start_utc": ["2025-01-01T00:00:00Z"], "window_end_utc": ["2025-01-08T00:00:00Z"], "split": ["train"]})

@@ -8,6 +8,7 @@ from retrofit_sim import baselines as B
 from .evalkit import INTERNAL_COLS, DevData, Method, concat_predictions, score_ids
 from .detect.alerting import alerts_from_flag, alerts_from_flags, b1_flag, split_flags
 from .detect.cavitation import cavitation_episodes
+from .detect.signature import SIGNATURES, fused_flag, fused_type, slow_detect
 from .diagnose import ACTIONS, DiagnosisModel, event_class_of
 from .features.causal import CH, build_features, causal_zscores, hold_sparse
 from .features.npsh import npsh_margin
@@ -21,15 +22,27 @@ def _regime(data: DevData, hold: int = 0) -> pd.DataFrame:
     return data.cache[key]
 
 
-def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0) -> pd.DataFrame:
+def _zf(data: DevData, causal: bool = False, thermal: int = 0, hold: int = 0, drop: tuple = (), learn: bool = False) -> pd.DataFrame:
     """Regime frame with robust z-scores for the assets in `data` (each asset uses only its own data).
 
     causal=False is the organizer's baseline (first 24 h of the window). causal=True uses an expanding baseline. `thermal` blanks thermal
     channels for that many minutes after a restart; `hold` carries sparse wireless reports forward for that many minutes.
+    `drop` names channel keys (such as "tf") that are blanked: they take no part in triggering, features or evidence.
     """
-    key = ("zf", causal, thermal, hold)
+    drop = tuple(sorted(drop))
+    key = ("zf", causal, thermal, hold) + ((drop,) if drop else ()) + (("learn",) if learn else ())
     if key not in data.cache:
-        data.cache[key] = causal_zscores(_regime(data, hold), thermal_min=thermal) if causal else B.zscores(_regime(data, hold))
+        if drop:
+            zf = _zf(data, causal, thermal, hold, (), learn).copy()
+            for k in drop:
+                for pre in ("z_", "zs_"):
+                    if pre + k in zf:
+                        zf[pre + k] = np.nan
+                if "flat_" + k in zf:
+                    zf["flat_" + k] = False
+            data.cache[key] = zf
+        else:
+            data.cache[key] = causal_zscores(_regime(data, hold), thermal_min=thermal, learn=learn) if causal else B.zscores(_regime(data, hold))
     return data.cache[key]
 
 
@@ -74,10 +87,11 @@ class B1CausalMethod(B1Method):
     CAUSAL = True
 
 
-def _features(data: DevData, thermal: int = 0, hold: int = 0) -> pd.DataFrame:
-    key = ("X", thermal, hold)
+def _features(data: DevData, thermal: int = 0, hold: int = 0, drop: tuple = (), learn: bool = False) -> pd.DataFrame:
+    drop = tuple(sorted(drop))
+    key = ("X", thermal, hold) + ((drop,) if drop else ()) + (("learn",) if learn else ())
     if key not in data.cache:
-        data.cache[key] = build_features(_zf(data, True, thermal, hold), data.assets)
+        data.cache[key] = build_features(_zf(data, True, thermal, hold, drop, learn), data.assets)
     return data.cache[key]
 
 
@@ -121,6 +135,18 @@ def _rule_diagnosis(row: pd.Series, xrow: pd.Series | None = None, kz: float = 6
     return None
 
 
+def _signature_evidence(xrow: pd.Series, ft: str, how: str) -> str:
+    """Evidence for an alert raised from fused weak shifts: the channels of the fault's signature with their 15-minute mean deviation, signed by the
+    direction the fault is expected to push them, in the same text format as `_evidence`."""
+    parts = []
+    for k, sign in SIGNATURES[ft].items():
+        v = xrow.get("m15_" + k)
+        if v is not None and pd.notna(v) and abs(v) >= 0.5 and np.sign(v) == sign:
+            parts.append((abs(float(v)), f"{CH[k]} z={float(v):+.1f}"))
+    parts = [t for _, t in sorted(parts, reverse=True)[:4]]
+    return ", ".join(parts + [f"{how} matches the {ft} signature"])
+
+
 def _evidence(row: pd.Series) -> str:
     """Top deviating channels in the text format that the export parses."""
     if bool(row.get("gap", False)):
@@ -137,20 +163,25 @@ class WKMethod(Method):
 
     name = "WK_causal_learned"           # with deterministic rules for gaps and frozen channels (rules=True)
 
-    def __init__(self, k=5.0, persist=12, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6, min_leaf=3, max_depth=None):
+    def __init__(self, k=5.0, persist=12, suppress=0.6, none_weight=0.5, k_low=4.0, trees=100, rules=True, cavitation=True, arbiter=True, thermal=60, hold=6, min_leaf=3, max_depth=None,
+                 sig_h=None, slow_h=None, slow_k=0.5, sig_smooth=15, sig_persist=12, drop=(), learn=True):
         self.k, self.persist, self.suppress, self.none_weight, self.k_low, self.trees = k, persist, suppress, none_weight, k_low, trees
         self.rules, self.cavitation, self.arbiter = rules, cavitation, arbiter
         self.thermal, self.hold = thermal, hold
         self.min_leaf, self.max_depth = min_leaf, max_depth
+        self.sig_h, self.slow_h, self.slow_k, self.sig_smooth, self.sig_persist = sig_h, slow_h, slow_k, sig_smooth, sig_persist
+        self.drop = tuple(sorted(drop))
+        self.learn = learn
 
     def fit(self, data, train_ids):
-        return DiagnosisModel(self.k_low, self.none_weight, self.trees, min_leaf=self.min_leaf, max_depth=self.max_depth).fit(_zf(data, True, self.thermal, self.hold), _features(data, self.thermal, self.hold), data.events, train_ids)
+        return DiagnosisModel(self.k_low, self.none_weight, self.trees, min_leaf=self.min_leaf, max_depth=self.max_depth).fit(_zf(data, True, self.thermal, self.hold, self.drop, self.learn), _features(data, self.thermal, self.hold, self.drop, self.learn), data.events, train_ids)
 
     def predict(self, model, data, asset_id):
-        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter, self.thermal, self.hold)
+        key = ("wk", id(model), asset_id, self.k, self.persist, self.suppress, self.rules, self.cavitation, self.arbiter, self.thermal, self.hold,
+               self.sig_h, self.slow_h, self.slow_k, self.sig_smooth, self.sig_persist, self.drop, self.learn)
         if key in data.cache:
             return data.cache[key]
-        zf, X = _zf(data, True, self.thermal, self.hold), _features(data, self.thermal, self.hold)
+        zf, X = _zf(data, True, self.thermal, self.hold, self.drop, self.learn), _features(data, self.thermal, self.hold, self.drop, self.learn)
         idx = zf.index[zf.asset_id == asset_id]
         g, Xa = zf.loc[idx].reset_index(drop=True), X.loc[idx]
         P = model.proba(Xa)
@@ -164,7 +195,24 @@ class WKMethod(Method):
         none_i = classes.index("NONE") if "NONE" in classes else None
         type_i = [i for i, c in enumerate(classes) if c != "NONE"]
 
+        flags = split_flags(g, self.k)
+        persist = {"dev": self.persist, "gap": min(self.persist, 8), "stuck": self.persist}
+        kinds = {}
+        if self.sig_h is not None:
+            flags["sig"], persist["sig"] = fused_flag(g, self.sig_h, self.sig_smooth), self.sig_persist
+            kinds["sig"] = fused_type(g, self.sig_smooth).to_numpy()
+        if self.slow_h is not None:
+            flags["slow"], kinds["slow"] = slow_detect(g, self.slow_h, self.slow_k)
+            persist["slow"] = 1                                   # the hourly decision is already persistent
+
         def diag(j, reason):
+            if reason in ("sig", "slow"):
+                ft = kinds[reason][j]
+                if ft is None or cav_active[j]:
+                    return None
+                how = "fused weak shifts" if reason == "sig" else "slow cumulative change"
+                return {"event_class": event_class_of(ft), "fault_type": ft, "confidence": 0.5 if reason == "sig" else 0.4,
+                        "evidence": _signature_evidence(Xa.iloc[j], ft, how), "action": ACTIONS[ft], "alternatives": [], "rule": "signature_" + reason}
             if reason in ("gap", "stuck"):
                 if self.rules:
                     return _rule_diagnosis(g.iloc[j], Xa.iloc[j], self.k, False, only=reason)
@@ -187,7 +235,7 @@ class WKMethod(Method):
             return {"event_class": event_class_of(ft), "fault_type": ft, "confidence": min(max(conf, 0.05), 0.99),
                     "evidence": _evidence(g.iloc[j]), "action": ACTIONS[ft], "alternatives": alts, "rule": "model"}
 
-        rows = alerts_from_flags(g, split_flags(g, self.k), {"dev": self.persist, "gap": min(self.persist, 8), "stuck": self.persist}, diag, "WK causal+learned")
+        rows = alerts_from_flags(g, flags, persist, diag, "WK causal+learned")
         rows += [dict(r, evidence="WK causal+learned: " + r["evidence"]) for r in cav_rows]
         out = pd.DataFrame(sorted(rows, key=lambda r: r["alert_time_utc"]), columns=INTERNAL_COLS)
         data.cache[key] = out
@@ -200,4 +248,7 @@ METHODS = {
     "wk": WKMethod,
     "wk-learned-only": lambda: WKMethod(rules=False),
     "wk-no-arbiter": lambda: WKMethod(arbiter=False),
+    "wk-sig": lambda: WKMethod(sig_h=5.0, slow_h=8.0),
+    "wk-no-tf": lambda: WKMethod(drop=("tf",)),
+    "wk-no-learn": lambda: WKMethod(learn=False),
 }

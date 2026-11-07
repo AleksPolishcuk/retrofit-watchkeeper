@@ -65,8 +65,40 @@ def thermal_warmup(zf: pd.DataFrame, minutes: int) -> pd.DataFrame:
     return out
 
 
-def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0) -> pd.DataFrame:
-    """`f` is the output of `retrofit_sim.baselines.regime_frame`."""
+def regime_learning_z(vals: np.ndarray, reg: np.ndarray, steady: np.ndarray, floor: float, base_end: int = 1440, min_regime: int = 120, learn_min: int = 180) -> np.ndarray:
+    """Robust z against a baseline that belongs to the operating regime (speed bin) the minute is in, and only to that regime.
+
+    The organizer baseline falls back to the median of *all* baseline regimes when a regime was not seen during the first 24 h. A drive that later settles
+    at a new speed (a demand change, not a fault) then gets z values of 20 or more for hours. Here a regime without enough baseline gets no z-score at all
+    (NaN, so no alert) until it has `min_regime` steady minutes; its baseline is then frozen after `learn_min` minutes. Regimes seen in the first
+    `base_end` minutes keep the expanding baseline of the first 24 h, as before. Hourly checkpoints; a minute uses only minutes before its own hour.
+    """
+    n = len(vals)
+    z = np.full(n, np.nan)
+    hour = np.arange(n) // 60
+    ok = steady & ~np.isnan(vals)
+    for r in np.unique(reg):
+        idx = np.flatnonzero(reg == r)
+        base_idx = idx[ok[idx]]
+        if len(base_idx) < min_regime:
+            continue
+        end = base_end if int((base_idx < base_end).sum()) >= min_regime else int(base_idx[min(learn_min, len(base_idx)) - 1]) + 1
+        hours_here = hour[idx]
+        for hh in np.unique(hours_here):
+            pre = base_idx[base_idx < min(60 * int(hh), end)]
+            if len(pre) < min_regime:
+                continue
+            b = vals[pre]
+            med = np.median(b)
+            mad = np.median(np.abs(b - med))
+            sel = idx[hours_here == hh]
+            z[sel] = (vals[sel] - med) / max(1.4826 * mad, floor)
+    return z
+
+
+def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120, thermal_min: int = 0, learn: bool = False, min_regime: int = 120, learn_min: int = 180) -> pd.DataFrame:
+    """`f` is the output of `retrofit_sim.baselines.regime_frame`. With `learn=True` the level baseline is per regime and regimes first seen after the
+    baseline period are learned before they are judged (see `regime_learning_z`)."""
     out = []
     for _, g in f.groupby("asset_id", sort=False):
         g = g.copy().reset_index(drop=True)
@@ -95,6 +127,9 @@ def causal_zscores(f: pd.DataFrame, baseline_h: int = 24, min_steady: int = 120,
                 if s_col in g:
                     sb = base[s_col].median()
                     zs[sel] = ((g.loc[sel, s_col] - sb) / max(1.4826 * (base[s_col] - sb).abs().median(), 1e-3 + 0.05 * abs(sb))).to_numpy()
+            if learn:
+                z = regime_learning_z(g[m].to_numpy(dtype=float), g["regime"].to_numpy(), g["steady"].to_numpy().astype(bool), FLOOR[k],
+                                      baseline_h * 60, min_regime, learn_min)
             g["z_" + k] = z
             if s_col in g:
                 g["zs_" + k] = zs
