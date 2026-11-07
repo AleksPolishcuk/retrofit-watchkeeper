@@ -1,0 +1,65 @@
+{
+  "edges": [
+    0.35,
+    0.55,
+    0.75
+  ],
+  "sets": [
+    "tune",
+    "dev9"
+  ],
+  "model": "wk.joblib",
+  "signature": {
+    "sig_h": null,
+    "slow_h": null
+  },
+  "basis": {
+    "watch": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "possible": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "likely": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "very_likely": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    }
+  },
+  "detail": {
+    "watch": {
+      "alerts": 53,
+      "at_a_real_event": 45,
+      "right_class": 33,
+      "right_type": 17
+    },
+    "possible": {
+      "alerts": 32,
+      "at_a_real_event": 29,
+      "right_class": 28,
+      "right_type": 22
+    },
+    "likely": {
+      "alerts": 33,
+      "at_a_real_event": 33,
+      "right_class": 30,
+      "right_type": 17
+    },
+    "very_likely": {
+      "alerts": 15,
+      "at_a_real_event": 15,
+      "right_class": 15,
+      "right_type": 15
+    }
+  },
+  "note": "Counts from back-testing on simulated fleets the model was not trained on. They describe this simulator, not field performance."
+}

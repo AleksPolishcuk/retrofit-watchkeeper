@@ -1,7 +1,7 @@
 PY ?= python3
 PACK ?=
 
-.PHONY: setup setup-pack data bank eval predict api web demo test results
+.PHONY: setup setup-pack data bank model eval report levels predict api web demo test results
 
 setup:
 	$(PY) -m venv .venv
@@ -22,8 +22,18 @@ eval:
 bank:
 	.venv/bin/python scripts/make_bank.py --out bank
 
+model:
+	.venv/bin/python eval/train_model.py --fit train --out models/wk.joblib
+	.venv/bin/python eval/train_model.py --fit train+tune+dev --out models/wk_final.joblib
+
+report:
+	.venv/bin/python eval/run_report.py --model models/wk.joblib
+
+levels:
+	.venv/bin/python eval/run_levels.py --model models/wk.joblib --sets tune dev9
+
 predict:
-	.venv/bin/python -m watchkeeper.predict --assets PUMP-10 PUMP-11 PUMP-12 --out submission/predictions_test.csv
+	.venv/bin/python -m watchkeeper.predict --assets PUMP-10 PUMP-11 PUMP-12 --model models/wk_final.joblib --out submission/predictions_test.csv
 
 api:
 	.venv/bin/python -m uvicorn watchkeeper.api.app:app --host 127.0.0.1 --port 8000
