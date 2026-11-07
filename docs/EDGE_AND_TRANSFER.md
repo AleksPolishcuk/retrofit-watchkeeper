@@ -32,7 +32,7 @@ From `eval/footprint.py` on a laptop (Python 3.10, one core):
 | Peak memory of the measuring process | 331 MB, including loading the whole public data table |
 | GPU, network | not needed |
 
-Reading: one small edge computer (EUR 0.5-0.6 k class in the organizers' bill of materials) can score a whole fleet many times over in real time. The figure is for scoring a recorded week in one batch. Every score uses only earlier data, so the same pipeline can be run on a live feed; the prototype itself replays recorded data and has not been run against a live feed.
+Reading: one small edge computer (EUR 0.5-0.6 k class in the organizers' bill of materials) can score a whole fleet many times over in real time. The figure is for scoring a recorded week in one batch. Every score uses only earlier data, so the same pipeline runs on a stream: `make live-demo` feeds the organizers' raw replay (one message per second) through the read-only adapter and the detector, and the alerts equal those of a batch run (`eval/results/live_replay.md`). Re-running the detector every minute on a day or two of history costs about 2 % of one core per pump; the cost grows with the history because the detector is re-run on all minutes received, and an incremental scorer is not built. The prototype has been run on replayed recorded data, not on a live plant feed.
 
 ## 3. What a pump needs to be onboarded
 

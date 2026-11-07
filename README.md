@@ -8,13 +8,24 @@ Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 Novemb
 
 ## What it does
 
-1. Replays or ingests pump telemetry (one-minute averages of the channels a pump already has).
+1. Replays or ingests pump telemetry: the recorded one-minute averages, or the organizers' raw replay stream (one message per second), which a read-only adapter turns into the same one-minute readings (`make live-demo`, see below).
 2. Learns each pump's own normal at each operating point, using only data from before the moment being judged (causal; a truncation test enforces it).
 3. Raises an alert when a deviation persists, says whether it looks like a **machine** problem or an **instrument** problem, and names the most likely fault type.
 4. Shows the evidence behind every alert, what limits our certainty (missing channels, instrumentation level), what it may mean and what to check first.
 5. Uses graded words (Watch, Possible, Likely, Very likely) backed by back-test counts, never percentages that pretend to be calibrated.
 6. Recommends an inspection or maintenance action for a human to approve, and can compare an intervention in the organizers' simulation sandbox (simulation only).
 7. Says so when its own data are the problem: a silent gateway, a lost channel or speed signal, rows without measurements, a pump still learning its normal, quality flags, unit mix-ups (the **Data check** in the case view). Silence from the detector is never read as a healthy pump.
+
+## Live replay (raw messages in, alerts out)
+
+`make live-demo` replays the public validation pump PUMP-08 as raw messages (`python -m retrofit_sim replay`, one per second), turns them into one-minute readings, re-runs the detector and writes `artifacts/live/PUMP-08/state.json`. The Monitor tab shows it as a **Live replay** strip (as-of time, data check, alerts as they appear). The adapter (`src/watchkeeper/ingest/`) only reads: no publish, no subscribe, no command topic. A test fails if a write or subscribe path appears.
+
+- Minutes built from raw messages equal the organizers' `features_1min` (largest difference 3e-5, float32 rounding) on a retrofit, a fully instrumented and a legacy pump.
+- The live run gives exactly the alerts of one batch run over the same minutes (PUMP-08, three alerts, same time, type and confidence).
+- Duplicates, out-of-order and late messages, unparsable lines and non-telemetry topics are counted and handled, never fatal.
+- Cost: the adapter handles about 21,000 messages per second; the detector re-run takes 1 to 3 seconds for up to a week of history on one core and grows with the history. An incremental scorer would remove that growth; it is not built.
+
+Numbers and method: `eval/results/live_replay.md`. The prototype has been run on a replay of recorded data, not on a live plant feed.
 
 ## Measured results
 
