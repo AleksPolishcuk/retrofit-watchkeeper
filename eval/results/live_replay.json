@@ -1,0 +1,94 @@
+{
+ "aggregator": [
+  {
+   "asset": "PUMP-08",
+   "tier": "T1_RETROFIT",
+   "hours": 6.0,
+   "messages": 21600,
+   "minutes": 360,
+   "same_minutes": true,
+   "max_abs_diff": 1.52587890625e-05,
+   "nan_pattern_differences": 0,
+   "values_compared": 15984,
+   "ingest_msgs_per_s_incl_replay": 21365
+  },
+  {
+   "asset": "PUMP-04",
+   "tier": "T2_FULL",
+   "hours": 6.0,
+   "messages": 21600,
+   "minutes": 360,
+   "same_minutes": true,
+   "max_abs_diff": 3.0517578125e-05,
+   "nan_pattern_differences": 0,
+   "values_compared": 26280,
+   "ingest_msgs_per_s_incl_replay": 18800
+  },
+  {
+   "asset": "PUMP-03",
+   "tier": "T0_LEGACY",
+   "hours": 6.0,
+   "messages": 21600,
+   "minutes": 360,
+   "same_minutes": true,
+   "max_abs_diff": 3.0517578125e-05,
+   "nan_pattern_differences": 0,
+   "values_compared": 8280,
+   "ingest_msgs_per_s_incl_replay": 33158
+  }
+ ],
+ "pipeline": {
+  "asset": "PUMP-08",
+  "window": [
+   "2025-09-08T00:00:00+00:00",
+   "2025-09-11T14:00:00+00:00"
+  ],
+  "minutes": 5160,
+  "ingest": {
+   "messages": 309600,
+   "minutes": 5160
+  },
+  "alerts_live": 3,
+  "alerts_batch": 3,
+  "identical_to_batch": true,
+  "alerts": [
+   {
+    "alert_time_utc": "2025-09-10T09:33:00Z",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.22743746996891498
+   },
+   {
+    "alert_time_utc": "2025-09-10T23:58:00Z",
+    "fault_type": "BEARING_WEAR",
+    "confidence": 0.25048535010802997
+   },
+   {
+    "alert_time_utc": "2025-09-11T12:35:00Z",
+    "fault_type": "BEARING_WEAR",
+    "confidence": 0.33747786266854274
+   }
+  ],
+  "first_alert_publish": {
+   "first_seen_as_of_utc": "2025-09-10T09:33:00Z",
+   "published_minutes_after_alert_time": 0.0
+  },
+  "evaluations_coarse": 171,
+  "evaluations_fine": 60,
+  "fine_ms": {
+   "median": 1199.0,
+   "p95": 1844.0,
+   "max": 2526.0,
+   "history_minutes": [
+    3421,
+    3480
+   ]
+  },
+  "coarse_ms": {
+   "median": 1339.0,
+   "max": 5842.0
+  },
+  "wall_s": 332.7,
+  "cpu_s": 305.5,
+  "peak_rss_mb": 570.0
+ }
+}

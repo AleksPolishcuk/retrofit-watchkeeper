@@ -40,10 +40,11 @@ def _clean(value):
     return None if isinstance(value, float) and pd.isna(value) else value
 
 
-def create_app(data_dir=None, alerts_dir=None, mock_path=None) -> FastAPI:
+def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None) -> FastAPI:
     data_dir = Path(data_dir or os.environ.get("WATCHKEEPER_DATA", ROOT / "data"))
     alerts_dir = Path(alerts_dir or ROOT / "artifacts" / "alerts")
     mock_path = Path(mock_path or ROOT / "docs" / "mock_alerts.json")
+    live_dir = Path(live_dir or ROOT / "artifacts" / "live")
 
     app = FastAPI(title="Watchkeeper API (read-only)", version="0.0.1")
     assets = pd.read_csv(data_dir / "assets.csv")
@@ -143,6 +144,36 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None) -> FastAPI:
             raise HTTPException(400, f"bad as_of: {e}")
         h["checks"] = checks
         return json.loads(json.dumps(h, default=str))
+
+    def live_state(asset_id: str):
+        f = live_dir / asset_id / "state.json"
+        if not f.exists():
+            return None
+        try:
+            return json.loads(f.read_text(encoding="utf-8"))
+        except ValueError:                                                     # being replaced right now: the next poll gets the new file
+            return None
+
+    @app.get("/api/live")
+    def live_list():
+        """Pumps with a running or finished live replay: asset, status, as-of time, counts. The replay runner writes the files; this only reads them."""
+        out = []
+        for a in sorted(dev_ids):
+            s = live_state(a)
+            if s:
+                out.append({"asset_id": a, "status": s.get("status"), "as_of_utc": s.get("as_of_utc"), "minutes": s.get("minutes"), "alerts": len(s.get("alerts", [])),
+                            "health": (s.get("health") or {}).get("status"), "updated_wall_utc": s.get("updated_wall_utc")})
+        return out
+
+    @app.get("/api/live/{asset_id}")
+    def live_one(asset_id: str):
+        need(asset_id)
+        if asset_id not in dev_ids:
+            raise HTTPException(403, "live replay is for the public pumps in this build")
+        s = live_state(asset_id)
+        if s is None:
+            raise HTTPException(404, f"no live replay state for {asset_id}")
+        return s
 
     results_dir = ROOT / "eval" / "results"
 
