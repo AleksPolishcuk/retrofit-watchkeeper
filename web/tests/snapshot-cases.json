@@ -1,0 +1,15 @@
+[
+  ["/api/assets", "assets.json"],
+  ["/api/results", "results.json"],
+  ["/api/alerts", "alerts.json"],
+  ["/api/alerts?asset_id=PUMP-08", "alerts/PUMP-08.json"],
+  ["/api/alerts/archive?asset_id=PUMP-06", "archive/PUMP-06.json"],
+  ["/api/timeline?asset_id=PUMP-09", "timeline/PUMP-09.json"],
+  ["/api/series?asset_id=PUMP-01&channel=discharge_pressure_kpa&step_min=120", "series/PUMP-01__discharge_pressure_kpa__120.json"],
+  ["/api/data-health?asset_id=PUMP-03", "data-health/PUMP-03.json"],
+  ["/api/data-health?asset_id=PUMP-06&as_of=2025-10-12T21%3A48%3A00Z", "data-health/PUMP-06__2025-10-12T21-48-00Z.json"],
+  ["/api/whatif?asset_id=PUMP-06&time_utc=2025-10-12T21%3A48%3A00Z&fault_type=MISALIGNMENT", "whatif/PUMP-06__2025-10-12T21-48-00Z__MISALIGNMENT.json"],
+  ["/api/live", null],
+  ["/api/live/PUMP-08", null],
+  ["/api/series?asset_id=PUMP-01", null]
+]

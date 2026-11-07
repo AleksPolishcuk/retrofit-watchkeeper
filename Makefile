@@ -1,7 +1,7 @@
 PY ?= python3
 PACK ?=
 
-.PHONY: alerts archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
+.PHONY: snapshot alerts archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
 
 setup:
 	$(PY) -m venv .venv
@@ -43,6 +43,11 @@ web:
 
 demo:
 	$(MAKE) -j2 api web
+
+# Writes every answer of the read-only API for the recorded pumps to web/public/snapshot (about 4 MB), so the interface can be hosted without a Python
+# server (see docs/DEPLOY_VERCEL.md). Needs the data pack and artifacts/alerts; the files are committed.
+snapshot:
+	.venv/bin/python -m watchkeeper.snapshot
 
 # Rewrites artifacts/alerts (what the interface shows): the nine public pumps from the model that was not fitted on them (needs models/wk.joblib, see
 # `make model`), the three test pumps from the submitted CSV (no model, no test telemetry is read). The files are committed, so a fresh clone works without it.

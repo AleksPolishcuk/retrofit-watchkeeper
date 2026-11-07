@@ -210,6 +210,8 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None, ar
     def whatif(asset_id: str, time_utc: str, fault_type: str):
         """Simulation only. Compares the pump as it is with the pump after the matching maintenance action, in the organizers' sandbox."""
         need(asset_id)
+        if asset_id not in dev_ids:                                         # the simulator reads telemetry: not for the test pumps
+            return {"available": False, "simulation_only": True, "message": "The simulator is not run for the test pumps in this build."}
         if fault_type not in WHATIF:
             return {"available": False, "simulation_only": True,
                     "message": "No simulated action is defined for this diagnosis; the recommendation stays a human decision."}
