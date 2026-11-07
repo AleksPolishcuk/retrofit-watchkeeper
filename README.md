@@ -94,7 +94,7 @@ make predict                   # needs a clean working tree
 ```
 src/watchkeeper/   features (causal baselines, NPSH, input hygiene), detect (alert timing, cavitation, data health, range check), diagnose (model, knowledge),
                    ingest (raw replay messages to minutes, live runner), incidents, stage words, alerts (contract v2, archive), what-if, api
-web/               five pages: Overview (what needs a look first), Alerts (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit; sidebar on wide screens, icon rail on tablets, bottom tab bar on phones (React, TypeScript, Vite; Inter and IBM Plex Mono bundled, no external font requests)
+web/               five pages: Overview (headline, four figures, pump table, active alerts, priority ring), Alerts (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit; sidebar on wide screens, icon rail on tablets, bottom tab bar on phones (React, TypeScript, Vite; Inter and IBM Plex Mono bundled, no external font requests)
 eval/              experiments, probes, results tables
 scripts/           bank generation, data linking
 docs/              plan, audit, alert contract (JSON schema), business case, edge and transfer, technical note, demo script

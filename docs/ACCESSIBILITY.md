@@ -28,7 +28,7 @@ Watchkeeper is meant to be used by a new operator without training. This note sa
 ## Made simpler for a new person
 
 - The first screen says what to do: how many cases need a look first, with one button to the strongest case.
-- Three key figures instead of four, and no jargon in the pump table (no instrumentation level, "Data OK" is quiet, only a problem is highlighted).
+- A fleet-dashboard layout: one headline, four key figures with icons, a pump table with a plain "Condition" and a week trend, active alerts and a priority ring. No jargon in the pump table (no instrumentation level; the data check shows only when something is wrong).
 - Every case starts with **Do this first**, one sentence with a button to the decision, before the charts.
 - A short "What do the priority levels mean?" under the Priority menu.
 - A pump with no open case is called "No open cases", never "healthy".
