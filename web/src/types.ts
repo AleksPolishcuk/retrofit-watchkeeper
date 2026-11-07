@@ -213,3 +213,12 @@ export interface LiveState {
   alerts: Alert[]
   alert_log: Record<string, { first_seen_as_of_utc: string; published_minutes_after_alert_time: number }>
 }
+
+export interface Archived {
+  model_version: string
+  asset_id: string
+  alerts: number
+  written_utc: string
+  sha256: string
+  file: string
+}

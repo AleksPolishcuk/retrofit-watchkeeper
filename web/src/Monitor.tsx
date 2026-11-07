@@ -2,13 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
 import { SignalChart } from './charts'
 import Dropdown from './Dropdown'
-import type { Decision } from './decisions'
 import Icon from './icons'
+import Lifecycle from './Lifecycle'
 import LiveStrip from './LiveStrip'
 import { CHANNEL, fmtNum, howFar, incidentsOf, median, nameOf, titleOf } from './plain'
+import ReviewLog from './ReviewLog'
+import { STATUS_LABEL } from './reviews'
+import type { Action, Review } from './reviews'
 import { STAGE_LABEL, STAGES, stageRank, when } from './stage'
 import TimelineChart from './Timeline'
 import WhatIf from './WhatIf'
+import type { Incident } from './plain'
 import type { Alert, Asset, DataHealth, Results, Series, Stage, Timeline } from './types'
 
 const HOUR = 3600_000
@@ -30,8 +34,9 @@ interface Props {
   assets: Asset[]
   alerts: Alert[]
   results: Results | null
-  decisions: Record<string, Decision>
-  decide: (id: string, d: Decision | undefined) => void
+  reviews: Record<string, Review>
+  act: (inc: Incident, action: Action) => void
+  clearReviews: () => void
 }
 
 function Meter({ stage }: { stage: Stage }) {
@@ -48,7 +53,7 @@ function Meter({ stage }: { stage: Stage }) {
   )
 }
 
-export default function Monitor({ assets, alerts, results, decisions, decide }: Props) {
+export default function Monitor({ assets, alerts, results, reviews, act, clearReviews }: Props) {
   const [pumpId, setPumpId] = useState('all')
   const [showAll, setShowAll] = useState(false)
   const [levels, setLevels] = useState<Stage[]>([])
@@ -77,6 +82,11 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
   const DEMO = ['SUCTION_STRAINER_CLOGGING', 'BEARING_WEAR', 'MISALIGNMENT', 'IMBALANCE', 'IMPELLER_WEAR']   // slow faults whose drift is visible in the data
   const fallback = incidents.find((i) => served(i) && DEMO.includes(i.head.fault_type) && i.head.evidence.length >= 2) ?? incidents.find((i) => served(i) && i.head.event_class === 'MACHINE' && stageRank(i.head.stage) >= 2) ?? incidents.find((i) => served(i)) ?? incidents[0] ?? null
   const inc = incidents.find((i) => i.id === selectedId) ?? fallback
+  // opening a case starts its review log (first_seen); acting on it is always a person's click
+  useEffect(() => {
+    if (inc) act(inc, { type: 'view' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inc?.id])
   const a = inc?.head ?? null
   const asset = a ? assets.find((x) => x.asset_id === a.asset_id) ?? null : null
 
@@ -174,7 +184,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
     setPlaying(true)
   }
 
-  const decision = a ? decisions[a.alert_id] : undefined
+  const review = inc ? reviews[inc.id] : undefined
   const detail = a?.stage && results?.stages ? results.stages.detail[a.stage] : null
   const pumpAlerts = a ? alerts.filter((x) => x.asset_id === a.asset_id) : []
 
@@ -230,7 +240,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
                     <span className={`stagechip s-${i.head.stage ?? 'watch'}`}>{STAGE_LABEL[i.head.stage ?? 'watch']}</span>
                     <span className="mono">{i.head.asset_id} · {when(i.head.alert_time_utc)}</span>
                     {i.members.length > 1 && ` · +${i.members.length - 1} related`}
-                    {decisions[i.head.alert_id] && <span className="done"> · <Icon name="check" /> reviewed</span>}
+                    {reviews[i.id] && reviews[i.id].status !== 'open' && <span className={`status-chip ${reviews[i.id].status}`}>{STATUS_LABEL[reviews[i.id].status]}</span>}
                   </span>
                 </button>
               </li>
@@ -238,6 +248,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
             {list.length === 0 && <li className="muted small">{levels.length > 0 ? 'No cases at this priority. Pick another level or clear the filter.' : 'No alerts for this pump. Nothing stands out against its own normal.'}</li>}
           </ul>
           {incidents.length > shortList && <button className="btn sm" onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show fewer' : `Show all ${incidents.length}`}</button>}
+          <ReviewLog incidents={incidentsOf(alerts)} reviews={reviews} clear={clearReviews} />
         </aside>
 
         {a && asset ? (
@@ -334,15 +345,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
                 <li><b>Check first</b><span>{a.check ?? a.recommended_action}</span></li>
                 <li><b>Then</b><span>{a.recommended_action}</span></li>
               </ol>
-              <div className="decide" role="group" aria-label="Your decision">
-                <button className={decision === 'approved' ? 'btn on-ok' : 'btn primary'} onClick={() => decide(a.alert_id, decision === 'approved' ? undefined : 'approved')}>
-                  <Icon name="check" /> {decision === 'approved' ? 'Inspection approved' : 'Approve inspection'}
-                </button>
-                <button className={decision === 'rejected' ? 'btn on-bad' : 'btn'} onClick={() => decide(a.alert_id, decision === 'rejected' ? undefined : 'rejected')}>
-                  {decision === 'rejected' ? 'Marked as false alarm' : 'Mark as false alarm'}
-                </button>
-              </div>
-              <p className="muted small">A person decides. The decision is kept in this browser only; Watchkeeper sends nothing to the machine, and existing alarms stay authoritative.{a.model_version ? ` Model ${a.model_version}.` : ''}</p>
+              {inc && <Lifecycle inc={inc} all={allIncidents} asset={asset} review={review} reviews={reviews} act={(x) => act(inc, x)} />}
               <details className="more">
                 <summary>Try it in the simulator: what if we do this?</summary>
                 <WhatIf key={a.alert_id} alert={a} />

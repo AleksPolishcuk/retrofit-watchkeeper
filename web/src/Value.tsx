@@ -61,7 +61,7 @@ export default function Value({ data }: { data: Results | null }) {
       <h2>How a plant would use it</h2>
       <ol className="plainlist">
         <li><b>Shadow mode.</b> Read-only data for 4 to 8 weeks. Alerts are logged and compared with what operators actually did. Nobody is asked to act yet.</li>
-        <li><b>Advisory pilot.</b> Alerts go to a named role with the evidence view. Approve or mark as false alarm; that feedback is what lowers the false-alert rate.</li>
+        <li><b>Advisory pilot.</b> Alerts go to a named role with the evidence view. Approve, record what the inspection found, mark false alarms and confirm recovery; that feedback is what lowers the false-alert rate.</li>
         <li><b>Review.</b> Decide on scale-up from avoided stops and repairs minus nuisance, then an independent engineering and regulatory check before any operational use.</li>
       </ol>
     </section>

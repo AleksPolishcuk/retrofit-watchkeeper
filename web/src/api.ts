@@ -1,4 +1,4 @@
-import type { Alert, Asset, DataHealth, LiveItem, LiveState, Results, Series, Timeline, WhatIfResult } from './types'
+import type { Alert, Archived, Asset, DataHealth, LiveItem, LiveState, Results, Series, Timeline, WhatIfResult } from './types'
 
 export class ApiError extends Error {
   status: number
@@ -30,6 +30,7 @@ const q = (params: Record<string, string | number>) =>
 export const api = {
   assets: () => get<Asset[]>('/api/assets'),
   results: () => get<Results>('/api/results'),
+  archive: (asset_id: string) => get<Archived[]>(`/api/alerts/archive?${q({ asset_id })}`),
   live: () => get<LiveItem[]>('/api/live'),
   liveOne: (asset_id: string) => get<LiveState>(`/api/live/${encodeURIComponent(asset_id)}`),
   dataHealth: (asset_id: string, as_of: string) => get<DataHealth>(`/api/data-health?${q({ asset_id, as_of })}`),

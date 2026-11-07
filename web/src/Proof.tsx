@@ -51,7 +51,7 @@ function Chart({ sets }: { sets: [string, ReportSet][] }) {
 const CHECKS: [string, string, string][] = [
   ['It only uses the past', 'Every alert uses data up to its own timestamp. A test cuts the telemetry at several points and requires the earlier alerts to stay identical. The organizers\' own baseline fails that test; ours passes.', 'tests/test_evalkit.py'],
   ['It cannot touch the machine', 'The interface has read-only routes and nothing in the code sends a command to a pump, drive, valve, PLC or safety system. A test fails if a write route is ever added.', 'tests/test_api.py'],
-  ['A person decides', 'Every alert is advice. Approving an inspection or marking a false alarm is recorded in the browser only. Existing alarms and trips stay authoritative.', 'src/watchkeeper/alerts'],
+  ['A person decides', 'Every alert is advice. Approving an inspection, recording what was found and confirming recovery are kept in a review log in the browser only. Existing alarms and trips stay authoritative.', 'src/watchkeeper/alerts'],
   ['It shows its evidence', 'Each alert lists the channels that moved, how far, and what could not be seen on that pump (missing sensors, instrumentation level).', 'docs/alert.schema.json'],
   ['It does not pretend to be certain', 'Likelihood is four words backed by back-test counts, never a percentage. Time to act is "not estimated" because we cannot predict it.', 'models/stages.json'],
   ['Test pumps were never used', 'The three test pumps were never loaded by any evaluation code. Their alerts were written once, from a frozen model at a tagged commit with the model hash recorded.', 'submission/predictions_test.meta.json'],
