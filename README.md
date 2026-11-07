@@ -103,7 +103,7 @@ submission/        test-pump alerts and submission notes
 
 ## Accessibility
 
-Axe finds no violations on any page (light and dark); a contrast test guards the colours; keyboard, 320 px reflow and larger text were checked; it has not been tested with screen readers or by assistive-technology users. Details and limits: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
+Light by default, with a Light, Dark and Auto switch; axe finds no violations on any page in either theme; a contrast test guards the colours; keyboard, 320 px reflow and larger text were checked; it has not been tested with screen readers or by assistive-technology users. Details and limits: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 
 ## Data and attribution
 

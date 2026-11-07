@@ -13,6 +13,7 @@ Watchkeeper is meant to be used by a new operator without training. This note sa
 | Text size | text sizes are in `rem` and breakpoints in `em`, so a larger default text size in the browser enlarges the text and switches to the narrow layouts earlier; browser zoom also works | checked by setting the root text size to 200 percent |
 | Colour is not the only signal | priority is a word on every chip, machine and instrument have an icon and a label, the donut and the figures list their numbers in text | by design |
 | Motion | the pulse and transitions switch off when the system asks for reduced motion | by design |
+| Theme | Light is the default whatever the system setting is; a Light, Dark and Auto switch (three toggle buttons) is in the menu, the tablet rail and the phone top bar; Auto follows the system. axe was run again with the switch in place, light and dark | 0 violations |
 
 ## What was changed because of the audit
 
