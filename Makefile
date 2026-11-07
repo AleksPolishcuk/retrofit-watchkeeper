@@ -1,12 +1,12 @@
 PY ?= python3
 PACK ?=
 
-.PHONY: setup setup-pack data eval predict api web demo test
+.PHONY: setup setup-pack data bank eval predict api web demo test results
 
 setup:
 	$(PY) -m venv .venv
 	.venv/bin/python -m pip install --upgrade pip
-	.venv/bin/python -m pip install -e ".[dev]"
+	.venv/bin/python -m pip install -e ".[dev,api]"
 
 setup-pack:
 	@test -n "$(PACK)" || (echo "usage: make setup-pack PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026" && exit 1)
@@ -17,7 +17,10 @@ data:
 	scripts/link_data.sh "$(PACK)"
 
 eval:
-	.venv/bin/python eval/run_eval.py --method b1
+	.venv/bin/python eval/run_eval.py --method wk
+
+bank:
+	.venv/bin/python scripts/make_bank.py --out bank
 
 predict:
 	.venv/bin/python -m watchkeeper.predict --assets PUMP-10 PUMP-11 PUMP-12 --out submission/predictions_test.csv

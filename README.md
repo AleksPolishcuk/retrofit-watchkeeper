@@ -17,7 +17,7 @@ Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 Novemb
 
 ## Status
 
-Scaffold only. Nothing is measured yet. Results, baseline comparison and limitations will be added here as they exist.
+Working prototype under active development. Numbers are in `eval/results/` and `docs/AUDIT_AND_PLAN.md`; the final results table and limitations will be written here at freeze. Measured so far on synthetic data only, so nothing here is evidence of field performance.
 
 ## Layout
 
