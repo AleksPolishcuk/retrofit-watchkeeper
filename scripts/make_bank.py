@@ -8,6 +8,7 @@ Sets (seeds are fixed so the bank is reproducible):
   train    201-205  five fleets of 8 pumps with random faults, extended with impeller wear and air entrainment
   tune     206-207  used only to choose thresholds
   hold     208-210  untouched until a method is frozen; the number to quote
+  healthy_train 311-316  more healthy fleets used only as training examples of normal operation (labelled NONE)
   healthy  301-306  fleets with no faults, to measure false alerts per pump-month. The generator needs at least one event per fleet, so pump -01
                     gets a 30 minute gateway outage and is left out of the count: 6 fleets x 7 pumps x 7 days = 294 pump-days
 Every fleet is 8 pumps x 7 days at 1 Hz, written by `make_dataset.py --tier full` with all labels visible.
@@ -27,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 import retrofit_sim
 
 PACK = Path(retrofit_sim.__file__).resolve().parents[2]            # the organizers' pack that `make setup-pack` installed
-SETS = {"train": [201, 202, 203, 204, 205], "tune": [206, 207], "hold": [208, 209, 210], "healthy": [301, 302, 303, 304, 305, 306]}
+SETS = {"train": [201, 202, 203, 204, 205], "tune": [206, 207], "hold": [208, 209, 210], "healthy": [301, 302, 303, 304, 305, 306], "healthy_train": [311, 312, 313, 314, 315, 316]}
 
 
 def plain(x):
@@ -93,7 +94,7 @@ def main() -> int:
     out = Path(a.out)
     jobs = [(n, s) for n, seeds in SETS.items() if a.only in (None, n) for s in seeds]
     with ThreadPoolExecutor(max_workers=a.jobs) as ex:
-        for msg in ex.map(lambda j: make_fleet(j[0], j[1], j[0] == "healthy", out), jobs):
+        for msg in ex.map(lambda j: make_fleet(j[0], j[1], j[0].startswith("healthy"), out), jobs):
             print(msg, flush=True)
     (out / "DONE").write_text("ok\n")
     return 0

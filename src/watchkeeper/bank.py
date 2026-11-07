@@ -8,7 +8,7 @@ import pandas as pd
 from .evalkit import ROOT, DevData
 
 DEFAULT = ROOT / "bank"
-SETS = {"train": [201, 202, 203, 204, 205], "tune": [206, 207], "hold": [208, 209, 210], "healthy": [301, 302, 303, 304, 305, 306]}
+SETS = {"train": [201, 202, 203, 204, 205], "tune": [206, 207], "hold": [208, 209, 210], "healthy": [301, 302, 303, 304, 305, 306], "healthy_train": [311, 312, 313, 314, 315, 316]}
 
 
 def _read(p: Path) -> pd.DataFrame:
@@ -29,7 +29,7 @@ def load_set(name: str, seeds=None, bank=None) -> DevData:
         parts["benign"].append(_read(pub / "benign_windows_train_validation.csv"))
         parts["alarms"].append(_read(pub / "alarms.csv"))
     j = {k: pd.concat([x for x in v if len(x)] or [pd.DataFrame(columns=["asset_id"])], ignore_index=True) for k, v in parts.items()}
-    if name == "healthy":                       # pump -01 of each healthy fleet carries the decoy outage; it is not part of the count
+    if name.startswith("healthy"):                       # pump -01 of each healthy fleet carries the decoy outage; it is not part of the count
         keep = lambda df: df[~df["asset_id"].astype(str).str.endswith("-01")] if len(df) and "asset_id" in df else df
         j = {k: keep(v) for k, v in j.items()}
         j["events"] = j["events"].iloc[0:0]
