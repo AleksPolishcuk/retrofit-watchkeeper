@@ -1,4 +1,5 @@
 import type { Series } from './types'
+import { useWidth } from './useWidth'
 
 const hhmm = (ms: number) => new Date(ms).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 
@@ -17,12 +18,13 @@ interface Props {
 
 /** One channel around an alert. The dashed line is the moment the alert was raised; it only appears once the replay has reached it. */
 export function SignalChart({ series, alertMs, fromMs, toMs, label, unit, progress = 1, height = 170, note }: Props) {
-  const W = 640
+  const [box, outer] = useWidth<HTMLDivElement>(600)
+  const W = Math.max(240, outer - 28)             // the card has 14 px of padding on each side
   const H = height
   const L = 10
   const R = 10
-  const T = 22
-  const B = 24
+  const T = 24
+  const B = 28
   const pts: [number, number][] = []
   if (series) {
     series.t.forEach((t, i) => {
@@ -32,7 +34,7 @@ export function SignalChart({ series, alertMs, fromMs, toMs, label, unit, progre
   }
   if (pts.length < 2) {
     return (
-      <div className="sig">
+      <div className="sig" ref={box}>
         <div className="sh">{label}</div>
         <p className="muted small" style={{ margin: '14px 0' }}>{series ? 'No data in this range.' : note ?? 'Loading…'}</p>
       </div>
@@ -48,11 +50,11 @@ export function SignalChart({ series, alertMs, fromMs, toMs, label, unit, progre
   const d = shown.map(([ms, v], i) => `${i ? 'L' : 'M'}${x(ms).toFixed(1)} ${y(v).toFixed(1)}`).join('')
   const ax = x(alertMs)
   const reached = cutMs >= alertMs
-  const tagX = Math.min(Math.max(ax, L + 52), W - R - 52)
+  const tagX = Math.min(Math.max(ax, L + 56), W - R - 56)
   return (
-    <div className="sig">
+    <div className="sig" ref={box}>
       <div className="sh">{label}<span>{fmtRange(lo, hi)} {unit}</span></div>
-      <svg className="sigsvg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label} around the alert`}>
+      <svg className="sigsvg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label} around the alert`}>
         {[0, 0.5, 1].map((f) => <line key={f} className="g" x1={L} x2={W - R} y1={T + f * (H - B - T)} y2={T + f * (H - B - T)} />)}
         {reached && <rect className="after" x={ax} y={T} width={Math.max(0, x(Math.min(cutMs, toMs)) - ax)} height={H - B - T} />}
         <path className="ln" d={d} />
@@ -60,7 +62,7 @@ export function SignalChart({ series, alertMs, fromMs, toMs, label, unit, progre
         {reached && (
           <g>
             <line className="mk" x1={ax} x2={ax} y1={T - 2} y2={H - B} />
-            <g className="tag"><rect x={tagX - 52} y={0} width={104} height={17} rx={8.5} /><text x={tagX} y={12.5} textAnchor="middle">Alert raised</text></g>
+            <g className="tag"><rect x={tagX - 56} y={0} width={112} height={19} rx={9.5} /><text x={tagX} y={13.5} textAnchor="middle">Alert raised</text></g>
           </g>
         )}
         <text className="t" x={L} y={H - 7}>{hhmm(fromMs)}</text>

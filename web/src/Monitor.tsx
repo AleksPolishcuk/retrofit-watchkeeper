@@ -197,7 +197,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
                   <span className="ct">{titleOf(i.head)}</span>
                   <span className="cm">
                     <span className={`stagechip s-${i.head.stage ?? 'watch'}`}>{STAGE_LABEL[i.head.stage ?? 'watch']}</span>
-                    {i.head.asset_id} · {when(i.head.alert_time_utc)}
+                    <span className="mono">{i.head.asset_id} · {when(i.head.alert_time_utc)}</span>
                     {i.members.length > 1 && ` · +${i.members.length - 1} related`}
                     {decisions[i.head.alert_id] && <span className="done"> · <Icon name="check" /> reviewed</span>}
                   </span>
@@ -213,9 +213,9 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
           <div className="flow">
             <div className="casehead" id="case-top">
               <div>
-                <p className="eyebrow">{a.asset_id} · {asset.system}</p>
+                <p className="eyebrow"><span className="mono">{a.asset_id}</span> · {asset.system}</p>
                 <h1>{titleOf(a)}</h1>
-                <p className="muted">Raised {when(a.alert_time_utc)}. <span className={`kind ${a.event_class === 'SENSOR' ? 'sensor' : 'machine'}`}><Icon name={a.event_class === 'SENSOR' ? 'sensor' : 'wrench'} /> {a.event_class === 'SENSOR' ? 'Instrument' : 'Machine'}</span>{inc && inc.members.length > 1 ? ` · ${inc.members.length} related alerts in this incident` : ''}</p>
+                <p className="muted">Raised <span className="mono">{when(a.alert_time_utc)}</span>. <span className={`kind ${a.event_class === 'SENSOR' ? 'sensor' : 'machine'}`}><Icon name={a.event_class === 'SENSOR' ? 'sensor' : 'wrench'} /> {a.event_class === 'SENSOR' ? 'Instrument' : 'Machine'}</span>{inc && inc.members.length > 1 ? ` · ${inc.members.length} related alerts in this incident` : ''}</p>
               </div>
               {a.stage && <span className={`stagechip big s-${a.stage}`}>{STAGE_LABEL[a.stage]}</span>}
             </div>
@@ -249,7 +249,7 @@ export default function Monitor({ assets, alerts, results, decisions, decide }: 
                         <span className={`dev ${e.z < 0 ? 'down' : 'up'}`}>{e.z < 0 ? '↓' : '↑'} {howFar(e.z)}</span>
                       ) : null}
                       <span className="muted">
-                        {c ? `Now about ${fmtNum(c.now)} ${CHANNEL[e.channel]?.[1] ?? ''}; earlier in the week typically ${fmtNum(c.usual)}.` : e.text}
+                        {c ? <>Now about <span className="mono">{fmtNum(c.now)} {CHANNEL[e.channel]?.[1] ?? ''}</span>; earlier in the week typically <span className="mono">{fmtNum(c.usual)}</span>.</> : e.text}
                       </span>
                     </li>
                   )

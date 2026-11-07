@@ -1,4 +1,5 @@
 import { STAGE_LABEL, STAGES } from './stage'
+import { useWidth } from './useWidth'
 import type { Healthy, ReportSet, Results } from './types'
 
 const ORDER: [string, string][] = [
@@ -10,35 +11,40 @@ const ORDER: [string, string][] = [
 const f = (x: number | null | undefined, d = 2) => (x === null || x === undefined || Number.isNaN(x) ? '—' : x.toFixed(d))
 
 function Chart({ sets }: { sets: [string, ReportSet][] }) {
-  const W = 880
-  const L = 330
-  const rowH = 54
-  const x = (v: number) => L + (v / 100) * (W - L - 20)
-  const H = sets.length * rowH + 36
+  const [box, W] = useWidth<HTMLDivElement>(860)
+  const narrow = W < 620                              // on a phone the label goes above its bar so that text keeps its real size
+  const L = narrow ? 12 : 330
+  const rowH = narrow ? 76 : 54
+  const x = (v: number) => L + (v / 100) * (W - L - 24)
+  const H = sets.length * rowH + 40
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Score of Watchkeeper, the organizers' baseline and random alerts, per evaluation set" className="rchart">
-      {[0, 25, 50, 75, 100].map((v) => (
-        <g key={v}>
-          <line className="grid" x1={x(v)} x2={x(v)} y1={8} y2={H - 24} />
-          <text className="tick" x={x(v)} y={H - 8} textAnchor="middle">{v}</text>
-        </g>
-      ))}
-      {sets.map(([label, s], i) => {
-        const y = 24 + i * rowH
-        return (
-          <g key={label}>
-            <text className="rlabel" x={L - 12} y={y + 5} textAnchor="end">{label}</text>
-            <rect className="bar wk" x={x(0)} y={y - 11} width={x(s.wk.composite) - x(0)} height={22} rx={4} />
-            {s.wk.lo !== null && s.wk.hi !== null && (
-              <g className="whisker"><line x1={x(s.wk.lo)} x2={x(s.wk.hi)} y1={y} y2={y} /><line x1={x(s.wk.lo)} x2={x(s.wk.lo)} y1={y - 6} y2={y + 6} /><line x1={x(s.wk.hi)} x2={x(s.wk.hi)} y1={y - 6} y2={y + 6} /></g>
-            )}
-            <text className="rval" x={x(0) + 10} y={y + 4} textAnchor="start">{s.wk.composite.toFixed(1)}</text>
-            {s.b1 && <polygon className="b1mark" points={`${x(s.b1.composite)},${y - 15} ${x(s.b1.composite) + 6},${y - 9} ${x(s.b1.composite)},${y - 3} ${x(s.b1.composite) - 6},${y - 9}`}><title>organizers' baseline: {s.b1.composite.toFixed(1)}</title></polygon>}
-            <line className="nullmark" x1={x(s.null_random_alerts)} x2={x(s.null_random_alerts)} y1={y + 6} y2={y + 20}><title>random alerts: {s.null_random_alerts.toFixed(1)}</title></line>
+    <div ref={box} className="chartbox">
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Score of Watchkeeper, the organizers' baseline and random alerts, per evaluation set" className="rchart">
+        {[0, 25, 50, 75, 100].map((v) => (
+          <g key={v}>
+            <line className="grid" x1={x(v)} x2={x(v)} y1={8} y2={H - 28} />
+            <text className="tick" x={x(v)} y={H - 10} textAnchor="middle">{v}</text>
           </g>
-        )
-      })}
-    </svg>
+        ))}
+        {sets.map(([label, s], i) => {
+          const y = (narrow ? 44 : 28) + i * rowH
+          return (
+            <g key={label}>
+              {narrow
+                ? <text className="rlabel" x={L} y={y - 22} textAnchor="start">{label}</text>
+                : <text className="rlabel" x={L - 12} y={y + 5} textAnchor="end">{label}</text>}
+              <rect className="bar wk" x={x(0)} y={y - 12} width={Math.max(0, x(s.wk.composite) - x(0))} height={24} rx={4} />
+              {s.wk.lo !== null && s.wk.hi !== null && (
+                <g className="whisker"><line x1={x(s.wk.lo)} x2={x(s.wk.hi)} y1={y} y2={y} /><line x1={x(s.wk.lo)} x2={x(s.wk.lo)} y1={y - 6} y2={y + 6} /><line x1={x(s.wk.hi)} x2={x(s.wk.hi)} y1={y - 6} y2={y + 6} /></g>
+              )}
+              <text className="rval" x={x(0) + 10} y={y + 5} textAnchor="start">{s.wk.composite.toFixed(1)}</text>
+              {s.b1 && <polygon className="b1mark" points={`${x(s.b1.composite)},${y - 17} ${x(s.b1.composite) + 6},${y - 11} ${x(s.b1.composite)},${y - 5} ${x(s.b1.composite) - 6},${y - 11}`}><title>organizers' baseline: {s.b1.composite.toFixed(1)}</title></polygon>}
+              <line className="nullmark" x1={x(s.null_random_alerts)} x2={x(s.null_random_alerts)} y1={y + 8} y2={y + 22}><title>random alerts: {s.null_random_alerts.toFixed(1)}</title></line>
+            </g>
+          )
+        })}
+      </svg>
+    </div>
   )
 }
 
