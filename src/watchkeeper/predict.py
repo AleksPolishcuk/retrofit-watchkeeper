@@ -2,15 +2,16 @@
 
   python -m watchkeeper.predict --assets PUMP-10 PUMP-11 PUMP-12 --out submission/predictions_test.csv
 
-The model is fitted on the labelled dev pumps (PUMP-01..09), never on the pumps being predicted. For a dev pump the fit excludes
-that pump, so the output is a held-out prediction and can be scored. The test pumps are read here and nowhere else: this module is the
-only place that loads their telemetry, and it never reads labels for them. Run it from a clean, tagged commit; the commit hash and the
-dirty flag are written next to the CSV.
+The model is the frozen file produced by `eval/train_model.py` (fitted on simulated fleets and the labelled dev pumps PUMP-01..09), never on
+the pumps being predicted. Nothing is trained here. The test pumps are read here and nowhere else: this module is the only place that loads
+their telemetry, and it never reads labels for them. Run it from a clean, tagged commit; the commit hash, the dirty flag and the model file's
+hash are written next to the CSV.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import subprocess
 import sys
@@ -42,13 +43,13 @@ def target_data(dev: DevData, asset_ids: list[str]) -> DevData:
     return DevData(dev.root, assets, feat, empty, empty, empty)
 
 
-def predict_assets(asset_ids: list[str], method_name: str = "wk", data_dir=None) -> tuple[pd.DataFrame, list[str]]:
+def predict_assets(asset_ids: list[str], model_path, method_name: str = "wk", data_dir=None) -> pd.DataFrame:
+    from .diagnose import DiagnosisModel
     dev = load_dev(data_dir)
-    train_ids = [a for a in dev.ids if a not in set(asset_ids)]
     method = METHODS[method_name]()
-    model = method.fit(dev, train_ids)
+    model = DiagnosisModel.load(model_path)
     tgt = target_data(dev, asset_ids)
-    return concat_predictions(method.predict(model, tgt, a) for a in asset_ids), train_ids
+    return concat_predictions(method.predict(model, tgt, a) for a in asset_ids)
 
 
 def main(argv=None) -> int:
@@ -56,6 +57,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--assets", nargs="+", required=True)
     ap.add_argument("--method", default="wk", choices=sorted(METHODS))
+    ap.add_argument("--model", default=str(ROOT / "models" / "wk_final.joblib"))
     ap.add_argument("--data", default=None)
     ap.add_argument("--out", required=True)
     ap.add_argument("--allow-dirty", action="store_true", help="Only for experiments; the meta file records it.")
@@ -64,12 +66,13 @@ def main(argv=None) -> int:
     dirty = bool(_git("status", "--porcelain"))
     if dirty and not a.allow_dirty:
         raise SystemExit("working tree is not clean. Commit (and tag) first, or pass --allow-dirty for an experiment.")
-    pred, train_ids = predict_assets(a.assets, a.method, a.data or default_data_dir())
+    model_file = Path(a.model)
+    pred = predict_assets(a.assets, model_file, a.method, a.data or default_data_dir())
     out = Path(a.out)
     write_predictions_csv(pred, out)
     meta = {"created_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "commit": _git("rev-parse", "HEAD"),
             "tag": _git("describe", "--tags", "--exact-match") or None, "dirty": dirty, "method": a.method,
-            "fitted_on": train_ids, "targets": a.assets, "alerts": int(len(pred))}
+            "model_file": model_file.name, "model_sha256": hashlib.sha256(model_file.read_bytes()).hexdigest(), "targets": a.assets, "alerts": int(len(pred))}
     out.with_suffix(".meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
     print(f"{len(pred)} alerts for {a.assets} -> {out}  (commit {meta['commit'][:8]}{', DIRTY' if dirty else ''})")
     return 0

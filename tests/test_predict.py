@@ -11,18 +11,21 @@ pytestmark = [pytest.mark.skipif(not (DATA / "assets.csv").exists(), reason="dat
               pytest.mark.filterwarnings("ignore")]
 
 
-def test_predict_for_a_dev_pump_matches_the_leave_one_out_fold_and_scores(tmp_path, monkeypatch):
+def test_predict_from_a_saved_model_matches_the_evaluation_path_and_scores(tmp_path, monkeypatch):
     from watchkeeper import predict as P
     from watchkeeper.alerts.export import write_predictions_csv
     from watchkeeper.evalkit import load_dev, score_ids
     from watchkeeper.methods import WKMethod
     monkeypatch.setitem(P.METHODS, "wk30", lambda: WKMethod(trees=30))
-    pred, train_ids = P.predict_assets(["PUMP-09"], "wk30", DATA)
-    assert "PUMP-09" not in train_ids and len(train_ids) == 8          # the target is never in its own training set
-
     dev = load_dev(DATA)
+    train_ids = [a for a in dev.ids if a != "PUMP-09"]
     m = WKMethod(trees=30)
-    direct = m.predict(m.fit(dev, train_ids), dev, "PUMP-09")
+    model = m.fit(dev, train_ids)
+    model_file = tmp_path / "m.joblib"
+    model.save(model_file)
+    pred = P.predict_assets(["PUMP-09"], model_file, "wk30", DATA)       # the frozen file is loaded, nothing is trained here
+
+    direct = m.predict(model, dev, "PUMP-09")
     cols = ["alert_time_utc", "event_class", "fault_type"]
     assert pred[cols].reset_index(drop=True).equals(direct[cols].reset_index(drop=True))      # same alerts through both paths
 
