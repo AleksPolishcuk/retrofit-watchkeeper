@@ -1,7 +1,7 @@
 PY ?= python3
 PACK ?=
 
-.PHONY: setup setup-pack data bank model eval report levels predict api web demo live-demo test results
+.PHONY: archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
 
 setup:
 	$(PY) -m venv .venv
@@ -43,6 +43,10 @@ web:
 
 demo:
 	$(MAKE) -j2 api web
+
+# Keeps an immutable snapshot of artifacts/alerts per model version in artifacts/alerts_archive (a re-run overwrites the alert files, not the archive).
+archive:
+	.venv/bin/python -m watchkeeper.alerts.archive
 
 # Replays the public validation pump PUMP-08 as raw messages (one per second) through the read-only ingest and the detector, writing
 # artifacts/live/PUMP-08/state.json for the Monitor tab. It takes a few minutes; the first alert of this pump is at 10 Sep 09:33 UTC.

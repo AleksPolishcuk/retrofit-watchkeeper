@@ -12,7 +12,7 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-from watchkeeper.alerts import to_contract, write_alerts  # noqa: E402
+from watchkeeper.alerts import archive_alerts, to_contract, write_alerts  # noqa: E402
 from watchkeeper.evalkit import ROOT, default_data_dir  # noqa: E402
 
 
@@ -22,7 +22,8 @@ def main() -> int:
     assets = pd.read_csv(default_data_dir() / "assets.csv")
     alerts = to_contract(pred, assets, source="WK_causal_learned (submitted predictions)", model_version="wk-" + meta["model_sha256"][:10])
     paths = write_alerts(alerts, ROOT / "artifacts" / "alerts", meta["targets"])
-    print(f"{len(alerts)} alerts for {meta['targets']} ->", ", ".join(p.name for p in paths))
+    archived = archive_alerts(alerts, ROOT / "artifacts" / "alerts_archive")
+    print(f"{len(alerts)} alerts for {meta['targets']} ->", ", ".join(p.name for p in paths), f"({len(archived)} new snapshot(s) archived)")
     return 0
 
 

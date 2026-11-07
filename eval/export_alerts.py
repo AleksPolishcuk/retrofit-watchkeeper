@@ -12,7 +12,7 @@ from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-from watchkeeper.alerts import to_contract, write_alerts  # noqa: E402
+from watchkeeper.alerts import archive_alerts, to_contract, write_alerts  # noqa: E402
 from watchkeeper.evalkit import ROOT, load_dev  # noqa: E402
 from watchkeeper.methods import METHODS  # noqa: E402
 
@@ -40,9 +40,11 @@ def main(argv=None) -> int:
     pred = method.predict_many(params, data, ids)
     alerts = to_contract(pred, data.assets, source=method.name, model_version=version)
     paths = write_alerts(alerts, a.out, ids)
+    archived = archive_alerts(alerts, Path(a.out).parent / "alerts_archive")        # the files above are overwritten on the next run; the archive is not
     print(f"{method.name} model={version}: {len(alerts)} alerts for {len(ids)} pumps -> {Path(a.out)}")
     for p in paths:
         print(" ", p.name)
+    print(f"{len(archived)} new snapshot(s) kept in {Path(a.out).parent / 'alerts_archive'}")
     return 0
 
 

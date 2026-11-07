@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 
+from ..alerts.archive import read_index
 from ..detect.datahealth import data_health
 from ..detect.rangecheck import check_ranges
 from ..features.hygiene import clean_minutes
@@ -40,11 +41,12 @@ def _clean(value):
     return None if isinstance(value, float) and pd.isna(value) else value
 
 
-def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None) -> FastAPI:
+def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None, archive_dir=None) -> FastAPI:
     data_dir = Path(data_dir or os.environ.get("WATCHKEEPER_DATA", ROOT / "data"))
     alerts_dir = Path(alerts_dir or ROOT / "artifacts" / "alerts")
     mock_path = Path(mock_path or ROOT / "docs" / "mock_alerts.json")
     live_dir = Path(live_dir or ROOT / "artifacts" / "live")
+    archive_dir = Path(archive_dir or ROOT / "artifacts" / "alerts_archive")
 
     app = FastAPI(title="Watchkeeper API (read-only)", version="0.0.1")
     assets = pd.read_csv(data_dir / "assets.csv")
@@ -92,6 +94,13 @@ def create_app(data_dir=None, alerts_dir=None, mock_path=None, live_dir=None) ->
             need(asset_id)
         source, alerts = load_alerts(asset_id)
         return {"asset_id": asset_id, "source": source, "alerts": alerts}
+
+    @app.get("/api/alerts/archive")
+    def alerts_archive(asset_id: str | None = None):
+        """Which snapshots of the alerts were kept, per model version (newest first). A re-run with another model does not erase what was shown before."""
+        if asset_id:
+            need(asset_id)
+        return sorted(read_index(archive_dir, asset_id), key=lambda e: e["written_utc"], reverse=True)
 
     @app.get("/api/timeline")
     def timeline(asset_id: str):
