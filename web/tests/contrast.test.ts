@@ -43,7 +43,9 @@ const pairs: Pair[] = [
   ['chip-likely-ink', 'chip-likely-bg', TEXT, 'Likely chip'], ['chip-very-ink', 'chip-very-bg', TEXT, 'Very likely chip'],
   ['err-ink', 'err-bg', TEXT, 'error banner'], ['on-primary', 'primary', TEXT, 'text on cyan buttons and the active menu item'],
   ['on-color', 'badge-bg', TEXT, 'count badge'], ['nav-ink', 'nav-bg', TEXT, 'menu text'], ['nav-ink', 'nav-bg2', TEXT, 'menu text, lower end of the gradient'],
-  ['nav-soft', 'nav-bg2', TEXT, 'small note in the menu'], ['#ffffff', 'nav-bg', TEXT, 'white text on the menu and the headline'], ['#e9f0f8', '#2d4057', TEXT, 'headline sub text'], ['#d3e0ee', '#3a506b', TEXT, 'headline eyebrow'],
+  ['nav-soft', 'nav-bg2', TEXT, 'small note in the menu'], ['#ffffff', 'nav-bg', TEXT, 'white text on the menu'], ['#ffffff', 'nav-bg2', TEXT, 'white text on the lower menu'],
+  ['#ffffff', '#08215a', TEXT, 'headline text on the navy banner'], ['#dbe6fb', '#08215a', TEXT, 'headline sub text on the banner'], ['#dbe6fb', '#0c2a66', TEXT, 'headline sub text at the light end of the banner'], ['#cfe0ff', '#0c2a66', TEXT, 'headline eyebrow on the banner'],
+  ['#ffffff', '#1f5fe0', TEXT, 'white text on the vivid blue button and the active menu item'],
   ['control-line', 'panel', UI, 'border of inputs and menus on a card'], ['focus', 'panel', UI, 'focus ring on a card'], ['focus', 'bg', UI, 'focus ring on the page'], ['focus', 'bg2', UI, 'focus ring at the lower end of the page wash'], ['focus', 'panel2', UI, 'focus ring on a tinted area'],
   ['#ffffff', 'nav-bg2', UI, 'focus ring on the menu'],
 ]

@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from './api'
 import { LEVELS, attention, headline, levelCounts, levelOf, pumpRows } from './cases'
-import type { Level } from './cases'
 import Icon from './icons'
 import LiveStrip from './LiveStrip'
 import { HEALTH_LABEL, incidentsOf, titleOf } from './plain'
+import PumpArt from './PumpArt'
 import type { Review } from './reviews'
 import { STAGE_LABEL, when } from './stage'
-import type { Asset, Alert, DataHealth, Series } from './types'
+import type { Alert, Asset, DataHealth, Series } from './types'
 import { Donut, Spark } from './viz'
 
 const PREFERRED = ['discharge_pressure_kpa', 'motor_current_a', 'motor_power_kw', 'fluid_temp_c']
-const CHANNEL_NAME: Record<string, string> = { discharge_pressure_kpa: 'discharge pressure', motor_current_a: 'motor current', motor_power_kw: 'motor power', fluid_temp_c: 'fluid temperature' }
+const CHANNEL_NAME: Record<string, string> = { discharge_pressure_kpa: 'Discharge pressure', motor_current_a: 'Motor current', motor_power_kw: 'Motor power', fluid_temp_c: 'Fluid temperature' }
 
 interface Visual {
   series: Series | null
@@ -59,141 +59,160 @@ export default function Overview({ assets, alerts, reviews }: Props) {
   const h = headline(cases, reviews)
   const counts = levelCounts(cases, reviews)
   const rows = pumpRows(assets.map((a) => a.asset_id), cases, reviews)
-  const first = attention(cases, reviews, 5)
+  const first = attention(cases, reviews, 4)
   const visual = useVisuals(assets)
   const urgent = h.urgent > 0
   const link = (id: string | null) => (id ? `#/alerts/${encodeURIComponent(id)}` : '#/alerts')
+  const pumpsWithCases = rows.filter((r) => r.open > 0).length
 
   return (
     <div className="overview">
       <section className={`hero ${urgent ? 'urgent' : 'calm'}`} aria-labelledby="hero-title">
-        <svg className="waves" viewBox="0 0 600 200" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
-          <path d="M0 150c60-30 110 30 170 0s110-30 170 0 110 30 170 0 70-20 90-10" />
-          <path d="M0 120c60-30 110 30 170 0s110-30 170 0 110 30 170 0 70-20 90-10" />
-          <path d="M0 90c60-30 110 30 170 0s110-30 170 0 110 30 170 0 70-20 90-10" />
-        </svg>
-        <div className="herobody">
-          <span className="heroicon" aria-hidden="true"><Icon name={urgent ? 'alert' : 'check'} /></span>
-          <div>
-            <p className="heroeyebrow">Recorded simulated pumps, replayed as if live</p>
-            <h1 id="hero-title">
-              {alerts.length === 0 ? 'No alerts to show yet' : urgent ? `${h.urgent} ${plural(h.urgent, 'case needs', 'cases need')} a look first` : 'Nothing urgent right now'}
-            </h1>
-            <p className="herosub">
-              {alerts.length === 0
-                ? 'Start the API, or pull the committed alert files, and reload.'
-                : urgent
-                  ? `${plural(h.pumpsUrgent, '1 pump has', `${h.pumpsUrgent} pumps have`)} an open case at Likely or Very likely priority. ${h.open} cases are open in total.`
-                  : `No open case at Likely or Very likely priority. ${h.open} lower-priority ${plural(h.open, 'case is', 'cases are')} still open.`}
-            </p>
-          </div>
+        <div className="herocopy">
+          <p className="heroeyebrow"><i aria-hidden="true" />Pump fleet · recorded simulation, replayed</p>
+          <h1 id="hero-title">
+            {alerts.length === 0 ? 'No alerts to show yet' : urgent ? `${h.urgent} ${plural(h.urgent, 'case needs', 'cases need')} a look first` : 'Nothing urgent right now'}
+          </h1>
+          <p className="herosub">
+            {alerts.length === 0
+              ? 'Start the API, or pull the committed alert files, and reload.'
+              : urgent
+                ? `${plural(h.pumpsUrgent, '1 pump has', `${h.pumpsUrgent} pumps have`)} an open case at Likely or Very likely priority. ${h.open} cases are open in total.`
+                : `No open case at Likely or Very likely priority. ${h.open} lower-priority ${plural(h.open, 'case is', 'cases are')} still open.`}
+          </p>
+          <a className="btn primary herocta" href={link(h.topId)}>{urgent ? 'Review the first case' : 'Open the alerts'} <Icon name="next" /></a>
         </div>
-        <a className="btn herocta" href={link(h.topId)}>{urgent ? 'Review the first case' : 'Open the alerts'} <Icon name="next" /></a>
+        <PumpArt className="heroart" />
       </section>
 
       <LiveStrip />
 
       <section className="kpirow" aria-label="Key figures">
         <article className="kpi">
-          <p className="kl">Open cases</p>
-          <p className="kv">{h.open}<span> of {h.total}</span></p>
-          <div className="stack" role="img" aria-label={LEVELS.map((l) => `${counts[l]} ${STAGE_LABEL[l]}`).join(', ')}>
-            {LEVELS.map((l) => counts[l] > 0 && <i key={l} className={`s-${l}`} style={{ flex: counts[l] }} />)}
+          <span className="kicon" aria-hidden="true"><Icon name="bell" /></span>
+          <div className="kbody">
+            <p className="kl">Open cases</p>
+            <p className="kv">{h.open}<span>of {h.total}</span></p>
+            <p className="kn">Across {pumpsWithCases} {plural(pumpsWithCases, 'pump', 'pumps')}</p>
           </div>
-          <p className="kn">{h.reviewed === 0 ? 'None reviewed yet' : `${h.reviewed} reviewed by people`}</p>
         </article>
         <article className="kpi">
-          <p className="kl">Need a look first</p>
-          <p className={`kv ${urgent ? 'hot' : ''}`}>{h.urgent}</p>
-          <p className="kn">Likely or Very likely, still open</p>
+          <span className="kicon red" aria-hidden="true"><Icon name="alert" /></span>
+          <div className="kbody">
+            <p className="kl">Need a look first</p>
+            <p className={`kv ${urgent ? 'hot' : ''}`}>{h.urgent}</p>
+            <p className="kn">Likely or Very likely</p>
+          </div>
         </article>
         <article className="kpi">
-          <p className="kl">Pumps with open cases</p>
-          <p className="kv">{rows.filter((r) => r.open > 0).length}<span> of {assets.length}</span></p>
-          <p className="kn">Open the table below to pick one</p>
+          <span className="kicon teal" aria-hidden="true"><Icon name="pump" /></span>
+          <div className="kbody">
+            <p className="kl">Monitored pumps</p>
+            <p className="kv">{assets.length}</p>
+            <p className="kn">{assets.filter((a) => a.telemetry_served).length} with telemetry shown</p>
+          </div>
+        </article>
+        <article className="kpi">
+          <span className="kicon green" aria-hidden="true"><Icon name="check" /></span>
+          <div className="kbody">
+            <p className="kl">Reviewed by people</p>
+            <p className="kv">{h.reviewed}<span>of {h.total}</span></p>
+            <p className="kn">Kept in this browser</p>
+          </div>
         </article>
       </section>
 
-      <div className="split">
-        <section className="panel" aria-labelledby="att-title">
+      <div className="dash">
+        <section className="panel" aria-labelledby="pumps-title">
           <div className="phead">
-            <h2 id="att-title">Needs a look first</h2>
-            <a className="more" href="#/alerts">All {h.open} open cases <Icon name="next" /></a>
+            <div>
+              <h2 id="pumps-title">Pump overview</h2>
+              <p className="psub">Choose a pump to see its open cases.</p>
+            </div>
           </div>
-          {first.length === 0 ? (
-            <p className="muted">{alerts.length === 0 ? 'No alerts loaded.' : 'No open cases. Everything has been reviewed or closed.'}</p>
-          ) : (
-            <ul className="attlist">
-              {first.map((c) => (
-                <li key={c.id}>
-                  <a href={link(c.id)} className={`att s-${levelOf(c.head.stage)}`}>
-                    <span className={`ticon ${c.head.event_class === 'SENSOR' ? 'sensor' : 'machine'}`} aria-hidden="true"><Icon name={c.head.event_class === 'SENSOR' ? 'sensor' : 'wrench'} /></span>
-                    <span className="atxt">
-                      <b>{titleOf(c.head)}</b>
-                      <span className="muted small"><span className="mono">{c.head.asset_id}</span> · {when(c.head.alert_time_utc)}{c.members.length > 1 ? ` · +${c.members.length - 1} related` : ''}</span>
-                    </span>
-                    <span className={`stagechip s-${levelOf(c.head.stage)}`}>{STAGE_LABEL[levelOf(c.head.stage)]}</span>
-                    <Icon name="next" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="tablewrap flat">
+            <table className="pumptable">
+              <thead><tr><th>Pump</th><th>Condition</th><th>Trend · recorded week</th><th><span className="sr">Open</span></th></tr></thead>
+              <tbody>
+                {rows.map((r) => {
+                  const a = assets.find((x) => x.asset_id === r.asset_id)
+                  const v = visual(r.asset_id)
+                  const marks = cases.filter((c) => c.head.asset_id === r.asset_id).map((c) => ({ at: c.head.alert_time_utc, level: levelOf(c.head.stage) }))
+                  const dataNote = v?.health && v.health.status !== 'OK' ? <span className={`hchip h-${v.health.status}`}>{HEALTH_LABEL[v.health.status]}</span> : null
+                  return (
+                    <tr key={r.asset_id}>
+                      <td data-label="Pump">
+                        <a className="pumplink" href={`#/alerts/${r.asset_id}`}>
+                          <span className="ptile" aria-hidden="true"><Icon name="pump" /></span>
+                          <span className="ptext"><b className="mono">{r.asset_id}</b><span>{a?.system}</span></span>
+                        </a>
+                      </td>
+                      <td data-label="Condition">
+                        {r.worst ? <span className={`cond s-${r.worst}`}>{STAGE_LABEL[r.worst]}</span> : <span className="cond">No open cases</span>}
+                        <span className="condsub">{r.open} open {plural(r.open, 'case', 'cases')} {dataNote}</span>
+                      </td>
+                      <td data-label="Trend" className="sparkcell">
+                        {!a?.telemetry_served
+                          ? <span className="muted small">Test pump: telemetry hidden</span>
+                          : v?.series
+                            ? <Spark t={v.series.t} v={v.series.v} marks={marks} label={`${CHANNEL_NAME[v.channel ?? ''] ?? 'Signal'} over the recorded week, ${marks.length} cases marked`} />
+                            : <span className="muted small">{v ? 'No signal to show' : 'Loading…'}</span>}
+                        {a?.telemetry_served && v?.channel && v.series ? <span className="xs">{CHANNEL_NAME[v.channel]}</span> : null}
+                      </td>
+                      <td><a className="go" href={`#/alerts/${r.asset_id}`} aria-label={`Open the cases of ${r.asset_id}`}><Icon name="next" /></a></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted small foot">A pump with no open cases is not called healthy: quiet can also mean the data are not good enough to judge, which the data check on each case says.</p>
         </section>
 
-        <section className="panel" aria-labelledby="mix-title">
-          <div className="phead"><h2 id="mix-title">Where the open cases are</h2></div>
-          <div className="mix">
-            <Donut counts={counts} />
-            <ul className="legend2">
-              {LEVELS.map((l: Level) => <li key={l}><i className={`dot2 ${l}`} aria-hidden="true" />{STAGE_LABEL[l]}<b>{counts[l]}</b></li>)}
-            </ul>
-          </div>
-        </section>
+        <div className="dcol">
+          <section className="panel" aria-labelledby="att-title">
+            <div className="phead">
+              <div>
+                <h2 id="att-title">Active alerts</h2>
+                <p className="psub">Highest priority first</p>
+              </div>
+              <a className="more" href="#/alerts">View all <Icon name="next" /></a>
+            </div>
+            {first.length === 0 ? (
+              <p className="muted">{alerts.length === 0 ? 'No alerts loaded.' : 'No open cases. Everything has been reviewed or closed.'}</p>
+            ) : (
+              <ul className="attlist">
+                {first.map((c) => (
+                  <li key={c.id}>
+                    <a href={link(c.id)} className="att">
+                      <span className="atxt">
+                        <b>{titleOf(c.head)}</b>
+                        <span className="muted small"><span className="mono">{c.head.asset_id}</span> · {when(c.head.alert_time_utc)}</span>
+                      </span>
+                      <span className={`stagechip s-${levelOf(c.head.stage)}`}>{STAGE_LABEL[levelOf(c.head.stage)]}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="panel" aria-labelledby="mix-title">
+            <div className="phead">
+              <div>
+                <h2 id="mix-title">Fleet condition</h2>
+                <p className="psub">Open cases by priority</p>
+              </div>
+            </div>
+            <div className="mix">
+              <Donut counts={counts} size={150} />
+              <ul className="legend2">
+                {LEVELS.map((l) => <li key={l}><i className={`dot2 ${l}`} aria-hidden="true" />{STAGE_LABEL[l]}<b>{counts[l]}</b></li>)}
+              </ul>
+            </div>
+          </section>
+        </div>
       </div>
-
-      <section className="panel" aria-labelledby="pumps-title">
-        <div className="phead">
-          <h2 id="pumps-title">Pumps</h2>
-          <span className="muted small">Open cases per pump and the recorded week, with a tick at each case</span>
-        </div>
-        <div className="tablewrap flat">
-          <table className="pumptable">
-            <thead><tr><th>Pump</th><th>Highest priority</th><th>Open</th><th>Recorded week</th><th>Data</th></tr></thead>
-            <tbody>
-              {rows.map((r) => {
-                const a = assets.find((x) => x.asset_id === r.asset_id)
-                const v = visual(r.asset_id)
-                const marks = cases.filter((c) => c.head.asset_id === r.asset_id).map((c) => ({ at: c.head.alert_time_utc, level: levelOf(c.head.stage) }))
-                return (
-                  <tr key={r.asset_id}>
-                    <td data-label="Pump">
-                      <a className="pumplink" href={`#/alerts/${r.asset_id}`}>
-                        <span className="mono">{r.asset_id}</span>
-                        <span className="sys">{a?.system}</span>
-                      </a>
-                    </td>
-                    <td data-label="Highest priority">{r.worst ? <span className={`stagechip s-${r.worst}`}>{STAGE_LABEL[r.worst]}</span> : <span className="muted">No open cases</span>}</td>
-                    <td data-label="Open" className="num">{r.open}</td>
-                    <td data-label="Recorded week" className="sparkcell">
-                      {!a?.telemetry_served
-                        ? <span className="muted small">Test pump: telemetry hidden</span>
-                        : v?.series
-                          ? <Spark t={v.series.t} v={v.series.v} marks={marks} label={`${CHANNEL_NAME[v.channel ?? ''] ?? 'signal'} over the recorded week, ${marks.length} cases marked`} />
-                          : <span className="muted small">{v ? 'No signal to show' : 'Loading…'}</span>}
-                      {a?.telemetry_served && v?.channel && v.series ? <span className="muted xs">{CHANNEL_NAME[v.channel]}</span> : null}
-                    </td>
-                    <td data-label="Data check">
-                      {!a?.telemetry_served ? <span className="muted small">Not computed</span> : v?.health ? (v.health.status === 'OK' ? <span className="dataok"><Icon name="check" /> Data OK</span> : <span className={`hchip h-${v.health.status}`}>{HEALTH_LABEL[v.health.status]}</span>) : <span className="muted small">{v ? '—' : 'Checking…'}</span>}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        <p className="muted small foot">A pump with no open cases is not called healthy: quiet can also mean the data are not good enough to judge, which is what the data check says.</p>
-      </section>
     </div>
   )
 }

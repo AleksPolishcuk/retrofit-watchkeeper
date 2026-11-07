@@ -217,12 +217,7 @@ export default function Monitor({ assets, alerts, focus, results, reviews, act, 
 
   return (
     <div className="monitor">
-      {!(narrow && mobileCase) && (
-        <header className="pagehead">
-          <h1>Alerts</h1>
-          <p className="muted">Pick a case. You will see what the data show, how sure we are, and what to do first.</p>
-        </header>
-      )}
+      <h1 className="sr">Alerts</h1>
 
       <div className={`mgrid ${narrow ? (mobileCase ? 'show-case' : 'show-list') : ''}`}>
         <aside className="card caselist" aria-label="Things to look at">

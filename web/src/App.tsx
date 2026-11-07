@@ -114,34 +114,44 @@ export default function App() {
   }, [pageName])
 
   const urgent = headline(incidentsOf(alerts), reviews).urgent
-  const nav = (cls: string) => TABS.map((t) => (
+  const link = (t: (typeof TABS)[number], cls: string) => (
     <a key={t.key} href={t.hash} title={t.hint} className={`${cls}${route.key === t.key ? ' on' : ''}`} aria-current={route.key === t.key ? 'page' : undefined}>
       <Icon name={t.icon} />
       <span>{t.label}</span>
       {t.key === 'alerts' && urgent > 0 && <b className="badge" aria-label={`${urgent} cases need a look first`}>{urgent}</b>}
     </a>
-  ))
+  )
+  const tab = (k: Route) => TABS.find((t) => t.key === k)!
+  const crumb = TABS.find((t) => t.key === route.key)
 
   return (
     <div className="app">
       <button className="skip" onClick={() => mainRef.current?.focus()}>Skip to the main content</button>
       <aside className="side" aria-label="Watchkeeper menu">
-        <a className="brand" href="#/" aria-label="Watchkeeper, overview"><span className="mark" aria-hidden="true"><Icon name="shield" /></span><span className="bn">Watchkeeper</span></a>
-        <nav className="sidenav" aria-label="Sections">{nav('sl')}</nav>
+        <a className="brand" href="#/"><span className="mark" aria-hidden="true"><Icon name="shield" /></span><span className="bn"><b>Watch<i>keeper</i></b><small>Pump monitoring</small></span></a>
+        <p className="navlabel">Monitoring</p>
+        <nav className="sidenav" aria-label="Monitoring">{(['overview', 'alerts'] as Route[]).map((k) => link(tab(k), 'sl'))}</nav>
+        <p className="navlabel">Evidence</p>
+        <nav className="sidenav" aria-label="Evidence">{(['value', 'proof', 'retrofit'] as Route[]).map((k) => link(tab(k), 'sl'))}</nav>
         <div className="sidefoot">
-          <p className="safe"><Icon name="shield" /><span><b>Advice only</b><br />It cannot control a machine</span></p>
-          <p className="note">Recorded simulated pumps, replayed as if live.</p>
-          <ThemeSwitch />
+          <b><i className="rdot" aria-hidden="true" />Replay mode</b>
+          <small>Recorded simulated data, replayed as if live</small>
         </div>
-        <div className="railtheme"><ThemeSwitch compact /></div>
       </aside>
       <header className="mtop">
-        <a className="brand" href="#/"><span className="mark" aria-hidden="true"><Icon name="shield" /></span>Watchkeeper</a>
-        <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only</span>
-        <ThemeSwitch compact />
+        <a className="brand" href="#/"><span className="mark" aria-hidden="true"><Icon name="shield" /></span><span className="bn"><b>Watch<i>keeper</i></b></span></a>
+        <ThemeSwitch compact onDark />
       </header>
       <main className="page" id="main" ref={mainRef} tabIndex={-1} aria-label={pageName}>
         <p className="sr" role="status" aria-live="polite">{pageName}</p>
+        <div className="topbar">
+          <p className="crumb"><b>{crumb?.label}</b><span>{crumb?.hint}</span></p>
+          <div className="chips">
+            <span className="chip"><i className="rdot" aria-hidden="true" />Replay mode</span>
+            <span className="chip safe" title="This interface only reads data"><Icon name="shield" />Advice only · cannot control a machine</span>
+            <ThemeSwitch compact />
+          </div>
+        </div>
         {error && <div className="error" role="alert">{error}</div>}
         {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'mock' && (
           <p className="alertwarn" role="alert"><b>These are demo alerts, not engine output.</b> The alert files are missing, so there are no priority levels. Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
@@ -155,7 +165,7 @@ export default function App() {
         {route.key === 'proof' && <Proof data={results} />}
         {route.key === 'retrofit' && <RetrofitPage data={results} />}
       </main>
-      <nav className="tabbar" aria-label="Sections">{nav('tb')}</nav>
+      <nav className="tabbar" aria-label="Sections">{TABS.map((t) => link(t, 'tb'))}</nav>
     </div>
   )
 }

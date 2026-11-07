@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
+import Icon from './icons'
 import { HEALTH_LABEL, titleOf } from './plain'
 import { STAGE_LABEL, when } from './stage'
 import type { LiveItem, LiveState } from './types'
 
-
-/** Shown only while a live replay has been run (make live-demo). Polls the read-only API; the replay runner is a separate process. */
+/** Shown only while a live replay has been run (make live-demo). One line until opened. Polls the read-only API; the replay runner is a separate process. */
 export default function LiveStrip() {
   const [state, setState] = useState<LiveState | null>(null)
 
@@ -36,38 +36,42 @@ export default function LiveStrip() {
   const h = state.health
   const running = state.status === 'running'
   return (
-    <section className="card live" aria-label="Live replay">
-      <div className="livehead">
+    <details className="livebar" aria-label="Live replay">
+      <summary>
         <span className={`pulse ${running ? 'on' : ''}`} aria-hidden="true" />
-        <h2>{running ? 'Live replay' : 'Live replay finished'}</h2>
+        <span>{running ? 'Live replay' : 'Live replay finished'}</span>
         <span className="mono">{state.asset_id}</span>
         <span className="muted">as of <span className="mono">{state.as_of_utc ? when(state.as_of_utc) : 'no data yet'}</span></span>
         {h.status && <span className={`hchip h-${h.status}`}>{HEALTH_LABEL[h.status]}</span>}
+        <span className="muted">{state.alerts.length} {state.alerts.length === 1 ? 'alert' : 'alerts'}</span>
+        <span className="chev" aria-hidden="true"><Icon name="chevron" /></span>
+      </summary>
+      <div className="livebody">
+        <p className="muted livenote">
+          Telemetry messages arrive one per second, are turned into one-minute readings and checked by the same detector as the recorded pumps. Nothing is sent to the machine.
+          {' '}{state.minutes} minutes received. The detector is re-run every {state.every_minutes} minutes and takes about {Math.round(state.latency.p50_ms)} ms per run on one CPU core.
+        </p>
+        {h.reasons && h.reasons.length > 0 && h.status !== 'OK' && (
+          <ul className="livereasons">{h.reasons.slice(0, 3).map((r) => <li key={r}>{r}</li>)}</ul>
+        )}
+        {state.alerts.length === 0 ? (
+          <p className="liveempty">No alert so far. Quiet is not proof of health: the data label says whether the data are good enough to judge.</p>
+        ) : (
+          <ul className="livealerts">
+            {state.alerts.slice(-4).reverse().map((a) => {
+              const log = state.alert_log[a.alert_id]
+              return (
+                <li key={a.alert_id}>
+                  <span className={`stagechip s-${a.stage ?? 'watch'}`}>{STAGE_LABEL[a.stage ?? 'watch']}</span>
+                  <b>{titleOf(a)}</b>
+                  <span className="muted">raised <span className="mono">{when(a.alert_time_utc)}</span>
+                    {log ? <>, shown {log.published_minutes_after_alert_time <= 0.5 ? 'as soon as the minute closed' : `${Math.round(log.published_minutes_after_alert_time)} min later`}</> : null}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
-      <p className="muted livenote">
-        Telemetry messages arrive one per second, are turned into one-minute readings and checked by the same detector as the recorded pumps below. Nothing is sent to the machine.
-        {' '}{state.minutes} minutes received. The detector is re-run every {state.every_minutes} minutes and takes about {Math.round(state.latency.p50_ms)} ms per run on one CPU core.
-      </p>
-      {h.reasons && h.reasons.length > 0 && h.status !== 'OK' && (
-        <ul className="livereasons">{h.reasons.slice(0, 3).map((r) => <li key={r}>{r}</li>)}</ul>
-      )}
-      {state.alerts.length === 0 ? (
-        <p className="liveempty">No alert so far. Quiet is not proof of health: the data label next to the pump says whether the data are good enough to judge.</p>
-      ) : (
-        <ul className="livealerts">
-          {state.alerts.slice(-4).reverse().map((a) => {
-            const log = state.alert_log[a.alert_id]
-            return (
-              <li key={a.alert_id}>
-                <span className={`stagechip s-${a.stage ?? 'watch'}`}>{STAGE_LABEL[a.stage ?? 'watch']}</span>
-                <b>{titleOf(a)}</b>
-                <span className="muted">raised <span className="mono">{when(a.alert_time_utc)}</span>
-                  {log ? <>, shown {log.published_minutes_after_alert_time <= 0.5 ? 'as soon as the minute closed' : `${Math.round(log.published_minutes_after_alert_time)} min later`}</> : null}</span>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
+    </details>
   )
 }
