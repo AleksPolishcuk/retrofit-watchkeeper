@@ -1,6 +1,6 @@
 {
   "created_utc": "2026-11-07T09:45:50Z",
-  "commit": "6dc3c9394602a38819327aa52927ee87982946d3",
+  "commit": "b7f30c70b492be2cfc1495e0d5180c0eb738a66c",
   "tag": "freeze-v1",
   "dirty": false,
   "method": "wk",
@@ -13,5 +13,6 @@
   ],
   "alerts": 33,
   "commit_before_history_rewrite": "7d784087baefc42c07a137564606f6952b17ec44",
-  "history_rewrite_note": "On 7 Nov 2026 the repository history was rewritten to remove an assistant instruction file. Code and model are unchanged; 'commit' is the rewritten hash of the same freeze commit (tag freeze-v1)."
+  "commit_after_first_history_rewrite": "6dc3c9394602a38819327aa52927ee87982946d3",
+  "history_rewrite_note": "On 7 Nov 2026 the repository history was rewritten twice, before submission: first to remove an assistant instruction file, then to remove internal working notes. Code and model are unchanged; 'commit' is the hash of the same freeze commit (tag freeze-v1) after the second rewrite."
 }

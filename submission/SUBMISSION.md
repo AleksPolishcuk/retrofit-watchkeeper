@@ -36,8 +36,8 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 
 ## History note
 
-On 7 Nov 2026 the repository history was rewritten once to remove an assistant instruction file from every commit. Code, models and results are unchanged; all commit hashes changed.
-The freeze commit that wrote the test-pump predictions is now `6dc3c93` (tag `freeze-v1`; it was `7d78408` before the rewrite). `submission/predictions_test.meta.json` records the new hash and, in `commit_before_history_rewrite`, the old one. The model hash and the CSV are untouched.
+On 7 Nov 2026 the repository history was rewritten twice, both times before submission: first to remove an assistant instruction file from every commit, then to remove internal working notes (planning documents and local helper scripts). Code, models and results are unchanged; all commit hashes changed.
+The freeze commit that wrote the test-pump predictions is now `b7f30c7` (tag `freeze-v1`). It was `6dc3c93` after the first rewrite and `7d78408` originally; its tree differs from `6dc3c93` only by the removed working notes. `submission/predictions_test.meta.json` records the current hash and both earlier ones. The model hash and the CSV are untouched.
 
 ## Evidence discipline
 
