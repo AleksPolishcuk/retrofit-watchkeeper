@@ -59,7 +59,31 @@ export default function RetrofitPage({ data }: { data: Results | null }) {
           )
         })}
       </div>
-      <p className="muted small">Fewer sensors give fewer causes that can be separated. Watchkeeper says so on each alert (what limits our certainty) instead of guessing.</p>
+      <p className="muted small">Fewer sensors give fewer causes that can be separated. Watchkeeper says so on each alert (what limits our certainty) instead of guessing. The counts above come from different mixes of faults on 5 to 10 pumps per level, so they show a direction and do not rank the levels; in particular they do not show that more sensors find fewer faults.</p>
+
+      {data?.missing_sensor && (
+        <>
+          <h2>If a sensor is missing or fails</h2>
+          <p className="muted">The frozen model on the untouched hold fleets (82 events) with whole channels removed from the data. The score falls gradually; no single missing channel breaks it.</p>
+          <div className="tablewrap">
+            <table className="fleettable">
+              <thead><tr><th>Scenario</th><th>Composite</th><th>Change</th><th>Recall</th><th>Class recall</th></tr></thead>
+              <tbody>
+                {data.missing_sensor.map((r, i) => (
+                  <tr key={r.scenario}>
+                    <td>{r.scenario}</td>
+                    <td className="num">{r.composite.toFixed(1)}</td>
+                    <td className="num">{i === 0 ? '—' : (r.composite - data.missing_sensor![0].composite).toFixed(1)}</td>
+                    <td className="num">{r.recall.toFixed(2)}</td>
+                    <td className="num">{r['class recall'].toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted small">The vibration sensor and discharge pressure matter most; flow, power and the extra temperatures matter least. That agrees with the advice to start from what the drive and the motor starter already know.</p>
+        </>
+      )}
 
       <h2>What it needs on site</h2>
       <div className="tablewrap">

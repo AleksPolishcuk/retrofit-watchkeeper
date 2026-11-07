@@ -4,34 +4,48 @@ Read-only operator-assist layer for existing cooling-water pumps.
 
 Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 November 2026) for the challenge **RETROFIT AI: Make Existing Machines Intelligent** (challenge owner Business Turku, technical sparring partner Elomatic).
 
-> **Advice only. No write path.** Watchkeeper reads telemetry and recommends actions for a human to approve. It never sends commands to a pump, drive, valve, PLC or safety system.
+> **Advice only. No write path.** Watchkeeper reads telemetry and recommends actions for a human to approve. It never sends commands to a pump, drive, valve, PLC or safety system. The API has GET routes only, and a test fails if that changes.
 
-## What it will do
+## What it does
 
-1. Ingest or replay pump telemetry (read-only, MQTT-style messages).
-2. Detect developing machine and instrument problems early, taking the operating regime into account.
-3. Tell a sensor fault from a machine fault.
-4. Show the evidence behind every alert and say how certain it is.
-5. Recommend an inspection or maintenance action for a human to review.
-6. Optionally compare an intervention in the provided digital sandbox (simulation only).
+1. Replays or ingests pump telemetry (one-minute averages of the channels a pump already has).
+2. Learns each pump's own normal at each operating point, using only data from before the moment being judged (causal; a truncation test enforces it).
+3. Raises an alert when a deviation persists, says whether it looks like a **machine** problem or an **instrument** problem, and names the most likely fault type.
+4. Shows the evidence behind every alert, what limits our certainty (missing channels, instrumentation level), what it may mean and what to check first.
+5. Uses graded words (Watch, Possible, Likely, Very likely) backed by back-test counts, never percentages that pretend to be calibrated.
+6. Recommends an inspection or maintenance action for a human to approve, and can compare an intervention in the organizers' simulation sandbox (simulation only).
 
-## Status
+## Measured results
 
-Working prototype under active development. Numbers are in `eval/results/` and `docs/AUDIT_AND_PLAN.md`; the final results table and limitations will be written here at freeze. Measured so far on synthetic data only, so nothing here is evidence of field performance.
+Everything below is on **synthetic** data, scored by the organizers' own scorer (`retrofit_sim.scoring`). It shows how the method behaves on this benchmark. It is not evidence of performance in a plant.
 
-## Layout
+The numbers in this table come from a model fitted only on fleets generated with the organizers' simulator (`models/wk.joblib`), never on the public pumps or on the fleets being scored. Hold fleets were opened once, after the method was frozen. The model that wrote the test-pump predictions (`models/wk_final.joblib`) is the same method refitted on the simulator fleets plus the labelled public pumps, so its own numbers on those pumps are not shown.
 
-```
-src/watchkeeper/   ingest, features, detect, diagnose, alerts, explain, sandbox, api
-web/               operator interface
-eval/              evaluation scripts and result tables
-automation/n8n/    exported human-approval workflow
-docs/              team plan, technical note, architecture, business case
-submission/        test-pump alert CSV and submission notes
-scripts/           data linking and demo helpers
-```
+| Set | Watchkeeper | Organizers' mode-aware baseline B1 | Random alerts |
+|---|---|---|---|
+| **Untouched hold fleets** (24 pumps, 82 events) | **62.8** (95% interval 55 to 70) | 52.1 (44 to 60) | 36.0 |
+| Tuning fleets (16 pumps, 48 events) | 59.9 (50 to 70) | 42.9 (35 to 51) | 37.5 |
+| 9 public development pumps (35 events) | 67.1 (58 to 73) | 63.4 | 43.6 |
+| Organizers' own split: 7 train pumps / 2 validation pumps | 63.0 / 79.5 | 58.2 / 78.0 | |
+| Masked-clogging trap (3 pumps, 6 events) | 48.1 | 52.1 | 40.9 |
 
-## Run
+- An alert-free detector scores 10. The plant's existing alarms score 23 on the organizers' validation split.
+- The 2-pump validation split has 9 events, so differences of a few points there are noise.
+- Intervals resample pumps (1000 draws). Full table, tier and fault-type breakdown: [eval/results/final/report.md](eval/results/final/report.md).
+- **False alerts:** on 294 pump-days of healthy simulated pumps, 1.3 false episodes per pump-month (upper 95% bound 2.3). That is still more than an operator would accept; see limitations.
+- **Sensors missing:** [eval/results/missing_sensor.md](eval/results/missing_sensor.md) removes whole channels from the hold fleets.
+- **Likelihood words:** counts per level from held-out back-tests are in `models/stages.json` and on the Results page.
+
+### What did not work
+
+- Fusing weak shifts across channels along each fault's signature, plus a slow cumulative-sum detector, was built and tested. It found more events, but added false alerts and no earlier warning. It stays in the code, switched off: [eval/results/signature.md](eval/results/signature.md).
+- A real fix for false alerts and early warning needs a better model of normal operation that uses the operating context (cooling demand, sea temperature); this was started but not integrated.
+
+## Test-pump predictions
+
+`submission/predictions_test.csv` has 33 alerts for PUMP-10, 11 and 12, produced once from git tag `freeze-v1` by `make predict`. `predictions_test.meta.json` records the commit, the tag, a clean-tree flag and the model file's SHA-256. Test pumps were never used for fitting, selection or threshold choice.
+
+## Run it
 
 The organizers' data pack (`RETROFIT_AI_PARTICIPANTS_2026`) is not stored in this repository. Point to your local copy:
 
@@ -39,9 +53,34 @@ The organizers' data pack (`RETROFIT_AI_PARTICIPANTS_2026`) is not stored in thi
 make setup
 make setup-pack PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026
 make data PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026
+make test                      # unit tests and truncation (causality) tests
+make api                       # read-only API on http://127.0.0.1:8000
+make web                       # interface on http://localhost:5173
 ```
 
-`make eval`, `make predict`, `make api`, `make web`, `make demo` and `make test` are placeholders until the matching parts exist.
+To regenerate the models and numbers (about 25 minutes on 8 cores):
+
+```bash
+make bank                      # simulated fleets from the organizers' simulator, into bank/ (not committed)
+make model                     # models/wk.joblib (bank only) and models/wk_final.joblib (bank + public pumps)
+make report                    # eval/results/final/report.md, tuning and tune/dev/trap/healthy sets
+make levels                    # models/stages.json
+make predict                   # needs a clean working tree
+```
+
+`make report` leaves the hold fleets alone; `eval/run_report.py --hold` opens them and should be run once, at freeze.
+
+## Layout
+
+```
+src/watchkeeper/   features (causal baselines, NPSH), detect (alert timing, cavitation, signature fusion), diagnose (model, knowledge),
+                   incidents, stage words, alerts (contract v2), what-if, api
+web/               fleet overview, pump view with causal replay, results, retrofit (React, TypeScript, Vite)
+eval/              experiments, probes, results tables
+scripts/           bank generation, data linking
+docs/              plan, audit, alert contract (JSON schema), business case, edge and transfer, technical note, demo script
+submission/        test-pump alerts and submission notes
+```
 
 ## Data and attribution
 
@@ -49,13 +88,17 @@ All data are synthetic. See [NOTICE](NOTICE). Data: "RETROFIT AI 2026 synthetic 
 
 ## AI tools used
 
-To be completed before submission.
+- **Claude** (Anthropic), through Claude Code, was used to analyse the challenge material, write and review code, run experiments and draft documentation. A human reviewed and directed the work.
+- **No language model runs in the product.** Alerts, evidence, stage words and wording come from the pipeline and fixed templates. Optional integrations are not required and are not enabled.
 
-## Limitations (preliminary)
+## Limitations
 
-- The data are synthetic and come from a reduced-order simulator. Fault growth is compressed into a 7-day window.
-- Seal leakage and electrical rotor or stator faults are not part of the benchmark.
-- Results on this benchmark are not evidence of field performance, and nothing here is certified for operational use.
+- The data are synthetic and come from a reduced-order simulator. Fault growth is compressed into a 7-day window. Seal leakage and electrical rotor or stator faults are not part of the benchmark.
+- The fault **type** is right for only about two in five faults, and machine faults are often named as instrument drift. The machine-or-instrument **class** is right more often (about three in five), and every alert says which instrument to check first.
+- Masked suction clogging on the trap fleets is a weak spot: below the baseline, and the type is never named.
+- False alerts on healthy simulated pumps are about 1.3 per pump-month, mostly at operating points not seen in the first 24 hours. A pilot would tune this with operators.
+- No time-to-failure estimate is given ("not estimated"); stage words come from back-test counts on this simulator only.
+- Not certified, not class-approved and not a safety system. Existing alarms and trips remain authoritative.
 
 ## License
 

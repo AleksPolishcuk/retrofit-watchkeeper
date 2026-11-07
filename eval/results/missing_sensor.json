@@ -1,0 +1,62 @@
+[
+  {
+    "scenario": "all channels",
+    "composite": 62.8,
+    "recall": 0.67,
+    "precision": 0.76,
+    "type recall": 0.41,
+    "class recall": 0.59,
+    "false+repeat per pump-day": 0.1,
+    "events": 82
+  },
+  {
+    "scenario": "no suction pressure",
+    "composite": 58.8,
+    "recall": 0.59,
+    "precision": 0.87,
+    "type recall": 0.35,
+    "class recall": 0.54,
+    "false+repeat per pump-day": 0.04,
+    "events": 82
+  },
+  {
+    "scenario": "no flow and no power",
+    "composite": 61.2,
+    "recall": 0.65,
+    "precision": 0.78,
+    "type recall": 0.39,
+    "class recall": 0.57,
+    "false+repeat per pump-day": 0.09,
+    "events": 82
+  },
+  {
+    "scenario": "no vibration sensor",
+    "composite": 55.5,
+    "recall": 0.59,
+    "precision": 0.75,
+    "type recall": 0.3,
+    "class recall": 0.45,
+    "false+repeat per pump-day": 0.1,
+    "events": 82
+  },
+  {
+    "scenario": "no bearing and winding temperature",
+    "composite": 62.3,
+    "recall": 0.65,
+    "precision": 0.78,
+    "type recall": 0.41,
+    "class recall": 0.59,
+    "false+repeat per pump-day": 0.09,
+    "events": 82
+  },
+  {
+    "scenario": "no discharge pressure",
+    "composite": 55.9,
+    "recall": 0.57,
+    "precision": 0.77,
+    "type recall": 0.33,
+    "class recall": 0.45,
+    "false+repeat per pump-day": 0.08,
+    "events": 82
+  }
+]

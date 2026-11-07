@@ -61,7 +61,7 @@ def _bisect(fn, lo: float, hi: float, target: float) -> float:
     return hi
 
 
-def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets_path: Path | None = None) -> str:
+def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets_path: Path | None = None, source: str = "leave-one-asset-out on the public pumps") -> str:
     m = json.loads(metrics_path.read_text(encoding="utf-8"))["leave_one_asset_out"]
     pe = pd.read_csv(per_event_path)
     days = m["asset_days"]
@@ -76,7 +76,7 @@ def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets
     r, r_org = evaluate(base), evaluate(org)
 
     L = ["# Business case for one retrofitted pump (synthetic scenario)", "",
-         "Every money figure is an assumption. The detection figures are measured on the synthetic benchmark with leave-one-asset-out. "
+         f"Every money figure is an assumption. The detection figures are measured on the synthetic benchmark ({source}). "
          "This shows how the numbers combine, not a saving at any real site.", "",
          "## Measured inputs", "",
          "| Measure | Value | Meaning |", "|---|---|---|",
@@ -127,12 +127,12 @@ def build(metrics_path: Path = METRICS, per_event_path: Path = PER_EVENT, assets
     tier = dict(zip(assets.asset_id, assets.instrumentation_tier))
     pe["tier"] = pe.asset_id.map(tier)
     by = pe.groupby("tier").agg(events=("event_id", "count"), detected=("detected", "sum"), type_ok=("type_correct", "sum"))
-    L += ["", "## What each retrofit level sees (measured on the dev pumps)", "",
+    L += ["", "## What each retrofit level sees (measured on the same fleets)", "",
           "| Instrumentation | Installed cost (assumption) | Events | Detected | Right type |", "|---|---|---|---|---|"]
     for (name, capex), t in zip(LEVELS.items(), ("T0_LEGACY", "T1_RETROFIT", "T2_FULL")):
         row = by.loc[t] if t in by.index else None
         L.append(f"| {name} | EUR {capex:,.0f} | {int(row.events) if row is not None else 0} | {int(row.detected) if row is not None else 0} | {int(row.type_ok) if row is not None else 0} |")
-    L += ["", "Each level has only a handful of events (2 to 4 pumps), so these counts show a direction and do not rank the levels with confidence.", "",
+    L += ["", "The levels see different mixes of faults on only 5 to 10 pumps each, so these counts show a direction and do not rank the levels; they do not show that more sensors detect less.", "",
           "## Honest limits", "",
           "- Synthetic data and assumed costs. Faults per year, downtime cost and repair cost drive the result more than the detector does.",
           f"- Only {n_dead} of the {len(pe)} events reach a conventional limit, so \"found before the limit\" rests on {n_dead} events ({n_early} caught).",
