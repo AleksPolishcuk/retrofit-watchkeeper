@@ -39,6 +39,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash))
   const [assets, setAssets] = useState<Asset[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
+  const [alertSource, setAlertSource] = useState<'engine' | 'mock' | null>(null)
   const [results, setResults] = useState<Results | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [reviews, setReviews] = useState<Record<string, Review>>(loadReviews)
@@ -54,7 +55,7 @@ export default function App() {
 
   useEffect(() => {
     api.assets().then(setAssets).catch((e) => setError(`Cannot reach the API: ${e.message}. Start it with "make api".`))
-    api.allAlerts().then((r) => setAlerts(r.alerts)).catch(() => undefined)
+    api.allAlerts().then((r) => { setAlerts(r.alerts); setAlertSource(r.source) }).catch(() => undefined)
     api.results().then(setResults).catch(() => undefined)
   }, [])
 
@@ -100,7 +101,7 @@ export default function App() {
       <div className="strip">Recorded simulated pumps, replayed as if live. Nothing is connected to a real machine.</div>
       {error && <div className="error" role="alert">{error}</div>}
       <main className="page">
-        {route === 'monitor' && <Monitor assets={assets} alerts={alerts} results={results} reviews={reviews} act={act} clearReviews={clearReviews} />}
+        {route === 'monitor' && <Monitor assets={assets} alerts={alerts} alertSource={alertSource} results={results} reviews={reviews} act={act} clearReviews={clearReviews} />}
         {route === 'value' && <Value data={results} />}
         {route === 'proof' && <Proof data={results} />}
         {route === 'retrofit' && <RetrofitPage data={results} />}

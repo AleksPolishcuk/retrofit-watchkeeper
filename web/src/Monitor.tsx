@@ -33,6 +33,7 @@ const TIER_NOTE: Record<string, string> = {
 interface Props {
   assets: Asset[]
   alerts: Alert[]
+  alertSource: 'engine' | 'mock' | null
   results: Results | null
   reviews: Record<string, Review>
   act: (inc: Incident, action: Action) => void
@@ -53,7 +54,7 @@ function Meter({ stage }: { stage: Stage }) {
   )
 }
 
-export default function Monitor({ assets, alerts, results, reviews, act, clearReviews }: Props) {
+export default function Monitor({ assets, alerts, alertSource, results, reviews, act, clearReviews }: Props) {
   const [pumpId, setPumpId] = useState('all')
   const [showAll, setShowAll] = useState(false)
   const [levels, setLevels] = useState<Stage[]>([])
@@ -68,12 +69,12 @@ export default function Monitor({ assets, alerts, results, reviews, act, clearRe
   const timer = useRef<number | null>(null)
 
   const allIncidents = useMemo(() => incidentsOf(pumpId === 'all' ? alerts : alerts.filter((a) => a.asset_id === pumpId)), [alerts, pumpId])
-  const countBy = (s: Stage) => allIncidents.filter((i) => i.head.stage === s).length
+  const countBy = (s: Stage) => allIncidents.filter((i) => (i.head.stage ?? 'watch') === s).length
   const casesByPump = useMemo(() => Object.fromEntries(assets.map((x) => [x.asset_id, incidentsOf(alerts.filter((a) => a.asset_id === x.asset_id)).length])), [assets, alerts])
   const tierOf = (x: Asset) => ({ T0_LEGACY: 'T0', T1_RETROFIT: 'T1', T2_FULL: 'T2' }[x.instrumentation_tier])
   const pumpAsset = assets.find((x) => x.asset_id === pumpId)
   const orderedLevels = [...STAGES].reverse().filter((s) => levels.includes(s))
-  const incidents = useMemo(() => (levels.length === 0 ? allIncidents : allIncidents.filter((i) => i.head.stage && levels.includes(i.head.stage))), [allIncidents, levels])
+  const incidents = useMemo(() => (levels.length === 0 ? allIncidents : allIncidents.filter((i) => levels.includes(i.head.stage ?? 'watch'))), [allIncidents, levels])
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 960px)').matches
   const shortList = narrow ? 3 : 7
   const list = showAll ? incidents : incidents.slice(0, shortList)
@@ -195,6 +196,12 @@ export default function Monitor({ assets, alerts, results, reviews, act, clearRe
         and tells the operator what to check. It never controls the machine.
       </p>
 
+      {alertSource === 'mock' && (
+        <p className="alertwarn" role="alert"><b>These are demo alerts, not engine output.</b> The alert files are missing, so there are no priority levels and the priority filter has nothing to filter. Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
+      )}
+      {alertSource === 'engine' && alerts.length > 0 && alerts.some((x) => !x.stage) && (
+        <p className="alertwarn" role="alert"><b>Some alert files are from an older engine version and have no priority level.</b> They are listed as Watch. Run <code>make alerts</code>, restart the API and reload.</p>
+      )}
       <LiveStrip />
 
       <div className="mgrid">

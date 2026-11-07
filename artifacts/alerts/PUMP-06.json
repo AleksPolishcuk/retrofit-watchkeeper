@@ -1,0 +1,739 @@
+[
+  {
+    "alert_id": "PUMP-06-2025-10-06T09:03:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-06T09:03:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.3395291494621911,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.414
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.159
+      },
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.088
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+6.9 robust standard deviations from the baseline for this operating regime",
+        "z": 6.9
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-5.0 robust standard deviations from the baseline for this operating regime",
+        "z": -5.0
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-3.1 robust standard deviations from the baseline for this operating regime",
+        "z": -3.1
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC01",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-06T09:22:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-06T09:22:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "MISALIGNMENT",
+    "confidence": 0.39714591308477387,
+    "alternatives": [
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.422
+      },
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.1
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.081
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+6.7 robust standard deviations from the baseline for this operating regime",
+        "z": 6.7
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-4.6 robust standard deviations from the baseline for this operating regime",
+        "z": -4.6
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "-2.7 robust standard deviations from the baseline for this operating regime",
+        "z": -2.7
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check coupling alignment, especially after recent maintenance.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC02",
+    "consequence": "Bearings and the coupling wear faster and temperatures rise, most often after recent work on the pump or motor.",
+    "check": "Check the coupling guard and alignment records for recent work, and feel the coupling-end bearing temperature.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-06T20:13:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-06T20:13:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_CALIBRATION_SHIFT",
+    "confidence": 0.20187115639600084,
+    "alternatives": [
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.359
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.297
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.142
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "motor_current_a",
+        "text": "+8.2 robust standard deviations from the baseline for this operating regime",
+        "z": 8.2
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-7.2 robust standard deviations from the baseline for this operating regime",
+        "z": -7.2
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Verify the transmitter calibration against a reference gauge.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC03",
+    "consequence": "Readings are offset, which can trigger an unnecessary repair or mask a real fault.",
+    "check": "Verify the transmitter against a reference gauge at standstill and at running pressure.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-06T21:34:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-06T21:34:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.24348965489664057,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.525
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.136
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.096
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "motor_current_a",
+        "text": "+5.8 robust standard deviations from the baseline for this operating regime",
+        "z": 5.8
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-4.8 robust standard deviations from the baseline for this operating regime",
+        "z": -4.8
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC04",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-09T03:09:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-09T03:09:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.461487442358544,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.284
+      },
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.156
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.098
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-5.4 robust standard deviations from the baseline for this operating regime",
+        "z": -5.4
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-4.5 robust standard deviations from the baseline for this operating regime",
+        "z": -4.5
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "+2.2 robust standard deviations from the baseline for this operating regime",
+        "z": 2.2
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC05",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-09T17:35:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-09T17:35:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.38122019838466603,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.256
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.233
+      },
+      {
+        "fault_type": "CAVITATION",
+        "p": 0.13
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-8.4 robust standard deviations from the baseline for this operating regime",
+        "z": -8.4
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-3.9 robust standard deviations from the baseline for this operating regime",
+        "z": -3.9
+      },
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+2.8 robust standard deviations from the baseline for this operating regime",
+        "z": 2.8
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC06",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-09T21:35:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-09T21:35:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "CAVITATION",
+    "confidence": 0.5966169687402564,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "npsh_margin (estimated)",
+        "text": "estimated NPSH margin 1.02; cavitation starts below about 1.15",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "calculated from suction pressure, fluid temperature and the pump data sheet, not read from one instrument"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check suction level and strainer; avoid operating at the flow that causes it if the process allows.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC06",
+    "consequence": "Vapour bubbles erode the impeller and cut head and flow. Vibration and noise rise within minutes.",
+    "check": "Listen at the pump for gravel-like noise and check suction level and strainer. Note whether it worsens at high flow.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-10T03:08:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-10T03:08:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_DRIFT",
+    "confidence": 0.6,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "deviates alone by -6.4 robust standard deviations; related channels did not follow",
+        "z": -6.4
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the transmitter against a reference gauge before any repair.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC07",
+    "consequence": "A drifting instrument can trigger an unnecessary repair, or hide a real fault that it should reveal.",
+    "check": "Compare the transmitter with a local gauge or a second instrument on the same quantity.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-10T05:48:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-10T05:48:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "CAVITATION",
+    "confidence": 0.7227772063233167,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "npsh_margin (estimated)",
+        "text": "estimated NPSH margin 0.65; cavitation starts below about 1.15",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "calculated from suction pressure, fluid temperature and the pump data sheet, not read from one instrument"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check suction level and strainer; avoid operating at the flow that causes it if the process allows.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC06",
+    "consequence": "Vapour bubbles erode the impeller and cut head and flow. Vibration and noise rise within minutes.",
+    "check": "Listen at the pump for gravel-like noise and check suction level and strainer. Note whether it worsens at high flow.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-10T08:56:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-10T08:56:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "CAVITATION",
+    "confidence": 0.7478363236631203,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "npsh_margin (estimated)",
+        "text": "estimated NPSH margin 0.58; cavitation starts below about 1.15",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "calculated from suction pressure, fluid temperature and the pump data sheet, not read from one instrument"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check suction level and strainer; avoid operating at the flow that causes it if the process allows.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC06",
+    "consequence": "Vapour bubbles erode the impeller and cut head and flow. Vibration and noise rise within minutes.",
+    "check": "Listen at the pump for gravel-like noise and check suction level and strainer. Note whether it worsens at high flow.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-10T13:15:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-10T13:15:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.3787860095235078,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.228
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.221
+      },
+      {
+        "fault_type": "CAVITATION",
+        "p": 0.172
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-14.7 robust standard deviations from the baseline for this operating regime",
+        "z": -14.7
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-4.5 robust standard deviations from the baseline for this operating regime",
+        "z": -4.5
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC06",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-10T17:22:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-10T17:22:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "CAVITATION",
+    "confidence": 0.7751096874120541,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "npsh_margin (estimated)",
+        "text": "estimated NPSH margin 0.50; cavitation starts below about 1.15",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "calculated from suction pressure, fluid temperature and the pump data sheet, not read from one instrument"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check suction level and strainer; avoid operating at the flow that causes it if the process allows.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC06",
+    "consequence": "Vapour bubbles erode the impeller and cut head and flow. Vibration and noise rise within minutes.",
+    "check": "Listen at the pump for gravel-like noise and check suction level and strainer. Note whether it worsens at high flow.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "very_likely",
+    "stage_basis": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-06-2025-10-12T21:48:00Z",
+    "asset_id": "PUMP-06",
+    "alert_time_utc": "2025-10-12T21:48:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "MISALIGNMENT",
+    "confidence": 0.5730744388584414,
+    "alternatives": [
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.293
+      },
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.134
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "bearing_temp_c",
+        "text": "+5.2 robust standard deviations from the baseline for this operating regime",
+        "z": 5.2
+      },
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+4.6 robust standard deviations from the baseline for this operating regime",
+        "z": 4.6
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-2.1 robust standard deviations from the baseline for this operating regime",
+        "z": -2.1
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check coupling alignment, especially after recent maintenance.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-06-INC08",
+    "consequence": "Bearings and the coupling wear faster and temperatures rise, most often after recent work on the pump or motor.",
+    "check": "Check the coupling guard and alignment records for recent work, and feel the coupling-end bearing temperature.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  }
+]

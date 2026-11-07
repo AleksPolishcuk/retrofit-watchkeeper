@@ -1,0 +1,378 @@
+[
+  {
+    "alert_id": "PUMP-04-2025-06-17T14:07:00Z",
+    "asset_id": "PUMP-04",
+    "alert_time_utc": "2025-06-17T14:07:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "IMBALANCE",
+    "confidence": 0.2320943590203342,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.421
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.21
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.137
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+7.0 robust standard deviations from the baseline for this operating regime",
+        "z": 7.0
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-4.2 robust standard deviations from the baseline for this operating regime",
+        "z": -4.2
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+4.0 robust standard deviations from the baseline for this operating regime",
+        "z": 4.0
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect the impeller for fouling or damage and balance if needed.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-04-INC01",
+    "consequence": "Vibration at running speed grows with speed and shortens bearing and seal life.",
+    "check": "Inspect the impeller for deposits or damage; compare vibration at two speeds if the drive allows.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-04-2025-06-18T04:35:00Z",
+    "asset_id": "PUMP-04",
+    "alert_time_utc": "2025-06-18T04:35:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "IMBALANCE",
+    "confidence": 0.2571278232846374,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.402
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.188
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.152
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+8.9 robust standard deviations from the baseline for this operating regime",
+        "z": 8.9
+      },
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+6.9 robust standard deviations from the baseline for this operating regime",
+        "z": 6.9
+      },
+      {
+        "channel": "flow_m3_h",
+        "text": "-6.9 robust standard deviations from the baseline for this operating regime",
+        "z": -6.9
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect the impeller for fouling or damage and balance if needed.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-04-INC02",
+    "consequence": "Vibration at running speed grows with speed and shortens bearing and seal life.",
+    "check": "Inspect the impeller for deposits or damage; compare vibration at two speeds if the drive allows.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-04-2025-06-18T22:03:00Z",
+    "asset_id": "PUMP-04",
+    "alert_time_utc": "2025-06-18T22:03:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "IMBALANCE",
+    "confidence": 0.3645905853845742,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.243
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.236
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.156
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+21.7 robust standard deviations from the baseline for this operating regime",
+        "z": 21.7
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+16.9 robust standard deviations from the baseline for this operating regime",
+        "z": 16.9
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-3.8 robust standard deviations from the baseline for this operating regime",
+        "z": -3.8
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect the impeller for fouling or damage and balance if needed.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-04-INC03",
+    "consequence": "Vibration at running speed grows with speed and shortens bearing and seal life.",
+    "check": "Inspect the impeller for deposits or damage; compare vibration at two speeds if the drive allows.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-04-2025-06-19T16:36:00Z",
+    "asset_id": "PUMP-04",
+    "alert_time_utc": "2025-06-19T16:36:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "IMBALANCE",
+    "confidence": 0.4328150385450941,
+    "alternatives": [
+      {
+        "fault_type": "COMMUNICATION_LOSS",
+        "p": 0.424
+      },
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.143
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+36.9 robust standard deviations from the baseline for this operating regime",
+        "z": 36.9
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+31.6 robust standard deviations from the baseline for this operating regime",
+        "z": 31.6
+      },
+      {
+        "channel": "vibration_crest_factor",
+        "text": "-3.3 robust standard deviations from the baseline for this operating regime",
+        "z": -3.3
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect the impeller for fouling or damage and balance if needed.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-04-INC04",
+    "consequence": "Vibration at running speed grows with speed and shortens bearing and seal life.",
+    "check": "Inspect the impeller for deposits or damage; compare vibration at two speeds if the drive allows.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-04-2025-06-20T15:16:00Z",
+    "asset_id": "PUMP-04",
+    "alert_time_utc": "2025-06-20T15:16:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "IMBALANCE",
+    "confidence": 0.3644256668438792,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.299
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.203
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.134
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+61.6 robust standard deviations from the baseline for this operating regime",
+        "z": 61.6
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+51.4 robust standard deviations from the baseline for this operating regime",
+        "z": 51.4
+      },
+      {
+        "channel": "vibration_crest_factor",
+        "text": "-5.1 robust standard deviations from the baseline for this operating regime",
+        "z": -5.1
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect the impeller for fouling or damage and balance if needed.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-04-INC05",
+    "consequence": "Vibration at running speed grows with speed and shortens bearing and seal life.",
+    "check": "Inspect the impeller for deposits or damage; compare vibration at two speeds if the drive allows.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-04-2025-06-22T12:07:00Z",
+    "asset_id": "PUMP-04",
+    "alert_time_utc": "2025-06-22T12:07:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "IMBALANCE",
+    "confidence": 0.43738305487947665,
+    "alternatives": [
+      {
+        "fault_type": "MISALIGNMENT",
+        "p": 0.392
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.171
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+57.1 robust standard deviations from the baseline for this operating regime",
+        "z": 57.1
+      },
+      {
+        "channel": "flow_m3_h",
+        "text": "-11.5 robust standard deviations from the baseline for this operating regime",
+        "z": -11.5
+      },
+      {
+        "channel": "motor_speed_rpm",
+        "text": "-9.9 robust standard deviations from the baseline for this operating regime",
+        "z": -9.9
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect the impeller for fouling or damage and balance if needed.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-04-INC06",
+    "consequence": "Vibration at running speed grows with speed and shortens bearing and seal life.",
+    "check": "Inspect the impeller for deposits or damage; compare vibration at two speeds if the drive allows.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  }
+]

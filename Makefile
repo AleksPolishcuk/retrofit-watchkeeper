@@ -1,7 +1,7 @@
 PY ?= python3
 PACK ?=
 
-.PHONY: archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
+.PHONY: alerts archive setup setup-pack data bank model eval report levels predict api web demo live-demo test results
 
 setup:
 	$(PY) -m venv .venv
@@ -43,6 +43,12 @@ web:
 
 demo:
 	$(MAKE) -j2 api web
+
+# Rewrites artifacts/alerts (what the interface shows): the nine public pumps from the model that was not fitted on them (needs models/wk.joblib, see
+# `make model`), the three test pumps from the submitted CSV (no model, no test telemetry is read). The files are committed, so a fresh clone works without it.
+alerts:
+	.venv/bin/python eval/export_alerts.py --method wk --model models/wk.joblib
+	.venv/bin/python scripts/export_submitted_alerts.py
 
 # Keeps an immutable snapshot of artifacts/alerts per model version in artifacts/alerts_archive (a re-run overwrites the alert files, not the archive).
 archive:

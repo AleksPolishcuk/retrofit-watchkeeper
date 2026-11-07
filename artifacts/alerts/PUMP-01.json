@@ -1,0 +1,484 @@
+[
+  {
+    "alert_id": "PUMP-01-2025-08-12T19:03:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-12T19:03:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_DRIFT",
+    "confidence": 0.6,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "deviates alone by -5.2 robust standard deviations; related channels did not follow",
+        "z": -5.2
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the transmitter against a reference gauge before any repair.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC01",
+    "consequence": "A drifting instrument can trigger an unnecessary repair, or hide a real fault that it should reveal.",
+    "check": "Compare the transmitter with a local gauge or a second instrument on the same quantity.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-13T11:18:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-13T11:18:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.20692618786330838,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.438
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.203
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.152
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-17.4 robust standard deviations from the baseline for this operating regime",
+        "z": -17.4
+      },
+      {
+        "channel": "motor_speed_rpm",
+        "text": "+3.8 robust standard deviations from the baseline for this operating regime",
+        "z": 3.8
+      },
+      {
+        "channel": "motor_power_kw",
+        "text": "+2.9 robust standard deviations from the baseline for this operating regime",
+        "z": 2.9
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC02",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-14T13:37:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-14T13:37:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "COMMUNICATION_LOSS",
+    "confidence": 0.9,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "GATEWAY",
+        "text": "telemetry rows are missing",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "all channels stopped together, which points at the gateway"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "poor"
+    },
+    "recommended_action": "Check the gateway and network link. No fault can be assessed during the gap.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC03",
+    "consequence": "While data is missing no fault can be assessed, and an incident can develop unseen.",
+    "check": "Check the gateway and network link; confirm whether the local displays still update.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "very_likely",
+    "stage_basis": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-14T18:44:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-14T18:44:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_CALIBRATION_SHIFT",
+    "confidence": 0.210714072435744,
+    "alternatives": [
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.475
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.168
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.146
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "motor_speed_rpm",
+        "text": "+5.7 robust standard deviations from the baseline for this operating regime",
+        "z": 5.7
+      },
+      {
+        "channel": "motor_power_kw",
+        "text": "+2.9 robust standard deviations from the baseline for this operating regime",
+        "z": 2.9
+      },
+      {
+        "channel": "fluid_temp_c",
+        "text": "-2.8 robust standard deviations from the baseline for this operating regime",
+        "z": -2.8
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Verify the transmitter calibration against a reference gauge.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC04",
+    "consequence": "Readings are offset, which can trigger an unnecessary repair or mask a real fault.",
+    "check": "Verify the transmitter against a reference gauge at standstill and at running pressure.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-15T20:29:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-15T20:29:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_CALIBRATION_SHIFT",
+    "confidence": 0.48652370155091307,
+    "alternatives": [
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.341
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.173
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-6.6 robust standard deviations from the baseline for this operating regime",
+        "z": -6.6
+      },
+      {
+        "channel": "motor_speed_rpm",
+        "text": "-4.7 robust standard deviations from the baseline for this operating regime",
+        "z": -4.7
+      },
+      {
+        "channel": "motor_power_kw",
+        "text": "-4.2 robust standard deviations from the baseline for this operating regime",
+        "z": -4.2
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Verify the transmitter calibration against a reference gauge.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC05",
+    "consequence": "Readings are offset, which can trigger an unnecessary repair or mask a real fault.",
+    "check": "Verify the transmitter against a reference gauge at standstill and at running pressure.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-16T07:58:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-16T07:58:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.3810509622032479,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.503
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.116
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-5.5 robust standard deviations from the baseline for this operating regime",
+        "z": -5.5
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-4.8 robust standard deviations from the baseline for this operating regime",
+        "z": -4.8
+      },
+      {
+        "channel": "motor_speed_rpm",
+        "text": "-2.5 robust standard deviations from the baseline for this operating regime",
+        "z": -2.5
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC06",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-16T08:59:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-16T08:59:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_CALIBRATION_SHIFT",
+    "confidence": 0.42126419684377137,
+    "alternatives": [
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.377
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.125
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.076
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-5.9 robust standard deviations from the baseline for this operating regime",
+        "z": -5.9
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-4.3 robust standard deviations from the baseline for this operating regime",
+        "z": -4.3
+      },
+      {
+        "channel": "motor_speed_rpm",
+        "text": "-3.9 robust standard deviations from the baseline for this operating regime",
+        "z": -3.9
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Verify the transmitter calibration against a reference gauge.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC07",
+    "consequence": "Readings are offset, which can trigger an unnecessary repair or mask a real fault.",
+    "check": "Verify the transmitter against a reference gauge at standstill and at running pressure.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  },
+  {
+    "alert_id": "PUMP-01-2025-08-17T04:43:00Z",
+    "asset_id": "PUMP-01",
+    "alert_time_utc": "2025-08-17T04:43:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "SUCTION_STRAINER_CLOGGING",
+    "confidence": 0.2751687368349418,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.33
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.276
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.119
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-8.2 robust standard deviations from the baseline for this operating regime",
+        "z": -8.2
+      },
+      {
+        "channel": "bearing_temp_c",
+        "text": "-4.0 robust standard deviations from the baseline for this operating regime",
+        "z": -4.0
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "-3.1 robust standard deviations from the baseline for this operating regime",
+        "z": -3.1
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "flow_m3_h",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Inspect and clean the suction strainer at the next opportunity.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-01-INC08",
+    "consequence": "Cooling flow falls and the drive raises speed to compensate. If it continues, suction pressure drops far enough to cause cavitation.",
+    "check": "Read the suction pressure locally and compare it with the transmitter. If a strainer differential gauge exists, read it.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T1_RETROFIT"
+  }
+]

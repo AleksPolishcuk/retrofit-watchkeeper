@@ -1,0 +1,49 @@
+[
+  {
+    "alert_id": "PUMP-05-2026-01-21T09:27:00Z",
+    "asset_id": "PUMP-05",
+    "alert_time_utc": "2026-01-21T09:27:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_STUCK",
+    "confidence": 0.85,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "constant value while the pump runs",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "the value stayed constant while the pump was running"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "suction_pressure_kpa",
+        "flow_m3_h",
+        "vibration_rms_mm_s",
+        "bearing_temp_c",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the sensor and its wiring; the value is not changing.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-05-INC01",
+    "consequence": "The reading no longer follows the process, so alarms and this system are blind on that quantity.",
+    "check": "Check the instrument and wiring; change the process slightly (valve or speed) and see whether the reading moves.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "very_likely",
+    "stage_basis": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T0_LEGACY"
+  }
+]

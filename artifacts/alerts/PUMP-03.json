@@ -1,0 +1,306 @@
+[
+  {
+    "alert_id": "PUMP-03-2026-03-03T23:56:00Z",
+    "asset_id": "PUMP-03",
+    "alert_time_utc": "2026-03-03T23:56:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "DISCHARGE_RESTRICTION",
+    "confidence": 0.2639798173503846,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_STUCK",
+        "p": 0.389
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.347
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+8.7 robust standard deviations from the baseline for this operating regime",
+        "z": 8.7
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "-8.5 robust standard deviations from the baseline for this operating regime",
+        "z": -8.5
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "suction_pressure_kpa",
+        "flow_m3_h",
+        "vibration_rms_mm_s",
+        "bearing_temp_c",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check discharge valve position and heat-exchanger fouling.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-03-INC01",
+    "consequence": "Flow and heat removal fall, the pump moves left of its best point and wears faster.",
+    "check": "Confirm discharge valve positions and read the heat exchanger pressure drop locally.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T0_LEGACY"
+  },
+  {
+    "alert_id": "PUMP-03-2026-03-04T15:36:00Z",
+    "asset_id": "PUMP-03",
+    "alert_time_utc": "2026-03-04T15:36:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "DISCHARGE_RESTRICTION",
+    "confidence": 0.8724951505223592,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.128
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+12.2 robust standard deviations from the baseline for this operating regime",
+        "z": 12.2
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "-11.4 robust standard deviations from the baseline for this operating regime",
+        "z": -11.4
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "suction_pressure_kpa",
+        "flow_m3_h",
+        "vibration_rms_mm_s",
+        "bearing_temp_c",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check discharge valve position and heat-exchanger fouling.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-03-INC02",
+    "consequence": "Flow and heat removal fall, the pump moves left of its best point and wears faster.",
+    "check": "Confirm discharge valve positions and read the heat exchanger pressure drop locally.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "very_likely",
+    "stage_basis": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T0_LEGACY"
+  },
+  {
+    "alert_id": "PUMP-03-2026-03-05T15:36:00Z",
+    "asset_id": "PUMP-03",
+    "alert_time_utc": "2026-03-05T15:36:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "DISCHARGE_RESTRICTION",
+    "confidence": 0.7009909173691892,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.2
+      },
+      {
+        "fault_type": "SENSOR_STUCK",
+        "p": 0.099
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+11.2 robust standard deviations from the baseline for this operating regime",
+        "z": 11.2
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "-11.0 robust standard deviations from the baseline for this operating regime",
+        "z": -11.0
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "suction_pressure_kpa",
+        "flow_m3_h",
+        "vibration_rms_mm_s",
+        "bearing_temp_c",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check discharge valve position and heat-exchanger fouling.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-03-INC03",
+    "consequence": "Flow and heat removal fall, the pump moves left of its best point and wears faster.",
+    "check": "Confirm discharge valve positions and read the heat exchanger pressure drop locally.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "likely",
+    "stage_basis": {
+      "n": 33,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T0_LEGACY"
+  },
+  {
+    "alert_id": "PUMP-03-2026-03-06T06:17:00Z",
+    "asset_id": "PUMP-03",
+    "alert_time_utc": "2026-03-06T06:17:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_DRIFT",
+    "confidence": 0.25944869936192233,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.37
+      },
+      {
+        "fault_type": "DISCHARGE_RESTRICTION",
+        "p": 0.192
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.179
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+6.7 robust standard deviations from the baseline for this operating regime",
+        "z": 6.7
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "-2.8 robust standard deviations from the baseline for this operating regime",
+        "z": -2.8
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "suction_pressure_kpa",
+        "flow_m3_h",
+        "vibration_rms_mm_s",
+        "bearing_temp_c",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the transmitter against a reference gauge before any repair.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-03-INC04",
+    "consequence": "A drifting instrument can trigger an unnecessary repair, or hide a real fault that it should reveal.",
+    "check": "Compare the transmitter with a local gauge or a second instrument on the same quantity.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T0_LEGACY"
+  },
+  {
+    "alert_id": "PUMP-03-2026-03-07T06:17:00Z",
+    "asset_id": "PUMP-03",
+    "alert_time_utc": "2026-03-07T06:17:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_DRIFT",
+    "confidence": 0.2583288309389772,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.375
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.202
+      },
+      {
+        "fault_type": "DISCHARGE_RESTRICTION",
+        "p": 0.164
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+7.7 robust standard deviations from the baseline for this operating regime",
+        "z": 7.7
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [
+        "suction_pressure_kpa",
+        "flow_m3_h",
+        "vibration_rms_mm_s",
+        "bearing_temp_c",
+        "motor_winding_temp_c"
+      ],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the transmitter against a reference gauge before any repair.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-03-INC05",
+    "consequence": "A drifting instrument can trigger an unnecessary repair, or hide a real fault that it should reveal.",
+    "check": "Compare the transmitter with a local gauge or a second instrument on the same quantity.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T0_LEGACY"
+  }
+]

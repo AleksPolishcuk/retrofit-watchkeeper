@@ -1,0 +1,527 @@
+[
+  {
+    "alert_id": "PUMP-09-2026-02-10T06:25:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-10T06:25:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "MISALIGNMENT",
+    "confidence": 0.3977094043926006,
+    "alternatives": [
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.411
+      },
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.104
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.087
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+15.9 robust standard deviations from the baseline for this operating regime",
+        "z": 15.9
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "+3.5 robust standard deviations from the baseline for this operating regime",
+        "z": 3.5
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+2.3 robust standard deviations from the baseline for this operating regime",
+        "z": 2.3
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check coupling alignment, especially after recent maintenance.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC01",
+    "consequence": "Bearings and the coupling wear faster and temperatures rise, most often after recent work on the pump or motor.",
+    "check": "Check the coupling guard and alignment records for recent work, and feel the coupling-end bearing temperature.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-11T06:25:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-11T06:25:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "MISALIGNMENT",
+    "confidence": 0.4496523959915506,
+    "alternatives": [
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.379
+      },
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.094
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.078
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+22.2 robust standard deviations from the baseline for this operating regime",
+        "z": 22.2
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "+4.9 robust standard deviations from the baseline for this operating regime",
+        "z": 4.9
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check coupling alignment, especially after recent maintenance.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC02",
+    "consequence": "Bearings and the coupling wear faster and temperatures rise, most often after recent work on the pump or motor.",
+    "check": "Check the coupling guard and alignment records for recent work, and feel the coupling-end bearing temperature.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-11T22:29:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-11T22:29:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_STUCK",
+    "confidence": 0.85,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "bearing_temp_c",
+        "text": "constant value while the pump runs",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "the value stayed constant while the pump was running"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the sensor and its wiring; the value is not changing.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC03",
+    "consequence": "The reading no longer follows the process, so alarms and this system are blind on that quantity.",
+    "check": "Check the instrument and wiring; change the process slightly (valve or speed) and see whether the reading moves.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "very_likely",
+    "stage_basis": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-12T00:17:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-12T00:17:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "MISALIGNMENT",
+    "confidence": 0.25627115753921886,
+    "alternatives": [
+      {
+        "fault_type": "SENSOR_STUCK",
+        "p": 0.357
+      },
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.281
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.105
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+23.4 robust standard deviations from the baseline for this operating regime",
+        "z": 23.4
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-2.5 robust standard deviations from the baseline for this operating regime",
+        "z": -2.5
+      },
+      {
+        "channel": "bearing_temp_c",
+        "text": "constant value while the pump runs",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check coupling alignment, especially after recent maintenance.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC04",
+    "consequence": "Bearings and the coupling wear faster and temperatures rise, most often after recent work on the pump or motor.",
+    "check": "Check the coupling guard and alignment records for recent work, and feel the coupling-end bearing temperature.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-12T12:17:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-12T12:17:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_STUCK",
+    "confidence": 0.85,
+    "alternatives": [],
+    "evidence": [
+      {
+        "channel": "bearing_temp_c",
+        "text": "constant value while the pump runs",
+        "z": null
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "the value stayed constant while the pump was running"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the sensor and its wiring; the value is not changing.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC05",
+    "consequence": "The reading no longer follows the process, so alarms and this system are blind on that quantity.",
+    "check": "Check the instrument and wiring; change the process slightly (valve or speed) and see whether the reading moves.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "very_likely",
+    "stage_basis": {
+      "n": 15,
+      "correct": 15,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-13T00:17:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-13T00:17:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "MISALIGNMENT",
+    "confidence": 0.46027668909690994,
+    "alternatives": [
+      {
+        "fault_type": "IMBALANCE",
+        "p": 0.263
+      },
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.165
+      },
+      {
+        "fault_type": "SENSOR_CALIBRATION_SHIFT",
+        "p": 0.112
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "vibration_rms_mm_s",
+        "text": "+22.3 robust standard deviations from the baseline for this operating regime",
+        "z": 22.3
+      },
+      {
+        "channel": "vibration_accel_rms_g",
+        "text": "+2.4 robust standard deviations from the baseline for this operating regime",
+        "z": 2.4
+      },
+      {
+        "channel": "suction_pressure_kpa",
+        "text": "-2.4 robust standard deviations from the baseline for this operating regime",
+        "z": -2.4
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check coupling alignment, especially after recent maintenance.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC06",
+    "consequence": "Bearings and the coupling wear faster and temperatures rise, most often after recent work on the pump or motor.",
+    "check": "Check the coupling guard and alignment records for recent work, and feel the coupling-end bearing temperature.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "possible",
+    "stage_basis": {
+      "n": 32,
+      "correct": 22,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-14T01:11:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-14T01:11:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_NOISE_SPIKES",
+    "confidence": 0.34426441450180767,
+    "alternatives": [
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.273
+      },
+      {
+        "fault_type": "SENSOR_DRIFT",
+        "p": 0.204
+      },
+      {
+        "fault_type": "DISCHARGE_RESTRICTION",
+        "p": 0.178
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "flow_m3_h",
+        "text": "-10.6 robust standard deviations from the baseline for this operating regime",
+        "z": -10.6
+      },
+      {
+        "channel": "motor_power_kw",
+        "text": "-6.4 robust standard deviations from the baseline for this operating regime",
+        "z": -6.4
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+3.4 robust standard deviations from the baseline for this operating regime",
+        "z": 3.4
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the sensor wiring, shielding and power supply.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC07",
+    "consequence": "Spikes cause nuisance alarms and make the signal unreliable for diagnosis.",
+    "check": "Check wiring, shielding and power supply of the transmitter; compare with a local gauge.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-15T01:11:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-15T01:11:00Z",
+    "event_class": "SENSOR",
+    "fault_type": "SENSOR_NOISE_SPIKES",
+    "confidence": 0.3319560351909606,
+    "alternatives": [
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.336
+      },
+      {
+        "fault_type": "DISCHARGE_RESTRICTION",
+        "p": 0.181
+      },
+      {
+        "fault_type": "AIR_ENTRAINMENT",
+        "p": 0.151
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "flow_m3_h",
+        "text": "-23.3 robust standard deviations from the baseline for this operating regime",
+        "z": -23.3
+      },
+      {
+        "channel": "motor_power_kw",
+        "text": "-14.4 robust standard deviations from the baseline for this operating regime",
+        "z": -14.4
+      },
+      {
+        "channel": "discharge_pressure_kpa",
+        "text": "+9.0 robust standard deviations from the baseline for this operating regime",
+        "z": 9.0
+      }
+    ],
+    "sensor_check": {
+      "verdict": "sensor",
+      "reason": "one instrument moved while the channels coupled to it did not"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check the sensor wiring, shielding and power supply.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC08",
+    "consequence": "Spikes cause nuisance alarms and make the signal unreliable for diagnosis.",
+    "check": "Check wiring, shielding and power supply of the transmitter; compare with a local gauge.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  },
+  {
+    "alert_id": "PUMP-09-2026-02-15T13:11:00Z",
+    "asset_id": "PUMP-09",
+    "alert_time_utc": "2026-02-15T13:11:00Z",
+    "event_class": "MACHINE",
+    "fault_type": "AIR_ENTRAINMENT",
+    "confidence": 0.30872804437200774,
+    "alternatives": [
+      {
+        "fault_type": "SUCTION_STRAINER_CLOGGING",
+        "p": 0.416
+      },
+      {
+        "fault_type": "IMPELLER_WEAR",
+        "p": 0.156
+      },
+      {
+        "fault_type": "SENSOR_NOISE_SPIKES",
+        "p": 0.12
+      }
+    ],
+    "evidence": [
+      {
+        "channel": "flow_m3_h",
+        "text": "-27.9 robust standard deviations from the baseline for this operating regime",
+        "z": -27.9
+      },
+      {
+        "channel": "motor_power_kw",
+        "text": "-27.4 robust standard deviations from the baseline for this operating regime",
+        "z": -27.4
+      },
+      {
+        "channel": "motor_current_a",
+        "text": "-10.0 robust standard deviations from the baseline for this operating regime",
+        "z": -10.0
+      }
+    ],
+    "sensor_check": {
+      "verdict": "machine",
+      "reason": "several related channels deviated together"
+    },
+    "uncertainty": {
+      "missing_channels": [],
+      "data_quality": "ok"
+    },
+    "recommended_action": "Check suction level and sea-chest aeration; inspect for air ingress.",
+    "requires_human_approval": true,
+    "what_if": null,
+    "source": "WK_causal_learned",
+    "incident_id": "PUMP-09-INC09",
+    "consequence": "Head and flow become erratic, which can trip cooling alarms on the loads.",
+    "check": "Check tank or sea-chest level and look for air in the suction line or at the vent.",
+    "time_to_act": null,
+    "time_to_act_note": "not estimated",
+    "stage": "watch",
+    "stage_basis": {
+      "n": 53,
+      "correct": 17,
+      "source": "back-test on simulated fleets tune+dev9"
+    },
+    "model_version": "wk-837590ba86",
+    "tier": "T2_FULL"
+  }
+]

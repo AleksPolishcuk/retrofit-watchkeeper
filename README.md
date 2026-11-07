@@ -70,9 +70,12 @@ make data PACK=/path/to/RETROFIT_AI_PARTICIPANTS_2026
 make test                      # unit tests, truncation (causality) tests, review log logic (needs Node 22.18 or newer, skipped otherwise)
 make api                       # read-only API on http://127.0.0.1:8000
 make web                       # interface on http://localhost:5173
+make alerts                    # optional: rewrite artifacts/alerts (committed; needs models/wk.joblib from `make model`)
 make live-demo                 # optional: replay PUMP-08 as raw messages through the read-only ingest (a few minutes); shows in Monitor
 make archive                   # optional: immutable snapshots of artifacts/alerts per model version
 ```
+
+If the interface says "These are demo alerts" or the priority filter shows nothing, the alert files are missing or old: `artifacts/alerts/*.json` is committed, so `git pull`, restart `make api` and reload. After training the models yourself, `make alerts` rewrites them (byte-identical for the same model). `models/*.joblib` and `bank/` are not committed.
 
 To regenerate the models and numbers (about 25 minutes on 8 cores):
 
