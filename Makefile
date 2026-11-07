@@ -55,7 +55,7 @@ archive:
 	.venv/bin/python -m watchkeeper.alerts.archive
 
 # Replays the public validation pump PUMP-08 as raw messages (one per second) through the read-only ingest and the detector, writing
-# artifacts/live/PUMP-08/state.json for the Monitor tab. It takes a few minutes; the first alert of this pump is at 10 Sep 09:33 UTC.
+# artifacts/live/PUMP-08/state.json for the Overview page. It takes a few minutes; the first alert of this pump is at 10 Sep 09:33 UTC.
 live-demo:
 	rm -rf artifacts/live/PUMP-08
 	.venv/bin/python -m watchkeeper.ingest.live --asset PUMP-08 --start 2025-09-08T00:00:00Z --end 2025-09-10T14:00:00Z --every 60 --fine-from 2025-09-10T08:30:00Z --fine-to 2025-09-10T10:00:00Z --fine-every 5

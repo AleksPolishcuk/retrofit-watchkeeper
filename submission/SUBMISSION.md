@@ -6,13 +6,13 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 
 | Asked for | Where |
 |---|---|
-| Working prototype: ingest or replay, detect, evidence and uncertainty, recommended action | `make api` and `make web`; the Monitor tab replays the data up to the alert; `make live-demo` streams raw replay messages through the read-only ingest and the detector (`src/watchkeeper/ingest/`, `eval/results/live_replay.md`); code in `src/watchkeeper/` and `web/` |
+| Working prototype: ingest or replay, detect, evidence and uncertainty, recommended action | `make api` and `make web`; the Alerts page replays the data up to the alert; `make live-demo` streams raw replay messages through the read-only ingest and the detector (`src/watchkeeper/ingest/`, `eval/results/live_replay.md`); code in `src/watchkeeper/` and `web/` |
 | Alerts for the 3 test pumps in the template format | `submission/predictions_test.csv` (33 alerts) with `predictions_test.meta.json` (commit, tag `freeze-v1`, model SHA-256) |
 | Code and run instructions | `README.md` (Run it), `Makefile` |
 | Comparison with the provided baselines | `README.md` (Measured results), `eval/results/final/report.md` |
 | Honest limitations | `README.md` (Limitations), Proof tab of the interface, `docs/TECHNICAL_NOTE.md` |
-| Short demo | `docs/DEMO_SCRIPT.md` (storyboard for a 3 minute recording of the Monitor tab) |
-| Optional: what-if in the sandbox | Monitor tab, step 4, "Try it in the simulator" for strainer, bearing and alignment alerts (simulation only) |
+| Short demo | `docs/DEMO_SCRIPT.md` (storyboard for a 3 minute recording: Overview, Alerts, Proof, Value, Retrofit) |
+| Optional: what-if in the sandbox | Alerts page, step 4, "Try it in the simulator" for strainer, bearing and alignment alerts (simulation only) |
 | Optional: edge design and transfer plan | `docs/EDGE_AND_TRANSFER.md`, Retrofit tab |
 | Optional: business case | `docs/business_case.md` (assumptions labelled, measured inputs from untouched fleets) |
 
@@ -24,7 +24,7 @@ Challenge: RETROFIT AI, Make Existing Machines Intelligent (Business Turku, with
 | Technical quality (25%) | Causal per-pump baseline by operating point with regime learning, learned fault typing, physical cavitation check; 62.8 on 82 events from untouched fleets against 52.1 for the organizers' baseline and 36 for random alerts; bootstrap intervals; negative results published | tab **Proof**, `docs/TECHNICAL_NOTE.pdf`, `eval/results/` |
 | Reliability and safety (20%) | Read-only by construction and by test; causality enforced by a truncation test; human approves every action; uncertainty stated (four level words with back-test counts, missing channels, instrumentation level, time to act "not estimated"); sensor-versus-machine call; missing-sensor test; behaviour under bad data tested on the 18 controlled situations of the enterprise reference (11 handled, 5 partly, 2 known gaps, all listed); test pumps never used | tab **Proof** (sections 2 and 3), `tests/` |
 | Low-cost retrofit and transfer (20%) | Works on the data a pump already has; tested with legacy, retrofit and full instrumentation and with channels removed; edge footprint measured (6.6 MB, 1.3 s per pump-week, one core); read-only integration, pilot path and what does and does not transfer | tab **Retrofit**, `docs/EDGE_AND_TRANSFER.md` |
-| Working demo and clarity (10%) | One four-step flow per case: the data (replayed as it arrived), what looks wrong, how sure we are, what to do; plain wording; runs offline with `make demo` | tab **Monitor**, `docs/DEMO_SCRIPT.md` |
+| Working demo and clarity (10%) | One four-step flow per case: the data (replayed as it arrived), what looks wrong, how sure we are, what to do; plain wording; runs offline with `make demo` | page **Alerts**, `docs/DEMO_SCRIPT.md` |
 
 ## How the test-pump file was made
 

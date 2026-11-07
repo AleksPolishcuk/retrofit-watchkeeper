@@ -19,7 +19,7 @@ Built by team **Nordic Forge** at the Since AI Hackathon 2026 (Turku, 6-8 Novemb
 
 ## Live replay (raw messages in, alerts out)
 
-`make live-demo` replays the public validation pump PUMP-08 as raw messages (`python -m retrofit_sim replay`, one per second), turns them into one-minute readings, re-runs the detector and writes `artifacts/live/PUMP-08/state.json`. The Monitor tab shows it as a **Live replay** strip (as-of time, data check, alerts as they appear). The adapter (`src/watchkeeper/ingest/`) only reads: no publish, no subscribe, no command topic. A test fails if a write or subscribe path appears.
+`make live-demo` replays the public validation pump PUMP-08 as raw messages (`python -m retrofit_sim replay`, one per second), turns them into one-minute readings, re-runs the detector and writes `artifacts/live/PUMP-08/state.json`. The Overview page shows it as a **Live replay** strip (as-of time, data check, alerts as they appear). The adapter (`src/watchkeeper/ingest/`) only reads: no publish, no subscribe, no command topic. A test fails if a write or subscribe path appears.
 
 - Minutes built from raw messages equal the organizers' `features_1min` (largest difference 3e-5, float32 rounding) on a retrofit, a fully instrumented and a legacy pump.
 - The live run gives exactly the alerts of one batch run over the same minutes (PUMP-08, three alerts, same time, type and confidence).
@@ -71,7 +71,7 @@ make test                      # unit tests, truncation (causality) tests, revie
 make api                       # read-only API on http://127.0.0.1:8000
 make web                       # interface on http://localhost:5173
 make alerts                    # optional: rewrite artifacts/alerts (committed; needs models/wk.joblib from `make model`)
-make live-demo                 # optional: replay PUMP-08 as raw messages through the read-only ingest (a few minutes); shows in Monitor
+make live-demo                 # optional: replay PUMP-08 as raw messages through the read-only ingest (a few minutes); shows on Overview
 make archive                   # optional: immutable snapshots of artifacts/alerts per model version
 ```
 
@@ -94,7 +94,7 @@ make predict                   # needs a clean working tree
 ```
 src/watchkeeper/   features (causal baselines, NPSH, input hygiene), detect (alert timing, cavitation, data health, range check), diagnose (model, knowledge),
                    ingest (raw replay messages to minutes, live runner), incidents, stage words, alerts (contract v2, archive), what-if, api
-web/               four tabs: Monitor (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit (React, TypeScript, Vite; Inter and IBM Plex Mono bundled, no external font requests)
+web/               five pages: Overview (what needs a look first), Alerts (data, what looks wrong, how sure, what to do), Value, Proof, Retrofit; sidebar on wide screens, icon rail on tablets, bottom tab bar on phones (React, TypeScript, Vite; Inter and IBM Plex Mono bundled, no external font requests)
 eval/              experiments, probes, results tables
 scripts/           bank generation, data linking
 docs/              plan, audit, alert contract (JSON schema), business case, edge and transfer, technical note, demo script
