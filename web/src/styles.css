@@ -456,8 +456,8 @@ a.kpi:hover { border-color: var(--primary); }
 .phead { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px 14px; flex-wrap: wrap; margin-bottom: 14px; }
 .phead h2 { margin: 0; font-size: 1.375rem; font-weight: 700; letter-spacing: -.02em; }
 .psub { margin: 4px 0 0; color: var(--muted); font-size: 0.9375rem; }
-.more { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 0.9375rem; text-decoration: none; color: var(--link); padding-top: 4px; }
-.more:hover { text-decoration: underline; }
+a.more { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 0.9375rem; text-decoration: none; color: var(--link); padding-top: 4px; }
+a.more:hover { text-decoration: underline; }
 .tablewrap.flat { border: 0; background: transparent; border-radius: 0; }
 .pumptable { width: 100%; border-collapse: separate; border-spacing: 0; }
 .pumptable th { padding: 10px 14px; background: var(--panel2); text-align: left; font-size: 0.875rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
