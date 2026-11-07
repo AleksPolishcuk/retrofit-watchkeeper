@@ -101,6 +101,10 @@ docs/              plan, audit, alert contract (JSON schema), business case, edg
 submission/        test-pump alerts and submission notes
 ```
 
+## Hosting
+
+The Python API needs the data pack, so it is not deployed to a static host. `make snapshot` saves every answer of the read-only API for the recorded pumps (about 4 MB, no test-pump telemetry) and the interface can be built to read them (`npm run build:snapshot`), which is what the Vercel setup in `web/vercel.json` does. What works there and what does not (the live replay): [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
+
 ## Accessibility
 
 Light by default, with a Light, Dark and Auto switch; axe finds no violations on any page in either theme; a contrast test guards the colours; keyboard, 320 px reflow and larger text were checked; it has not been tested with screen readers or by assistive-technology users. Details and limits: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
