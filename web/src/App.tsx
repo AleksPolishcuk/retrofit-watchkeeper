@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from './api'
 import type { Decision } from './decisions'
+import { headline } from './cases'
 import { incidentsOf } from './plain'
 import { STORE as REVIEW_STORE, apply, load as loadReviews, migrateDecisions, save as saveReviews } from './reviews'
 import type { Action, Review } from './reviews'
 import Icon from './icons'
 import Monitor from './Monitor'
+import Overview from './Overview'
 import Proof from './Proof'
 import RetrofitPage from './Retrofit'
 import Value from './Value'
@@ -13,11 +15,23 @@ import type { Alert, Asset, Results } from './types'
 import type { Incident } from './plain'
 
 const STORE = 'watchkeeper.decisions'
-type Route = 'monitor' | 'value' | 'proof' | 'retrofit'
+type Route = 'overview' | 'alerts' | 'value' | 'proof' | 'retrofit'
+interface Parsed { key: Route; param: string | null }
 
-function parseRoute(hash: string): Route {
-  const k = hash.replace(/^#\/?/, '').split('/')[0]
-  return k === 'value' || k === 'proof' || k === 'retrofit' ? k : 'monitor'
+/** `#/alerts/PUMP-04` filters the alerts to one pump, `#/alerts/PUMP-04-INC02` opens one case. `#/monitor` is the old name of the alerts page. */
+function parseRoute(hash: string): Parsed {
+  const parts = hash.replace(/^#\/?/, '').split('/')
+  const rest = parts.slice(1).join('/')
+  let param: string | null = null
+  try {
+    param = rest ? decodeURIComponent(rest) : null
+  } catch {
+    param = null
+  }
+  const k = parts[0]
+  if (k === 'alerts' || k === 'monitor') return { key: 'alerts', param }
+  if (k === 'value' || k === 'proof' || k === 'retrofit') return { key: k, param: null }
+  return { key: 'overview', param: null }
 }
 
 function loadOldDecisions(): Record<string, Decision> {
@@ -28,15 +42,16 @@ function loadOldDecisions(): Record<string, Decision> {
   }
 }
 
-const TABS: { key: Route; label: string; hint: string; hash: string }[] = [
-  { key: 'monitor', label: 'Monitor', hint: 'See a pump, the evidence and what to do', hash: '#/' },
-  { key: 'value', label: 'Value', hint: 'What it is worth to an operator', hash: '#/value' },
-  { key: 'proof', label: 'Proof', hint: 'Does it work, is it safe, where does it fail', hash: '#/proof' },
-  { key: 'retrofit', label: 'Retrofit', hint: 'What it needs and how it transfers', hash: '#/retrofit' },
+const TABS: { key: Route; label: string; hint: string; hash: string; icon: string }[] = [
+  { key: 'overview', label: 'Overview', hint: 'What needs a look first', hash: '#/', icon: 'home' },
+  { key: 'alerts', label: 'Alerts', hint: 'Open a case: the data, the evidence, what to do', hash: '#/alerts', icon: 'bell' },
+  { key: 'value', label: 'Value', hint: 'What it is worth to an operator', hash: '#/value', icon: 'chart' },
+  { key: 'proof', label: 'Proof', hint: 'Does it work, is it safe, where does it fail', hash: '#/proof', icon: 'shield' },
+  { key: 'retrofit', label: 'Retrofit', hint: 'What it needs and how it transfers', hash: '#/retrofit', icon: 'plug' },
 ]
 
 export default function App() {
-  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash))
+  const [route, setRoute] = useState<Parsed>(() => parseRoute(window.location.hash))
   const [assets, setAssets] = useState<Asset[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [alertSource, setAlertSource] = useState<'engine' | 'mock' | null>(null)
@@ -87,25 +102,44 @@ export default function App() {
     saveReviews({})
   }, [])
 
+  const urgent = headline(incidentsOf(alerts), reviews).urgent
+  const nav = (cls: string) => TABS.map((t) => (
+    <a key={t.key} href={t.hash} title={t.hint} className={`${cls}${route.key === t.key ? ' on' : ''}`} aria-current={route.key === t.key ? 'page' : undefined}>
+      <Icon name={t.icon} />
+      <span>{t.label}</span>
+      {t.key === 'alerts' && urgent > 0 && <b className="badge" aria-label={`${urgent} cases need a look first`}>{urgent}</b>}
+    </a>
+  ))
+
   return (
     <div className="app">
-      <header className="top">
-        <div className="brand"><span className="mark" aria-hidden="true"><Icon name="shield" /></span>Watchkeeper</div>
-        <nav aria-label="Sections">
-          {TABS.map((t) => (
-            <a key={t.key} href={t.hash} title={t.hint} className={route === t.key ? 'tab on' : 'tab'} aria-current={route === t.key ? 'page' : undefined}>{t.label}</a>
-          ))}
-        </nav>
-        <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only · it cannot control a machine</span>
+      <aside className="side">
+        <a className="brand" href="#/" aria-label="Watchkeeper, overview"><span className="mark" aria-hidden="true"><Icon name="shield" /></span><span className="bn">Watchkeeper</span></a>
+        <nav className="sidenav" aria-label="Sections">{nav('sl')}</nav>
+        <div className="sidefoot">
+          <p className="safe"><Icon name="shield" /><span><b>Advice only</b><br />It cannot control a machine</span></p>
+          <p className="note">Recorded simulated pumps, replayed as if live.</p>
+        </div>
+      </aside>
+      <header className="mtop">
+        <a className="brand" href="#/"><span className="mark" aria-hidden="true"><Icon name="shield" /></span>Watchkeeper</a>
+        <span className="pill safe" title="This interface only reads data"><Icon name="shield" /> Advice only</span>
       </header>
-      <div className="strip">Recorded simulated pumps, replayed as if live. Nothing is connected to a real machine.</div>
-      {error && <div className="error" role="alert">{error}</div>}
       <main className="page">
-        {route === 'monitor' && <Monitor assets={assets} alerts={alerts} alertSource={alertSource} results={results} reviews={reviews} act={act} clearReviews={clearReviews} />}
-        {route === 'value' && <Value data={results} />}
-        {route === 'proof' && <Proof data={results} />}
-        {route === 'retrofit' && <RetrofitPage data={results} />}
+        {error && <div className="error" role="alert">{error}</div>}
+        {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'mock' && (
+          <p className="alertwarn" role="alert"><b>These are demo alerts, not engine output.</b> The alert files are missing, so there are no priority levels. Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
+        )}
+        {(route.key === 'overview' || route.key === 'alerts') && alertSource === 'engine' && alerts.some((x) => !x.stage) && (
+          <p className="alertwarn" role="alert"><b>Some alert files are from an older engine version and have no priority level.</b> They are listed as Watch. Run <code>make alerts</code>, restart the API and reload.</p>
+        )}
+        {route.key === 'overview' && <Overview assets={assets} alerts={alerts} reviews={reviews} results={results} />}
+        {route.key === 'alerts' && <Monitor assets={assets} alerts={alerts} focus={route.param} results={results} reviews={reviews} act={act} clearReviews={clearReviews} />}
+        {route.key === 'value' && <Value data={results} />}
+        {route.key === 'proof' && <Proof data={results} />}
+        {route.key === 'retrofit' && <RetrofitPage data={results} />}
       </main>
+      <nav className="tabbar" aria-label="Sections">{nav('tb')}</nav>
     </div>
   )
 }

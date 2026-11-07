@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
-import { titleOf } from './plain'
+import { HEALTH_LABEL, titleOf } from './plain'
 import { STAGE_LABEL, when } from './stage'
 import type { LiveItem, LiveState } from './types'
 
-const HEALTH_LABEL: Record<string, string> = { OK: 'Data OK', BASELINE_LEARNING: 'Still learning', DEGRADED: 'Data degraded', INSUFFICIENT_DATA: 'Not enough data', NO_DATA: 'No data' }
 
 /** Shown only while a live replay has been run (make live-demo). Polls the read-only API; the replay runner is a separate process. */
 export default function LiveStrip() {

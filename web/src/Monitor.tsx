@@ -4,12 +4,13 @@ import { SignalChart } from './charts'
 import Dropdown from './Dropdown'
 import Icon from './icons'
 import Lifecycle from './Lifecycle'
-import LiveStrip from './LiveStrip'
-import { CHANNEL, fmtNum, howFar, incidentsOf, median, nameOf, titleOf } from './plain'
+import { CHANNEL, HEALTH_LABEL, fmtNum, howFar, incidentsOf, median, nameOf, titleOf } from './plain'
 import ReviewLog from './ReviewLog'
+import { isClosed } from './cases'
+import { useMedia } from './useMedia'
 import { STATUS_LABEL } from './reviews'
 import type { Action, Review } from './reviews'
-import { STAGE_LABEL, STAGES, stageRank, when } from './stage'
+import { STAGE_LABEL, STAGES, when } from './stage'
 import TimelineChart from './Timeline'
 import WhatIf from './WhatIf'
 import type { Incident } from './plain'
@@ -17,7 +18,6 @@ import type { Alert, Asset, DataHealth, Results, Series, Stage, Timeline } from 
 
 const HOUR = 3600_000
 const DEFAULT_SIGNALS = ['vibration_rms_mm_s', 'discharge_pressure_kpa', 'motor_current_a', 'suction_pressure_kpa', 'bearing_temp_c']
-const HEALTH_LABEL: Record<string, string> = { OK: 'Data OK', BASELINE_LEARNING: 'Still learning', DEGRADED: 'Data degraded', INSUFFICIENT_DATA: 'Not enough data', NO_DATA: 'No data' }
 const STAGE_WORDS: Record<Stage, string> = {
   watch: 'Something moved. Keep an eye on it.',
   possible: 'Worth a look when convenient.',
@@ -33,7 +33,7 @@ const TIER_NOTE: Record<string, string> = {
 interface Props {
   assets: Asset[]
   alerts: Alert[]
-  alertSource: 'engine' | 'mock' | null
+  focus: string | null // from the address: a pump id filters the list, a case id opens that case
   results: Results | null
   reviews: Record<string, Review>
   act: (inc: Incident, action: Action) => void
@@ -54,8 +54,10 @@ function Meter({ stage }: { stage: Stage }) {
   )
 }
 
-export default function Monitor({ assets, alerts, alertSource, results, reviews, act, clearReviews }: Props) {
+export default function Monitor({ assets, alerts, focus, results, reviews, act, clearReviews }: Props) {
   const [pumpId, setPumpId] = useState('all')
+  const [scope, setScope] = useState<'active' | 'resolved'>('active')
+  const [mobileCase, setMobileCase] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [levels, setLevels] = useState<Stage[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -69,25 +71,49 @@ export default function Monitor({ assets, alerts, alertSource, results, reviews,
   const timer = useRef<number | null>(null)
 
   const allIncidents = useMemo(() => incidentsOf(pumpId === 'all' ? alerts : alerts.filter((a) => a.asset_id === pumpId)), [alerts, pumpId])
-  const countBy = (s: Stage) => allIncidents.filter((i) => (i.head.stage ?? 'watch') === s).length
-  const casesByPump = useMemo(() => Object.fromEntries(assets.map((x) => [x.asset_id, incidentsOf(alerts.filter((a) => a.asset_id === x.asset_id)).length])), [assets, alerts])
+  const scoped = useMemo(() => allIncidents.filter((i) => isClosed(i.id, reviews) === (scope === 'resolved')), [allIncidents, reviews, scope])
+  const resolvedCount = allIncidents.filter((i) => isClosed(i.id, reviews)).length
+  const activeCount = allIncidents.length - resolvedCount
+  const countBy = (s: Stage) => scoped.filter((i) => (i.head.stage ?? 'watch') === s).length
+  const casesByPump = useMemo(() => Object.fromEntries(assets.map((x) => [x.asset_id, incidentsOf(alerts.filter((a) => a.asset_id === x.asset_id)).filter((i) => !isClosed(i.id, reviews)).length])), [assets, alerts, reviews])
   const tierOf = (x: Asset) => ({ T0_LEGACY: 'T0', T1_RETROFIT: 'T1', T2_FULL: 'T2' }[x.instrumentation_tier])
   const pumpAsset = assets.find((x) => x.asset_id === pumpId)
   const orderedLevels = [...STAGES].reverse().filter((s) => levels.includes(s))
-  const incidents = useMemo(() => (levels.length === 0 ? allIncidents : allIncidents.filter((i) => levels.includes(i.head.stage ?? 'watch'))), [allIncidents, levels])
-  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 960px)').matches
+  const incidents = useMemo(() => (levels.length === 0 ? scoped : scoped.filter((i) => levels.includes(i.head.stage ?? 'watch'))), [scoped, levels])
+  const narrow = useMedia('(max-width: 960px)')
   const shortList = narrow ? 3 : 7
   const list = showAll ? incidents : incidents.slice(0, shortList)
-  // the first case a visitor sees should have data to look at: prefer a strong machine case on a pump whose telemetry is shown
-  const served = (i: { head: Alert }) => assets.find((x) => x.asset_id === i.head.asset_id)?.telemetry_served
-  const DEMO = ['SUCTION_STRAINER_CLOGGING', 'BEARING_WEAR', 'MISALIGNMENT', 'IMBALANCE', 'IMPELLER_WEAR']   // slow faults whose drift is visible in the data
-  const fallback = incidents.find((i) => served(i) && DEMO.includes(i.head.fault_type) && i.head.evidence.length >= 2) ?? incidents.find((i) => served(i) && i.head.event_class === 'MACHINE' && stageRank(i.head.stage) >= 2) ?? incidents.find((i) => served(i)) ?? incidents[0] ?? null
-  const inc = incidents.find((i) => i.id === selectedId) ?? fallback
+  // the case on show is the one picked, otherwise the first in the list (strongest priority first), so the list and the detail always agree
+  const inc = incidents.find((i) => i.id === selectedId) ?? incidents[0] ?? null
   // opening a case starts its review log (first_seen); acting on it is always a person's click
   useEffect(() => {
-    if (inc) act(inc, { type: 'view' })
+    if (inc && (!narrow || mobileCase)) act(inc, { type: 'view' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inc?.id])
+  }, [inc?.id, narrow, mobileCase])
+
+  // an address such as #/alerts/PUMP-04 or #/alerts/PUMP-04-INC02 (from the overview) selects a pump or opens a case
+  useEffect(() => {
+    if (!focus || assets.length === 0 || alerts.length === 0) return
+    setLevels([])
+    setShowAll(false)
+    if (assets.some((x) => x.asset_id === focus)) {
+      setPumpId(focus)
+      setScope('active')
+      setSelectedId(null)
+      setMobileCase(false)
+      return
+    }
+    const target = incidentsOf(alerts).find((i) => i.id === focus)
+    if (target) {
+      setPumpId('all')
+      setScope(isClosed(target.id, reviews) ? 'resolved' : 'active')
+      setSelectedId(target.id)
+      setShowAll(true) // the opened case must be visible in the list
+      setMobileCase(true)
+      window.setTimeout(() => document.querySelector('.case.on')?.scrollIntoView({ block: 'nearest' }), 150)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus, assets.length, alerts.length])
   const a = inc?.head ?? null
   const asset = a ? assets.find((x) => x.asset_id === a.asset_id) ?? null : null
 
@@ -191,22 +217,19 @@ export default function Monitor({ assets, alerts, alertSource, results, reviews,
 
   return (
     <div className="monitor">
-      <p className="intro">
-        Watchkeeper reads a pump's existing sensor data, notices when something moves away from that pump's own normal, shows the evidence and how sure it is,
-        and tells the operator what to check. It never controls the machine.
-      </p>
-
-      {alertSource === 'mock' && (
-        <p className="alertwarn" role="alert"><b>These are demo alerts, not engine output.</b> The alert files are missing, so there are no priority levels and the priority filter has nothing to filter. Run <code>make alerts</code> (or pull the committed <code>artifacts/alerts</code>), restart the API and reload.</p>
+      {!(narrow && mobileCase) && (
+        <header className="pagehead">
+          <h1>Alerts</h1>
+          <p className="muted">Pick a case. You will see what the data show, how sure we are, and what to do first.</p>
+        </header>
       )}
-      {alertSource === 'engine' && alerts.length > 0 && alerts.some((x) => !x.stage) && (
-        <p className="alertwarn" role="alert"><b>Some alert files are from an older engine version and have no priority level.</b> They are listed as Watch. Run <code>make alerts</code>, restart the API and reload.</p>
-      )}
-      <LiveStrip />
 
-      <div className="mgrid">
+      <div className={`mgrid ${narrow ? (mobileCase ? 'show-case' : 'show-list') : ''}`}>
         <aside className="card caselist" aria-label="Things to look at">
-          <h2>Needs a look</h2>
+          <div className="seg2" role="tablist" aria-label="Case status">
+            <button role="tab" aria-selected={scope === 'active'} className={scope === 'active' ? 'on' : ''} onClick={() => { setScope('active'); setSelectedId(null); setShowAll(false) }}>Active <b>{activeCount}</b></button>
+            <button role="tab" aria-selected={scope === 'resolved'} className={scope === 'resolved' ? 'on' : ''} onClick={() => { setScope('resolved'); setSelectedId(null); setShowAll(false) }}>Resolved <b>{resolvedCount}</b></button>
+          </div>
           <Dropdown
             label="Pump"
             minPanelWidth={360}
@@ -229,19 +252,19 @@ export default function Monitor({ assets, alerts, alertSource, results, reviews,
             label="Priority"
             multiple
             allLabel="All priorities"
-            allCount={allIncidents.length}
+            allCount={scoped.length}
             selected={levels}
             onChange={(v) => { setLevels(v as Stage[]); setShowAll(false) }}
             options={[...STAGES].reverse().map((s) => ({ value: s, dot: s, text: STAGE_LABEL[s], label: <span title={STAGE_WORDS[s]}>{STAGE_LABEL[s]}</span>, count: countBy(s) }))}
             summary={levels.length === 0
-              ? <>All priorities <span className="cnt">{allIncidents.length}</span></>
+              ? <>All priorities <span className="cnt">{scoped.length}</span></>
               : <span className="ddline">{orderedLevels.map((s) => <i key={s} className={`dot2 ${s}`} aria-hidden="true" />)}{orderedLevels.map((s) => STAGE_LABEL[s]).join(', ')}<span className="cnt">{incidents.length}</span></span>}
           />
-          <p className="hint">Priority is the evidence level; pick one or more. Numbers are cases.{levels.length > 0 ? ` Showing ${incidents.length} of ${allIncidents.length}.` : ''}</p>
+          <p className="hint">Priority is the evidence level; pick one or more. Numbers are cases.{levels.length > 0 ? ` Showing ${incidents.length} of ${scoped.length}.` : ''}</p>
           <ul>
             {list.map((i) => (
               <li key={i.id}>
-                <button className={`${i.id === inc?.id ? 'case on' : 'case'} s-${i.head.stage ?? 'watch'}`} onClick={() => { setSelectedId(i.id); if (narrow) window.setTimeout(() => document.getElementById('case-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}>
+                <button className={`${i.id === inc?.id && (!narrow || mobileCase) ? 'case on' : 'case'} s-${i.head.stage ?? 'watch'}`} onClick={() => { setSelectedId(i.id); setMobileCase(true); if (narrow) window.scrollTo(0, 0) }}>
                   <span className="ct">{titleOf(i.head)}</span>
                   <span className="cm">
                     <span className={`stagechip s-${i.head.stage ?? 'watch'}`}>{STAGE_LABEL[i.head.stage ?? 'watch']}</span>
@@ -252,7 +275,7 @@ export default function Monitor({ assets, alerts, alertSource, results, reviews,
                 </button>
               </li>
             ))}
-            {list.length === 0 && <li className="muted small">{levels.length > 0 ? 'No cases at this priority. Pick another level or clear the filter.' : 'No alerts for this pump. Nothing stands out against its own normal.'}</li>}
+            {list.length === 0 && <li className="muted small">{levels.length > 0 ? 'No cases at this priority. Pick another level or clear the filter.' : scope === 'resolved' ? 'No resolved cases yet. A case moves here when you close it after an inspection.' : 'No open cases for this pump. Quiet is not proof of health: see the data check.'}</li>}
           </ul>
           {incidents.length > shortList && <button className="btn sm" onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show fewer' : `Show all ${incidents.length}`}</button>}
           <ReviewLog incidents={incidentsOf(alerts)} reviews={reviews} clear={clearReviews} />
@@ -262,6 +285,7 @@ export default function Monitor({ assets, alerts, alertSource, results, reviews,
           <div className="flow">
             <div className="casehead" id="case-top">
               <div>
+                {narrow && <button className="btn sm back" onClick={() => setMobileCase(false)}><Icon name="back" /> All alerts</button>}
                 <p className="eyebrow"><span className="mono">{a.asset_id}</span> · {asset.system}</p>
                 <h1>{titleOf(a)}</h1>
                 <p className="muted">Raised <span className="mono">{when(a.alert_time_utc)}</span>. <span className={`kind ${a.event_class === 'SENSOR' ? 'sensor' : 'machine'}`}><Icon name={a.event_class === 'SENSOR' ? 'sensor' : 'wrench'} /> {a.event_class === 'SENSOR' ? 'Instrument' : 'Machine'}</span>{inc && inc.members.length > 1 ? ` · ${inc.members.length} related alerts in this incident` : ''}</p>

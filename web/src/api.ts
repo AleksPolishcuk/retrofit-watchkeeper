@@ -33,6 +33,7 @@ export const api = {
   archive: (asset_id: string) => get<Archived[]>(`/api/alerts/archive?${q({ asset_id })}`),
   live: () => get<LiveItem[]>('/api/live'),
   liveOne: (asset_id: string) => get<LiveState>(`/api/live/${encodeURIComponent(asset_id)}`),
+  dataHealthNow: (asset_id: string) => get<DataHealth>(`/api/data-health?${q({ asset_id })}`),
   dataHealth: (asset_id: string, as_of: string) => get<DataHealth>(`/api/data-health?${q({ asset_id, as_of })}`),
   allAlerts: () => get<{ source: 'engine' | 'mock'; alerts: Alert[] }>('/api/alerts'),
   alerts: (asset_id: string) => get<{ source: 'engine' | 'mock'; alerts: Alert[] }>(`/api/alerts?${q({ asset_id })}`),
